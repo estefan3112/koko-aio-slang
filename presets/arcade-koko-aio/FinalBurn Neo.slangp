@@ -1,0 +1,5 @@
+#reference "../../shaders/shaders_slang/bezel/koko-aio/presets/monitor-slotmask-bloom-bezel.slangp"
+BEZEL_R = "-0.170000"
+BEZEL_G = "-0.170000"
+BEZEL_B = "-0.170000"
+DO_BG_IMAGE = "1.000000"
