@@ -1,3 +1,8 @@
+# Koko-aio Fork for FinalBurn Neo Artwork
+
+Repository for creating dedicated FinalBurn Neo artwork using the Koko-aio Slang shader<br>
+Currently in pre-Alpha stage, testing out possibilities.<br>
+
 # Koko-aio
 
 Koko-aio shader is meant to be an all-in one crt shader.<br>
