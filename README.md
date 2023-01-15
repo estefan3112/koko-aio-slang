@@ -5,7 +5,7 @@ Currently in pre-Alpha stage, testing out possibilities.<br>
 
 # How to install the additional Arcade Artwork
 
-Step 1: As I stick with the RetroArch folder structure, it is easiest to clone the entire repository and replace the directory /shaders/shaders_slang/bezel/koko-aio entirely.<br>
+Step 1: As the RetroArch folder structure is not identical with this Github folder structure, please only take the entire folder /textures/arcade_textures and move it locally to /shaders/shaders_slang/bezel/koko-aio/textures.<br>
 Step 2: Move the content of the directory koko-aio/presets/arcade-koko-aio to /config/FinalBurn Neo/ -> by this, the game launches the right shader configuration automatically.<br>
 
 Note: The FinalBurn Neo.cfg contains one line that secures that the Aspect Ratio is set to 'Full'. Without this option, the background will not appear.
