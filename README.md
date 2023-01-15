@@ -1,7 +1,17 @@
-# Koko-aio Fork for FinalBurn Neo Artwork
+# Koko-aio Fork for Arcade Artwork (currently FinalBurn Neo)
 
-Repository for creating dedicated FinalBurn Neo artwork using the Koko-aio Slang shader<br>
+Repository for creating dedicated FinalBurn Neo Arcade Artwork by using the Koko-aio Slang shader<br>
 Currently in pre-Alpha stage, testing out possibilities.<br>
+
+# How to install the additional Arcade Artwork
+
+Step 1: As I stick with the RetroArch folder structure, it is easiest to clone the entire repository and replace the directory /shaders/shaders_slang/bezel/koko-aio entirely.<br>
+Step 2: Move the content of the directory koko-aio/presets/arcade-koko-aio to /config/FinalBurn Neo/ -> by this, the game launches the right shader configuration automatically.<br>
+
+Note: The FinalBurn Neo.cfg contains one line that secures that the Aspect Ratio is set to 'Full'. Without this option, the background will not appear.
+
+Please also refer to the instructions contained in the ReadMe.md of these folders.<br>
+
 
 # Koko-aio
 
