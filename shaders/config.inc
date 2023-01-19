@@ -34,7 +34,7 @@
 	//the blurred image
 	//Set this to the same value as used for the maximum
 	//of IN_GLOW_BIAS
-#define IN_GLOW_BIAS_MAX 2.0
+#define IN_GLOW_BIAS_MAX 1.0
 
 #define eps 1e-5
 #define pi 3.141592654
@@ -87,6 +87,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float DO_CCORRECTION;
 	float DO_ALT_BLANK;
 	float IN_GLOW_BIAS ;
+	float IN_GLOW_AMOUNT ;
 	float SCANLINES_BLEEDING ;
 	float IN_GLOW_W;
 	float IN_GLOW_H;
@@ -148,6 +149,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float BEZEL_IMAGE_BORDER;
 	float BEZEL_REFL_ZOOM;
 	float BEZEL_FRAME_ZOOM;
+	float BEZEL_USE_STRAIGHT;
 
 	float DO_SPOT;
 	float S_POSITION; 
@@ -182,6 +184,11 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float SHIFT_G;
 	float SHIFT_B;
 	float OFFSET_STRENGTH;
+	
+	float GLOBAL_ZOOM;
+	float GLOBAL_OFFX;
+	float GLOBAL_OFFY;
+	float GLOBAL_SHZO;
 	
 } global;
 
@@ -225,13 +232,14 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter SHIFT_B         "        Blue offset"			3.0 	-210.0 189.0 1
 
 
-// Input glowing
-#pragma parameter DO_IN_GLOW               "★ Glowing Input/power enable? ==>" 					0.0	0.0 1.0 1.0
-#pragma parameter IN_GLOW_POWER            "        Input signal glow strength"					0.45 	0.0 5.0 0.05
+// Input Blur / light glowing
+#pragma parameter DO_IN_GLOW               "★ Glow/Blur enable? ==>"	 					0.0	0.0 1.0 1.0
+#pragma parameter IN_GLOW_POWER            "        Input signal strength"					0.45 	0.0 5.0 0.05
 #pragma parameter IN_GLOW_W                "        Sharpness, horizontal"					2.5	0.2 7.0 0.05
 #pragma parameter IN_GLOW_H                "        Sharpness, vertical"					2.5	0.2 7.0 0.05
 #pragma parameter IN_GLOW_GAMMA            "        Gamma, the higher, the less the glow on dark colors"	1.0 	1.0 10.0 0.1
-#pragma parameter IN_GLOW_BIAS             "        Glow to blur bias"						2.0     0.0 2.0 0.05 
+#pragma parameter IN_GLOW_AMOUNT           "        Light spread amount"					0.6 	0.0 2.0 0.05
+#pragma parameter IN_GLOW_BIAS             "        Glow to blur bias"					    	1.0     0.0 1.0 0.05 
 
 
 
@@ -294,21 +302,27 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter GEOM_WARP_X        "        Warp X"				0.3  0.0 6.0 0.05
 #pragma parameter GEOM_WARP_Y        "        Warp Y"				0.0   0.0 6.0 0.05
 #pragma parameter GEOM_CORNER_SIZE   "        Corner radius"			0.01  0.01 0.1 0.005
-#pragma parameter GEOM_CORNER_SMOOTH "        Corner sharpness"			350.0 50.0 1000.0 25.0
+#pragma parameter GEOM_CORNER_SMOOTH "        Corner sharpness"			350.0 15.0 1000.0 1.0
 
 
 
 //Bezel related
-#pragma parameter DO_BEZEL	     "★ Bezel enable? ==>"			0.0   0.0 1.0 1.0
-#pragma parameter BEZEL_R            "        Bezel color: Red"			-0.3   -0.5 0.5  0.01
-#pragma parameter BEZEL_G            "        Bezel color: Green"		-0.3   -0.5 0.5  0.01
-#pragma parameter BEZEL_B            "        Bezel color: Blue"		-0.3   -0.5 0.5  0.01
-#pragma parameter BEZEL_CON          "        Bezel Contrast"			1.3   0.0  10.0 0.01
-#pragma parameter BEZEL_INNER_ZOOM   "        Image zoom"			-0.18   -1.5 0.5 0.01
-#pragma parameter BEZEL_FRAME_ZOOM   "        Frame zoom"			0.0   -1.5 0.5 0.01
-#pragma parameter BEZEL_IMAGE_BORDER "        Image border"			1.01   1.0 1.2 0.01
-#pragma parameter BEZEL_REFL_ZOOM    "        Reflections zoom"			0.965   0.0 2.0 0.005
+#pragma parameter DO_BEZEL	     "★ Bezel enable? ==>"		0.0   0.0 1.0 1.0
+#pragma parameter BEZEL_USE_STRAIGHT "        Straight"			0.0	0.0 1.0  1.0 
+#pragma parameter BEZEL_R            "        Color: Red"		-0.3   -0.5 0.5  0.01
+#pragma parameter BEZEL_G            "        Color: Green"		-0.3   -0.5 0.5  0.01
+#pragma parameter BEZEL_B            "        Color: Blue"		-0.3   -0.5 0.5  0.01
+#pragma parameter BEZEL_CON          "        Contrast"			1.3   0.0  10.0 0.01
+#pragma parameter BEZEL_INNER_ZOOM   "        Image zoom"		-0.18   -1.5 0.5 0.01
+#pragma parameter BEZEL_FRAME_ZOOM   "        Frame zoom"		0.0   -1.5 0.5 0.01
+#pragma parameter BEZEL_IMAGE_BORDER "        Image border"		1.01   1.0 1.2 0.01
+#pragma parameter BEZEL_REFL_ZOOM    "        Reflections zoom"		0.965   0.0 2.0 0.005
 
+//Global Zoom/Offset
+#pragma parameter GLOBAL_SHZO	 "★ Global shift/zoom"				0.0   0.0  1.0 	  1.0
+#pragma parameter GLOBAL_OFFX	 "        X axis shift "			0.0  -1.0  1.0    0.0005
+#pragma parameter GLOBAL_OFFY	 "        Y axis shift "			0.0  -1.0  1.0    0.0005
+#pragma parameter GLOBAL_ZOOM	 "        Zoom"					1.0   0.0  3.0    0.0005
 
 //Background Image
 #pragma parameter DO_BG_IMAGE	 "★ Backgound image enable? ==>"			0.0  0.0  1.0     1.0
@@ -410,6 +424,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 #define DO_IN_GLOW               global.DO_IN_GLOW
 #define IN_GLOW_BIAS             global.IN_GLOW_BIAS
+#define IN_GLOW_AMOUNT           global.IN_GLOW_AMOUNT
 #define SCANLINES_BLEEDING       global.SCANLINES_BLEEDING
 #define IN_GLOW_W                global.IN_GLOW_W
 #define IN_GLOW_H                global.IN_GLOW_H
@@ -476,6 +491,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #define BEZEL_FRAME_ZOOM   global.BEZEL_FRAME_ZOOM
 #define BEZEL_IMAGE_BORDER global.BEZEL_IMAGE_BORDER
 #define BEZEL_REFL_ZOOM    global.BEZEL_REFL_ZOOM
+#define BEZEL_USE_STRAIGHT global.BEZEL_USE_STRAIGHT
 
 #define DO_SPOT    global.DO_SPOT
 #define S_BYPASS   global.S_BYPASS
@@ -510,3 +526,8 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #define SHIFT_G           global.SHIFT_G
 #define SHIFT_B           global.SHIFT_B
 #define OFFSET_STRENGTH   global.OFFSET_STRENGTH
+
+#define GLOBAL_ZOOM      global.GLOBAL_ZOOM
+#define GLOBAL_OFFX      global.GLOBAL_OFFX
+#define GLOBAL_OFFY      global.GLOBAL_OFFY
+#define GLOBAL_SHZO      global.GLOBAL_SHZO

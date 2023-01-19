@@ -6,7 +6,7 @@
 
 #define PastSampler ambi_temporal_passFeedback
 
-#define internalness 0.07  //The distance between the screen border and the led strip
+#define internalness 0.07 //The distance between the screen border and the led strip
 #define leds_per_strip 8   //How many leds per border
 #define radius 0.001       //The base radius of the emitted light (tuned by user parameter later)
 
@@ -18,16 +18,23 @@ layout(location = 1) out float border_min;
 layout(location = 2) out float border_max;
 layout(location = 3) out float fstep;
 layout(location = 4) out float lod;
+layout(location = 5) out vec2 vWarp_vexp;
+layout(location = 6) out vec2 vWarp_arg2;
 
 void main() {
-   gl_Position = global.MVP * Position;
-   vTexCoord = TexCoord;
-   
-   border_min=internalness ;
-   border_max=1.0-internalness ;
-   fstep = (border_max - border_min)  / (leds_per_strip-1);
-   //Calc a lod for a texture sized led_strip x led_strip
-   lod = log2(params.SourceSize.y / leds_per_strip);
+    gl_Position = global.MVP * Position;
+    vTexCoord = TexCoord;
+
+    border_min=internalness ;
+    border_max=1.0-internalness ;
+    fstep = (border_max - border_min)  / (leds_per_strip-1);
+    
+    //Calc a lod for a texture sized led_strip x led_strip
+        lod = log2(params.SourceSize.y / leds_per_strip);
+    
+    //Precalc some Curvature/Warp values:
+        vWarp_vexp = 1.0/ (1 + (vec2(GEOM_WARP_X, GEOM_WARP_Y) * 0.2)) ;
+        vWarp_arg2 = 1.0 - pow(vec2(0.29289321881345247559915563789515), vWarp_vexp );
 }
 
 #pragma stage fragment
@@ -36,6 +43,8 @@ layout(location = 1) in float border_min;
 layout(location = 2) in float border_max;
 layout(location = 3) in float fstep;
 layout(location = 4) in float lod;
+layout(location = 5) in vec2 vWarp_vexp;
+layout(location = 6) in vec2 vWarp_arg2;
 
 layout(location = 0) out vec4 FragColor;
 
@@ -51,6 +60,7 @@ vec3 circle_smooth(vec2 coords, vec2 middle, float f_radius, float FALLOFF, floa
     float fdistance=distance(middle, vec2(coords.x, coords.y));
     float circle = (1-smoothstep(f_radius-FALLOFF, f_radius+FALLOFF, fdistance));
     vec3 circle_color = textureLod(Source, middle, f_lod).rgb * circle;
+    //return pow(circle_color, vec3(2.0));
     return circle_color;
 }
 
@@ -63,6 +73,9 @@ vec3 ambi_pre_pass() {
     
     //Scale to the original aspect
     vec2 coords = get_scaled_coords(vTexCoord, global.FinalViewportSize, is_rotated);
+    if (GLOBAL_SHZO >0.5)
+        coords = zoom(coords + vec2(-GLOBAL_OFFX, -GLOBAL_OFFY), GLOBAL_ZOOM );
+    
     if (DO_BEZEL==1.0) coords = zoomout_coords(coords, -BEZEL_INNER_ZOOM , 1.0);
     
     //Skip coords in the rect "under the monitor"
@@ -71,20 +84,20 @@ vec3 ambi_pre_pass() {
     //First consider to skip the curved coords
     if (DO_CURVATURE == 1.0) {
         if ((GEOM_WARP_X > 0.0) || (GEOM_WARP_Y > 0.0)) {
-            vec2 coords_curved = Warp(coords, GEOM_WARP_X, GEOM_WARP_Y);
+            vec2 coords_curved = Warp_fast(coords, vWarp_vexp, vWarp_arg2); // vec2 coords_curved = Warp(coords, GEOM_WARP_X, GEOM_WARP_Y);
             if ( ( (coords_curved.x > tol_start && coords_curved.x < 1.0 - tol_start ) && (coords_curved.y > tol_start && coords_curved.y < 1.0 - tol_start) ) &&
                 !( (coords.x < - tol_start || coords.x > 1.0 + tol_start) ||  (coords.y < - tol_start || coords.y > 1.0 + tol_start) ) )
                 return vec3(0.0);                               
         }       
     }    
+
     //...next, the straight ones (needed even when curvature is due, because it returns particular values in the corners)
     //skip_pass = skip_pass && !( (coords.x < 0.0 -tol || coords.x > 1.0 +tol) ||  (coords.y < 0.0 -tol || coords.y > 1.0 +tol) );
-    if (coords.x > tol_start && coords.x < tol_end && coords.y > tol_start && coords.y < tol_end)  return vec3(0.0);
-    
+if (coords.x > tol_start && coords.x < tol_end && coords.y > tol_start && coords.y < tol_end)  return vec3(0.0);
+   
     //Finally, emulate leds.
     vec3 pixel_out = vec3(0.0);
     float middle_x; float middle_y ;
-    
     middle_x=border_min;
     for (middle_y=border_min ; middle_y <= border_max+eps ; middle_y=middle_y + fstep ) {
         pixel_out +=circle_smooth(coords, vec2(middle_x,middle_y), radius, AMBI_FALLOFF, lod);

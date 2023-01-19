@@ -28,20 +28,23 @@
     It can be used with RGB shifting and image blurring to give the picture
     an ntsc look without dealing with specific encoding/decoding stuffs. 
 
-**Glowing Input/power:**
+**Glow/Blur:**
     Emulate the CRT glowing "feature", so that the brighter areas of
-    the image will light their surroundings.
+    the image will light their surroundings,
+    with options to switch to classic blur.
     
-    Input signal glow strength:
+    Input signal strength:
         The input signal gain
     Sharpness (horizontal, vertical):
         How much the glow will "spread".
         When pushed to its maximum value, no blurring will occour.
     Gamma:
         Controls how much the signal has to be bright to produce the glow.
-    Glow to blur bias:
-        Modulates between glow (0.. brighter colors expands over darker ones)
-        versus blur (..1  all the colors are blurred)
+    Glow / blur bias:
+        Higher negative values -> more glow : brighter colors expands over darker ones.
+        Higher positive values -> means blur: all the colors are blurred.
+        0.0 means no blur, no glow.
+        
     
 **RGB Masks and/or Darklines:**
     Emulates CRT RGB phosphors (RGB Mask),
@@ -184,7 +187,8 @@
     - The alpha channel in the inner frame represents the part of the bezel
       that will be filled by the game content
     - The blue channel represents the part of the bezel that will be filled by the game reflection.
-    
+    Straight
+        Use a straight bezel instead of a curved one.
     Bezel color (red,green,blue) and contrast:
         Allows to choose the color of the monitor frame.
     Image zoom:
@@ -195,6 +199,9 @@
         Draws a black border around the game content.
     Reflections zoom:
         "Zoom" the reflections if they don't match the content.
+
+**Global shift/zoom image:**
+    Zoom and shift everything on screen, but background pictures.
         
 **Backgound image:**
     Draws an image on screen picked from the "textures" shader subdirectory,
