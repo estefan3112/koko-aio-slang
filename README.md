@@ -1,11 +1,20 @@
 # Koko-aio Fork for Arcade Artwork (currently FinalBurn Neo and MAME 2003)
 
-Repository for game-specific Arcade Artwork by using the Koko-aio slang shader Successfully tested under MacOS, Windows and iOS.<br>
-Currently the Koko-aio shader provides superior performance on all reasonably powered desktops, while providing enhanced shader functions, including bezel reflections.<br>
+Repository for game-specific Arcade Artwork by using the Koko-aio slang shader Successfully tested under MacOS, Windows and iOS. Currently the Koko-aio shader provides superior performance on all reasonably powered desktops, while providing enhanced shader functions, including bezel reflections. It embeds game-specific artwork seamlessly and scales according to resolution.<br>
 <br>
 Main source of this artwork comes from John Merrit, who set a benchmark for realistic arcade artwork. I still very much like them, and they shine even more in combination with Koko-aio. My selection of the artwork is arbitrary, but I try to publish eye candys earlier :-).<br>
 <br>
 Requirements: a very recent RetroArch Nightly Build that supports Vulkan.<br>
+
+# Release 0.1 contains first 21 game-specific presets - download here!
+Please see the list of game presets in the Release Notes.
+
+# Screenshots
+Screenshots are taken under MacOS with HDR enabled.
+
+<img width="512" alt="1943" src="https://user-images.githubusercontent.com/24915559/215357835-23de575f-66ba-477c-be39-e8ab433a8e50.png">
+<img width="512" alt="aliensyn" src="https://user-images.githubusercontent.com/24915559/215357862-535b6e7e-dff0-4a86-9d86-f9a88f89921c.png">
+<img width="512" alt="mpatrol" src="https://user-images.githubusercontent.com/24915559/215357897-803ccc6a-6bfa-4ef2-8b58-4547b140c5e3.png">
 
 # Easy install
 
@@ -31,7 +40,7 @@ Please note that the Koko-aio github repository has a different folder structure
 Please see the Moon Patrol example - you can just duplicate the .slangp preset and rename it with the name of the clone. By this, you have an identical configuration for a clone. <br>
 
 
-FROM HERE THE ORIGINAL TEXT FROM FORKED REPOSITORY FOLLOWING:
+# From here, the original text from the forked repository follows:
 
 # Koko-aio
 
