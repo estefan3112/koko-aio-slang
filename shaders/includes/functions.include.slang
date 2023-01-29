@@ -109,9 +109,10 @@ float random(float power, vec2 seed) {
     float dt = dot(seed.xy, vec2(RND_A, RND_B));
     float sn = mod(dt,3.14);
 
-    float noise_out = fract(sin(sn) * RND_C) - 0.5;
-    noise_out = clamp(noise_out, -power, power);
-    return noise_out ;
+    float noise_out = fract(sin(sn) * RND_C);
+    //noise_out = clamp(noise_out, -power, power);
+    noise_out = scale_to_range(noise_out, -power, power);
+    return noise_out;
 }
 
 
@@ -287,5 +288,85 @@ float random(float power, vec2 seed) {
 		return scale_coord;
 	}
 	
+//Blur/Glow
+	vec3 glow_dumb(sampler2D in_texture, float glow_power, float gamma, vec2 coords) {
+		return pow( texture(in_texture, coords).rgb, vec3(gamma) ) * glow_power;
+	}
 
+	vec3 blur9_x(sampler2D image, vec2 uv, vec2 sourcesize, float sharpness_x) {
+		vec2 resolution = sourcesize * sharpness_x;
+		vec3 color = vec3(0.0);
+		vec2 off1 = vec2(1.3846153846, 0.0) ;
+		vec2 off2 = vec2(3.2307692308, 0.0) ;
+		color += texture(image, uv).rgb                       * 0.2270270270;
+		color += texture(image, uv + (off1 / resolution)).rgb * 0.3162162162;
+		color += texture(image, uv - (off1 / resolution)).rgb * 0.3162162162;
+		color += texture(image, uv + (off2 / resolution)).rgb * 0.0702702703;
+		color += texture(image, uv - (off2 / resolution)).rgb * 0.0702702703;
+		return color;
+	}
 
+	vec3 blur9_y(sampler2D image, vec2 uv, vec2 sourcesize, float sharpness_y) {
+		vec2 resolution = sourcesize * sharpness_y;
+		vec3 color = vec3(0.0);
+		vec2 off1 = vec2(0.0, 1.3846153846) ;
+		vec2 off2 = vec2(0.0, 3.2307692308) ;
+		color += texture(image, uv).rgb                       * 0.2270270270;
+		color += texture(image, uv + (off1 / resolution)).rgb * 0.3162162162;
+		color += texture(image, uv - (off1 / resolution)).rgb * 0.3162162162;
+		color += texture(image, uv + (off2 / resolution)).rgb * 0.0702702703;
+		color += texture(image, uv - (off2 / resolution)).rgb * 0.0702702703;
+		return color;
+	}
+
+	vec3 blur9_y_alpha_aware(sampler2D image, vec2 uv, vec2 sourcesize, float sharpness_y) {
+		vec2 resolution = sourcesize * sharpness_y;
+		vec2 off1 = vec2(0.0, 1.3846153846) ;
+		vec2 off2 = vec2(0.0, 3.2307692308) ;
+		vec3 color = vec3(0.0);
+		vec4 lookup = texture(image, uv);                   color += lookup.a * lookup.rgb * 0.2270270270;
+		lookup = texture(image, uv  + (off1 / resolution)); color += lookup.a * lookup.rgb * 0.3162162162;
+		lookup = texture(image, uv  - (off1 / resolution)); color += lookup.a * lookup.rgb * 0.3162162162;
+		lookup = texture(image, uv  + (off2 / resolution)); color += lookup.a * lookup.rgb * 0.0702702703;
+		lookup = texture(image, uv  - (off2 / resolution)); color += lookup.a * lookup.rgb * 0.0702702703;
+		return color;
+	}
+
+	
+	vec3 blur5_x(sampler2D image, vec2 uv, vec2 sourcesize, float sharpness_x, float lod) {
+		vec2 resolution = sourcesize * sharpness_x;
+		vec3 color = vec3(0.0);
+		vec2 off1 = vec2(1.333333333333, 0.0) ;
+		color += textureLod(image, uv, lod).rgb   * 0.29411764705882354;
+		color += textureLod(image, uv + (off1 / resolution), lod).rgb   * 0.35294117647058826;
+		color += textureLod(image, uv - (off1 / resolution), lod).rgb   * 0.35294117647058826;
+		return color;
+	}
+	
+	vec3 blur5_y(sampler2D image, vec2 uv, vec2 sourcesize, float sharpness_y, float lod) {
+		vec2 resolution = sourcesize * sharpness_y;
+		vec3 color = vec3(0.0);
+		vec2 off1 = vec2(0.0, 1.333333333333) ;
+		color += textureLod(image, uv, lod).rgb   * 0.29411764705882354;
+		color += textureLod(image, uv + (off1 / resolution), lod).rgb   * 0.35294117647058826;
+		color += textureLod(image, uv - (off1 / resolution), lod).rgb   * 0.35294117647058826;
+		return color;
+	}
+	
+	//smoothly shade x and y < 0.0, currently unused	
+	float blur_shade(vec2 co, float size) {
+		
+		float co_1D;	
+		(co.x < 0.0 || co.x > 1.0) ? co_1D = co.x : co_1D = co.y ;
+
+		float side_hi_switch = float(co_1D > 1.0);
+		float side_lo_switch = float(co_1D < 0.0);
+		
+		float smooth_min = 1.0 * side_hi_switch;
+		float smooth_max = smooth_min + ( 
+						( size * side_hi_switch) + 
+						(-size * side_lo_switch ) 
+						);	
+		
+		return smoothstep(smooth_min, smooth_max, co_1D);
+	}

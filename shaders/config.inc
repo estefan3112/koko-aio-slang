@@ -2,12 +2,13 @@
 #define MIN_LINES_INTERLACED 380
 
 	//Sort of dithering used in vignette, spot, backlight leds
-#define NOISEPOWER ((params.OutputSize.z)*3)
+#define NOISEPOWER 1/192.0
+//((params.OutputSize.z)*3)
 
-	//Bezel reflection area size in relation to the game frame
+	//Bezel border size in relation to the game frame
 	//Use the lowest possible value for best performance
 	//It is also used to compute wrap/repeated coordinates.
-#define BEZEL_REFLECTION_AREA_SIZE 0.175
+#define BEZEL_BORDER_SIZE 0.175
 
 	// 0.0-1.0: sensitivity to scene change (ambilike stuff), 0.0 changes more
 #define AMBI_SCENE_CHG_THRSHLD 0.07  
@@ -35,6 +36,10 @@
 	//Set this to the same value as used for the maximum
 	//of IN_GLOW_BIAS
 #define IN_GLOW_BIAS_MAX 1.0
+
+	//Try to keep blur sizes consistent across input resolutions
+#define NEW_SCALEMOD_X (params.OriginalSize.x/360.0 / 2.2)
+#define NEW_SCALEMOD_Y (params.OriginalSize.y/270.0 / 2.2)
 
 #define eps 1e-5
 #define pi 3.141592654
@@ -185,10 +190,13 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float SHIFT_B;
 	float OFFSET_STRENGTH;
 	
+	float DO_GLOBAL_SHZO;
 	float GLOBAL_ZOOM;
 	float GLOBAL_OFFX;
 	float GLOBAL_OFFY;
-	float GLOBAL_SHZO;
+
+	
+	float RF_NOISE_STRENGTH;
 	
 } global;
 
@@ -207,6 +215,8 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 // Apply an antialiasing filter via FXAA from Nvidia.
 #pragma parameter DO_FXAA "★ FXAA enable? ==>"	0.0 	0.0 1.0 1.0
 
+
+
 // NTSC color artifacting
 #pragma parameter DO_NTSC_ARTIFACTS "★ CVBS: NTSC color artifacts enable? ==>"	0.0 	0.0 1.0 1.0
 #pragma parameter NTSC_FILTER_WIDTH "        Filter width"			17.0	5.0 21.0 4.0
@@ -216,6 +226,9 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 //#pragma parameter NTSC_DOT_CRAWL    "        Dot Crawl"			1.0	0.0 1.0  1.0
 #pragma parameter NTSC_MIX          "        Strength"				0.5	0.0 3.0  0.05
 
+#pragma parameter label_rfnoise	 "★ RF Noise "							0.0  0.0  1.0     1.0
+#pragma parameter RF_NOISE_STRENGTH "        Strength"				0.0 	0.0 1.0 0.01
+
 // YIQ/YUV bandwidth limited chroma bleeding and NTSC color artifacts.
 #pragma parameter DO_SAT_BLEED "★ CVBS: Bandwidth limited chroma enable? ==>"	0.0 	0.0 1.0 1.0
 #pragma parameter SAT_BLEED_PAL           "        Use PAL colorspace, not NTSC"	0.0 	 0.0 1.0 1.0
@@ -224,21 +237,24 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter SAT_BLEED_SIZE_RIGHT    "        Size Right"				5.0 	 1.0 40.0  1.0
 #pragma parameter SAT_BLEED_FALLOFF  	  "        Falloff"				1.7 	 1.0 2.0 0.01
 
+
+
 //Offset RGB
 #pragma parameter DO_SHIFT_RGB       "★ RGB deconvergence enable? (bad with FXAA) ==>"	0.0	 0.0 1.0 1.0
-#pragma parameter OFFSET_STRENGTH "        Strength"			0.5 	 0.0 1.0 0.1
+#pragma parameter OFFSET_STRENGTH "        Strength"			0.3 	 0.0 1.0 0.05
 #pragma parameter SHIFT_R         "        Red offset"			-40.0 	-210.0 189.0 1
 #pragma parameter SHIFT_G         "        Green offset"		40.0 	-210.0 189.0 1
 #pragma parameter SHIFT_B         "        Blue offset"			3.0 	-210.0 189.0 1
 
 
+
 // Input Blur / light glowing
 #pragma parameter DO_IN_GLOW               "★ Glow/Blur enable? ==>"	 					0.0	0.0 1.0 1.0
 #pragma parameter IN_GLOW_POWER            "        Input signal strength"					0.45 	0.0 5.0 0.05
-#pragma parameter IN_GLOW_W                "        Sharpness, horizontal"					2.5	0.2 7.0 0.05
-#pragma parameter IN_GLOW_H                "        Sharpness, vertical"					2.5	0.2 7.0 0.05
+#pragma parameter IN_GLOW_W                "        Sharpness, horizontal"					2.5	0.35 7.0 0.05
+#pragma parameter IN_GLOW_H                "        Sharpness, vertical"					2.5	0.35 7.0 0.05
 #pragma parameter IN_GLOW_GAMMA            "        Gamma, the higher, the less the glow on dark colors"	1.0 	1.0 10.0 0.1
-#pragma parameter IN_GLOW_AMOUNT           "        Light spread amount"					0.6 	0.0 2.0 0.05
+#pragma parameter IN_GLOW_AMOUNT           "        Light spread amount"					0.6 	0.0 4.0 0.05
 #pragma parameter IN_GLOW_BIAS             "        Glow to blur bias"					    	1.0     0.0 1.0 0.05 
 
 
@@ -254,7 +270,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 #pragma parameter DARKLINES_STRENGTH     "        Darklines strength (0.0 to disable)"				0.65 	0.0 1.0   0.05
 #pragma parameter DARKLINES_VOFFSET      "           . Offset"							1.0 	0.0 1.0   1.0
-#pragma parameter DARKLINES_PERIOD       "           . Height"							4.0 	2.0 16.0  2.0
+#pragma parameter DARKLINES_PERIOD       "           . Height"							2.0 	2.0 16.0  2.0
 #pragma parameter DRKLN_OVERWHITE        "           . Affect bright colors"					1.0 	0.0 1.0   0.05
 
 
@@ -262,8 +278,8 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 // Halo
 #pragma parameter DO_HALO       "★ Halo enable? ==>" 						0.0	0.0 1.0 1.0
 #pragma parameter HALO_POWER    "        Strength"						0.9 	0.0  5.0 0.025
-#pragma parameter HALO_W        "        Sharpness, horizontal"					1.75	0.2  7.0 0.05
-#pragma parameter HALO_H        "        Sharpness, Vertical"					1.75	0.2  7.0 0.05
+#pragma parameter HALO_W        "        Sharpness, horizontal"					1.75	0.35  7.0 0.05
+#pragma parameter HALO_H        "        Sharpness, Vertical"					1.75	0.35  7.0 0.05
 #pragma parameter HALO_GAMMA    "        Gamma, the higher, the less the halo on dark colors"	2.0 	1.0  10.0 0.1
 #pragma parameter HALO_VS_SCAN  "        Light up scanlines too"				0.0	0.0  1.0  0.1
 
@@ -316,13 +332,9 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter BEZEL_INNER_ZOOM   "        Image zoom"		-0.18   -1.5 0.5 0.01
 #pragma parameter BEZEL_FRAME_ZOOM   "        Frame zoom"		0.0   -1.5 0.5 0.01
 #pragma parameter BEZEL_IMAGE_BORDER "        Image border"		1.01   1.0 1.2 0.01
-#pragma parameter BEZEL_REFL_ZOOM    "        Reflections zoom"		0.965   0.0 2.0 0.005
+#pragma parameter BEZEL_REFL_ZOOM    "        Reflections zoom"		0.955   0.0 2.0 0.005
 
-//Global Zoom/Offset
-#pragma parameter GLOBAL_SHZO	 "★ Global shift/zoom"				0.0   0.0  1.0 	  1.0
-#pragma parameter GLOBAL_OFFX	 "        X axis shift "			0.0  -1.0  1.0    0.0005
-#pragma parameter GLOBAL_OFFY	 "        Y axis shift "			0.0  -1.0  1.0    0.0005
-#pragma parameter GLOBAL_ZOOM	 "        Zoom"					1.0   0.0  3.0    0.0005
+
 
 //Background Image
 #pragma parameter DO_BG_IMAGE	 "★ Backgound image enable? ==>"			0.0  0.0  1.0     1.0
@@ -343,21 +355,6 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter AMBI_STEPS	 "        Slowness"							60.0 5.0  1000.0  5.0
 #pragma parameter AMBI_FALLOFF   "        Light Falloff"						0.7  0.1  3.0     0.01
 #pragma parameter AMBI_POWER     "        Led power"							1.5  1.0  7.0     0.05
-
-
-
-//Aspect Ratio
-#pragma parameter label_ar	 "★ Aspect Ratio "							0.0  0.0  1.0     1.0
-#pragma parameter ASPECT_X       "        Aspect Ratio Numerator (-x for a preset below)"   		0.0  -6.0 256. 1.0
-#pragma parameter ASPECT_Y       "        Aspect Ratio Denominator"	  				3.0   0.0 256. 1.0
-#pragma parameter label_aspect_presets "        Presets reference list:" 0.0 0.0 0.0 1.0
-#pragma parameter label_aspect_preset0 "          (0 =  MAME 1.33)" 0.0 0.0 0.0 1.0
-#pragma parameter label_aspect_preset1 "          (-1 = NTSC 1.5)" 0.0 0.0 0.0 1.0
-#pragma parameter label_aspect_preset2 "          (-2 = PAL 1.25)" 0.0 0.0 0.0 1.0
-#pragma parameter label_aspect_preset3 "          (-3 = Snes 8/7)" 0.0 0.0 0.0 1.0
-#pragma parameter label_aspect_preset4 "          (-4 = Megadrive 10/7)" 0.0 0.0 0.0 1.0
-#pragma parameter label_aspect_preset5 "          (-5 = Uncorrected)" 0.0 0.0 0.0 1.0
-#pragma parameter label_aspect_preset6 "          (-6 = MAME rotated/TATE 0.75)" 0.0 0.0 0.0 1.0
 
 
 
@@ -383,151 +380,34 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 
 
-// Alternative blanking.
+// Alternative blanking
 #pragma parameter DO_ALT_BLANK       "★ Alternate line blanking enable? ==>"			0.0 0.0 1.0 1.0
 #pragma parameter ALT_BLANK_STRENGTH "        Alternate black frame insertion strength" 	0.5 0.0 1.0 0.1
 #pragma parameter ALT_BLANK_PERIOD   "        Blank lines period" 				4.0 0.0 20.0 1.0
 
 
 
+//Global Zoom/Offset
+#pragma parameter DO_GLOBAL_SHZO	 "★ Global shift/zoom"			0.0   0.0  1.0 	  1.0
+#pragma parameter GLOBAL_OFFX	 "        X axis shift "			0.0  -1.0  1.0    0.0005
+#pragma parameter GLOBAL_OFFY	 "        Y axis shift "			0.0  -1.0  1.0    0.0005
+#pragma parameter GLOBAL_ZOOM	 "        Zoom"					2.0   0.0  3.0    0.0005
 
 
 
-#define DO_FXAA        	global.DO_FXAA
-
-#define DO_SAT_BLEED            global.DO_SAT_BLEED
-#define SAT_BLEED_SIZE_LEFT     global.SAT_BLEED_SIZE_LEFT
-#define SAT_BLEED_SIZE_RIGHT    global.SAT_BLEED_SIZE_RIGHT
-#define SAT_BLEED_FALLOFF       global.SAT_BLEED_FALLOFF
-#define SAT_BLEED_STRENGTH      global.SAT_BLEED_STRENGTH
-#define SAT_BLEED_PAL           global.SAT_BLEED_PAL
-
-#define DO_NTSC_ARTIFACTS global.DO_NTSC_ARTIFACTS
-#define NTSC_FILTER_WIDTH global.NTSC_FILTER_WIDTH
-#define NTSC_FILTER_SCF   global.NTSC_FILTER_SCF
-#define NTSC_FILTER_FC    global.NTSC_FILTER_FC
-#define NTSC_MIX          global.NTSC_MIX
-#define NTSC_PHASE_SHIFT  global.NTSC_PHASE_SHIFT
-//#define NTSC_DOT_CRAWL    global.NTSC_DOT_CRAWL
-
-#define DO_SCANLINES                  global.DO_SCANLINES
-#define SCANLINE_DARK                 params.SCANLINE_DARK
-#define SCANLINE_MIN                  global.SCANLINE_MIN
-#define SCANLINE_OVERWHITE            global.SCANLINE_OVERWHITE
-#define SCANLINE_FLICKERING           global.SCANLINE_FLICKERING
-#define SCANLINE_FLICKERING_POWER     global.SCANLINE_FLICKERING_POWER
-#define SCANLINE_DISABLE_ON_INTERLACE global.SCANLINE_DISABLE_ON_INTERLACE
-#define SCANLINE_COMPENSATION         global.SCANLINE_COMPENSATION
-#define SCANLINE_SM_TYPE              global.SCANLINE_SM_TYPE
-#define SCANLINE_SM_STRENGTH          global.SCANLINE_SM_STRENGTH
-#define SCANLINE_SM_VOFFSET           global.SCANLINE_SM_VOFFSET 
-
-#define DO_IN_GLOW               global.DO_IN_GLOW
-#define IN_GLOW_BIAS             global.IN_GLOW_BIAS
-#define IN_GLOW_AMOUNT           global.IN_GLOW_AMOUNT
-#define SCANLINES_BLEEDING       global.SCANLINES_BLEEDING
-#define IN_GLOW_W                global.IN_GLOW_W
-#define IN_GLOW_H                global.IN_GLOW_H
-#define IN_GLOW_POWER            global.IN_GLOW_POWER
-#define IN_GLOW_GAMMA            global.IN_GLOW_GAMMA
-
-#define DO_VMASK_AND_DARKLINES  global.DO_VMASK_AND_DARKLINES
-#define MASK_COMPENSATION	global.MASK_COMPENSATION
-#define RGB_MASK_STRENGTH       global.RGB_MASK_STRENGTH
-#define VMASK_OVERWHITE         params.VMASK_OVERWHITE
-#define VMASK_DARKLINE_SCALE    params.VMASK_DARKLINE_SCALE
-#define VMASK_GAP               params.VMASK_GAP
-#define VMASK_USE_GM            params.VMASK_USE_GM
-
-#define DARKLINES_STRENGTH   global.DARKLINES_STRENGTH
-#define DRKLN_OVERWHITE      params.DRKLN_OVERWHITE
-#define DARKLINES_VOFFSET    params.DARKLINES_VOFFSET
-#define DARKLINES_PERIOD     params.DARKLINES_PERIOD
-
-#define DO_HALO       global.DO_HALO
-#define HALO_W        params.HALO_W
-#define HALO_H        params.HALO_H
-#define HALO_POWER    params.HALO_POWER
-#define HALO_GAMMA    params.HALO_GAMMA
-#define HALO_VS_SCAN  params.HALO_VS_SCAN
-
-#define DO_BLOOM           params.DO_BLOOM
-#define BLOOM_MIX          global.BLOOM_MIX
-#define BLOOM_QUALITY      params.BLOOM_QUALITY
-#define BLOOM_SIZE         global.BLOOM_SIZE
-#define BLOOM_GAMMA        global.BLOOM_GAMMA
-#define BLOOM_POWER        global.BLOOM_POWER
-#define BLOOM_GAMMA_OUT    global.BLOOM_GAMMA_OUT
-#define BLOOM_OVER_WHITE   global.BLOOM_OVER_WHITE
-#define BLOOM_BYPASS       global.BLOOM_BYPASS
+//Aspect Ratio
+#pragma parameter label_ar	 "★ Aspect Ratio "							0.0  0.0  1.0     1.0
+#pragma parameter ASPECT_X       "        Aspect Ratio Numerator (-x for a preset below)"   		0.0  -6.0 256. 1.0
+#pragma parameter ASPECT_Y       "        Aspect Ratio Denominator"	  				3.0   0.0 256. 1.0
+#pragma parameter label_aspect_presets "        Presets reference list:" 0.0 0.0 0.0 1.0
+#pragma parameter label_aspect_preset0 "          (0 =  MAME 1.33)" 0.0 0.0 0.0 1.0
+#pragma parameter label_aspect_preset1 "          (-1 = NTSC 1.5)" 0.0 0.0 0.0 1.0
+#pragma parameter label_aspect_preset2 "          (-2 = PAL 1.25)" 0.0 0.0 0.0 1.0
+#pragma parameter label_aspect_preset3 "          (-3 = Snes 8/7)" 0.0 0.0 0.0 1.0
+#pragma parameter label_aspect_preset4 "          (-4 = Megadrive 10/7)" 0.0 0.0 0.0 1.0
+#pragma parameter label_aspect_preset5 "          (-5 = Uncorrected)" 0.0 0.0 0.0 1.0
+#pragma parameter label_aspect_preset6 "          (-6 = MAME rotated/TATE 0.75)" 0.0 0.0 0.0 1.0
 
 
-#define DO_CCORRECTION global.DO_CCORRECTION
-#define GAMMA_OUT      global.GAMMA_OUT
-#define SATURATION     global.SATURATION
-#define LUMINANCE       global.LUMINANCE
-#define CONTRAST       global.CONTRAST
-#define BRIGHTNESS     global.BRIGHTNESS
-#define TEMPERATURE    global.TEMPERATURE
 
-#define DO_ALT_BLANK       global.DO_ALT_BLANK
-#define ALT_BLANK_STRENGTH global.ALT_BLANK_STRENGTH
-#define ALT_BLANK_PERIOD global.ALT_BLANK_PERIOD
-
-
-#define DO_CURVATURE       global.DO_CURVATURE
-#define GEOM_WARP_X        global.GEOM_WARP_X
-#define GEOM_WARP_Y        global.GEOM_WARP_Y
-#define GEOM_CORNER_SIZE   global.GEOM_CORNER_SIZE
-#define GEOM_CORNER_SMOOTH global.GEOM_CORNER_SMOOTH
-
-
-#define DO_BEZEL           global.DO_BEZEL
-#define BEZEL_R            global.BEZEL_R
-#define BEZEL_G            global.BEZEL_G
-#define BEZEL_B            global.BEZEL_B
-#define BEZEL_CON          global.BEZEL_CON
-#define BEZEL_INNER_ZOOM   global.BEZEL_INNER_ZOOM
-#define BEZEL_FRAME_ZOOM   global.BEZEL_FRAME_ZOOM
-#define BEZEL_IMAGE_BORDER global.BEZEL_IMAGE_BORDER
-#define BEZEL_REFL_ZOOM    global.BEZEL_REFL_ZOOM
-#define BEZEL_USE_STRAIGHT global.BEZEL_USE_STRAIGHT
-
-#define DO_SPOT    global.DO_SPOT
-#define S_BYPASS   global.S_BYPASS
-#define S_POSITION global.S_POSITION
-#define S_SIZE     global.S_SIZE
-#define S_POWER    global.S_POWER
-
-#define DO_DYNZOOM      global.DO_DYNZOOM
-#define DYNZOOM_FACTOR  global.DYNZOOM_FACTOR
-
-#define DO_VIGNETTE  global.DO_VIGNETTE
-#define V_BYPASS     global.V_BYPASS
-#define V_SIZE       global.V_SIZE
-#define V_POWER      global.V_POWER
-
-#define DO_AMBILIGHT global.DO_AMBILIGHT
-#define AMBI_STEPS   global.AMBI_STEPS
-#define AMBI_FALLOFF global.AMBI_FALLOFF
-#define AMBI_POWER   global.AMBI_POWER
-#define ASPECT_X     global.ASPECT_X
-#define ASPECT_Y     global.ASPECT_Y
-
-#define DO_BG_IMAGE        global.DO_BG_IMAGE
-#define BG_IMAGE_OVER      global.BG_IMAGE_OVER
-#define BG_IMAGE_OFFY      global.BG_IMAGE_OFFY
-#define BG_IMAGE_OFFX      global.BG_IMAGE_OFFX
-#define BG_IMAGE_ZOOM      global.BG_IMAGE_ZOOM
-#define BG_IMAGE_ROTATION  global.BG_IMAGE_ROTATION
-
-#define DO_SHIFT_RGB      global.DO_SHIFT_RGB
-#define SHIFT_R           global.SHIFT_R
-#define SHIFT_G           global.SHIFT_G
-#define SHIFT_B           global.SHIFT_B
-#define OFFSET_STRENGTH   global.OFFSET_STRENGTH
-
-#define GLOBAL_ZOOM      global.GLOBAL_ZOOM
-#define GLOBAL_OFFX      global.GLOBAL_OFFX
-#define GLOBAL_OFFY      global.GLOBAL_OFFY
-#define GLOBAL_SHZO      global.GLOBAL_SHZO
+#include "config.globals.inc"

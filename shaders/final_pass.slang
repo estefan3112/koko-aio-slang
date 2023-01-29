@@ -17,9 +17,18 @@ layout(location = 1) out vec2 vOutputCoord;
 layout(location = 2) out vec2 spot_offset;
 layout(location = 3) out vec2 vFragCoord;
 layout(location = 4) out float vIsRotated;
-layout(location = 5) out vec2 vWarp_vexp;
-layout(location = 6) out vec2 vWarp_arg2;
 
+
+//Curvature:
+    layout(location = 5) out vec2 vWarp_vexp;
+    layout(location = 6) out vec2 vWarp_arg2;
+
+//Scanlines:
+    layout(location = 7) out float vIsInterlaced;
+    layout(location = 8) out float vFlickeringScanlines;
+    layout(location = 9) out float vScanlinePeriod;
+    layout(location = 10) out float vScanlinesAlternate;
+    //layout(location = 11) out float vScanlinePhase;
 
 #include "includes/functions.include.slang"
 
@@ -28,7 +37,7 @@ void main() {
     vIsRotated = float(is_rotated());
     vTexCoord = get_scaled_coords(TexCoord,global.FinalViewportSize, bool(vIsRotated) ) + vec2(0.00001);
     
-    if (GLOBAL_SHZO >0.5)
+    if (DO_GLOBAL_SHZO >0.5)
         vTexCoord = zoom(vTexCoord + vec2(-GLOBAL_OFFX, -GLOBAL_OFFY), GLOBAL_ZOOM );
     
     vOutputCoord = TexCoord;
@@ -42,6 +51,24 @@ void main() {
     //Precalc some Curvature/Warp values:
         vWarp_vexp = 1.0/ (1 + (vec2(GEOM_WARP_X, GEOM_WARP_Y) * 0.2)) ;
         vWarp_arg2 = 1.0 - pow(vec2(0.29289321881345247559915563789515), vWarp_vexp );
+        
+    //Help scanline code too:
+        if (DO_SCANLINES > 0.5) {
+            bool bIs_Interlaced = is_interlaced();
+            vIsInterlaced = float(bIs_Interlaced);
+            vFlickeringScanlines = float((DO_SCANLINES == 1.0) && scanline_have_to_flicker(bIs_Interlaced)) ;
+            
+            //Scanline period:
+            vScanlinePeriod = 1.0;
+            vScanlinesAlternate = 0.0;
+            if (bIs_Interlaced) {
+                if (params.FrameCount % 2 == 0.0) vScanlinesAlternate = 1.0;
+                if (params.OriginalSize.y > MIN_LINES_INTERLACED )  vScanlinePeriod = 0.5;
+            }
+            //vScanlinePhase = 0.0;
+            //vScanlinePhase = vScanlinePeriod * pi - pi/4.0; //<-- needed to match scanlines done in first_pass. //FIXME check what happens for highter res.
+        }
+
 }
 
 
@@ -53,7 +80,13 @@ layout(location = 3) in vec2 vFragCoord;
 layout(location = 4) in float vIsRotated;
 layout(location = 5) in vec2 vWarp_vexp;
 layout(location = 6) in vec2 vWarp_arg2;
+layout(location = 7) in float vIsInterlaced;
+layout(location = 8) in float vFlickeringScanlines;
+layout(location = 9) in float vScanlinePeriod;
+layout(location = 10) in float vScanlinesAlternate;
+//layout(location = 11) in float vScanlinePhase;
 
+    
 layout(location = 0) out vec4 FragColor;
 
 
@@ -65,13 +98,9 @@ layout(set = 0, binding = 6)  uniform sampler2D monitor_body_straight;
 layout(set = 0, binding = 7)  uniform sampler2D monitor_body_curved;
 layout(set = 0, binding = 8)  uniform sampler2D bg_under;
 layout(set = 0, binding = 9)  uniform sampler2D bg_over;
-layout(set = 0, binding = 10)  uniform sampler2D first_pass;
-layout(set = 0, binding = 11) uniform sampler2D shift_and_bleed_pass;
-
-//Ex main_pass layouts:
-    layout(set = 0, binding = 12) uniform sampler2D FXAA_pass;
-    layout(set = 0, binding = 13) uniform sampler2D in_glow_pass;
-    layout(set = 0, binding = 14) uniform sampler2D halo_pass;
+layout(set = 0, binding = 10) uniform sampler2D shift_and_bleed_pass;
+layout(set = 0, binding = 11) uniform sampler2D in_glow_pass;
+layout(set = 0, binding = 12) uniform sampler2D halo_pass;
 
 
 
@@ -146,17 +175,6 @@ vec3 pixel_vmask_gm(vec3 source, vec3 white_reference, float over_white) {
    return pixel_out;
 }
 
-
-
-/*bool drawit( float period, float off, vec2 coords){    
-    coords = vTexCoord; 
-    float first_pass_size_y = global.first_passSize.y * period;   
-    float current_line_int = floor(coords.y * first_pass_size_y) + off ;
-    float screenline_height = first_pass_size_y/params.OutputSize.y;//; params.OutputSize.y/first_pass_size_y;
-    return (coords.y * first_pass_size_y  > current_line_int) &&  
-           (coords.y * first_pass_size_y  < current_line_int+screenline_height) ; 
-}*/
-
 vec3 pixel_darklines(vec3 source,float darkline_every, float darkline_trans,
                      float do_offset, vec3 white_reference,float over_white, vec2 coords) {
     /* "darklines" are vertical gaps that can be used to emulate aperturegrille
@@ -200,32 +218,36 @@ vec3 pixel_darklines(vec3 source,float darkline_every, float darkline_trans,
 
 
 
-float scanline_shape(vec2 coords, bool do_flicker, bool is_interlaced, bool do_slotmask, float lum) {
+float scanline_shape(vec2 coords, bool do_slotmask, float lum) {
 /* Produces a B/W scanline shape to be multiplicated by the source
  * pixel later on to emulate scanline effect.
  * scanlines can be drawn on odd and even fields alternating on odd and
  * even frames to emulate that aspect of interlacing.
  */
 
+    float period = vScanlinePeriod;
+    bool is_interlaced = bool(vIsInterlaced);
+    bool alternate = bool(vScanlinesAlternate);
+    bool do_flicker = bool(vFlickeringScanlines);
+
     //...to scale scanline tickness:
         float lum_scaled = scale_to_range(lum,SCANLINE_MIN+eps,1.0);
 
-    bool alternate = false;
-    float period = 1.0;
-    if (do_flicker) {
-        if (params.FrameCount % 2 == 0.0) alternate = true;
-        if (params.OriginalSize.y > MIN_LINES_INTERLACED )  period = 0.5;
-    }
-
-    float angle_base = coords.y * pi * params.OriginalSize.y * period;
+    float angle_base = coords.y * pi * params.OriginalSize.y * period;// + vScanlinePhase;
 
     float lines = 1.0;
+    
     if (!( is_interlaced && SCANLINE_DISABLE_ON_INTERLACE == 1.0 )) {
-        if (alternate)
-            lines = -sin(angle_base + HALF_PI); //lines = abs(cos(angle))
+        
+        /*if (alternate)
+            lines = -sin(angle_base + HALF_PI); 
                 else
             lines = sin(angle_base);
-            lines = (lines*lines);
+        */
+        //Unbranched the previous if/then/else:
+        lines = (2*vScanlinesAlternate -1) * sin(angle_base + (vScanlinesAlternate * HALF_PI)) ;
+         
+        lines = (lines*lines);
     }
 
 
@@ -261,11 +283,10 @@ float scanline_shape(vec2 coords, bool do_flicker, bool is_interlaced, bool do_s
                 //Every "odd triple" column, it is also out of phase of HALF_PI
                 //Slotmask is multiplied by original scanline and thinner.
                 //Only strength parameter is taken into account.
-                if (odd_column)
+               if (odd_column)
                     phase = period * pi + QUARTER_PI * lum_scaled;
                         else
                     phase = period * HALF_PI + QUARTER_PI;
-
 
                 float angle_slotmask = angle_base + phase;
                 float slotmask = sin(angle_slotmask);
@@ -285,35 +306,22 @@ float scanline_shape(vec2 coords, bool do_flicker, bool is_interlaced, bool do_s
                     lines = slotmask;
                 }
             }
-
-
-
         }
     }
 
-
-
-
-
-    if (SCANLINE_DARK >= 0.0) {
-        lines = lines * (1.0 - SCANLINE_DARK) + SCANLINE_DARK;
-    } else {
-        float deepness = -SCANLINE_DARK;
-        lines = lines * ((1-SCANLINE_DARK) ) + SCANLINE_DARK ;
-    }
-
-
+ 
     //Thickness (min):
-        //lines = pow(lines,  (   1/(lum_scaled+eps)       )          );
-        lines = pow(lines,  (   1/(sqrt(lum_scaled)    )       )          );
+        //lines = pow(lines, 1/(lum_scaled+eps) );
+        lines = pow(lines, 1/(sqrt(lum_scaled) ) );
 
     //Thickness (max):
-        /*
-            lines = pow(abs(lines), 1/(10*lum_scaled*lum_scaled));
-            float clamp_start=0.2;
-            if (lum_scaled>clamp_start) lines = clamp(lines,(lum_scaled-clamp_start)/(1-clamp_start) ,1.0); //FIXME use step?
-        */
-
+        
+            //lines = pow(abs(lines), 1/(10*lum_scaled*lum_scaled));
+            //float clamp_start=0.2;
+            //if (lum_scaled>clamp_start) lines = clamp(lines,(lum_scaled-clamp_start)/(1-clamp_start) ,1.0); //FIXME use step?
+        
+        
+    lines = lines * ((1-SCANLINE_DARK) ) + SCANLINE_DARK ;
     return lines;
 }
 
@@ -323,22 +331,19 @@ vec4 pixel_main_pass(vec2 coords, bool bBorder_needed) {
     if (bBorder_needed)
         if (vTexCoord.x < 0.0 || vTexCoord.x > 1.0 || vTexCoord.y < 0.0 || vTexCoord.y > 1.0) return vec4(0.0);
 
-    bool isinterlaced = is_interlaced();
-    bool flickering_scanlines = (DO_SCANLINES == 1.0) && scanline_have_to_flicker(isinterlaced) ;
-
     vec3 pixel_in;
     vec3 pixel_glowed;
 
     //Get the first available pixel_in:
+    //vec2 off=vec2(0.0,+ global.first_passSize.w*0.5); needed
+    //To be added to the following coords and to halo coords (FIXME: WHY?)
+    //if drawing scanlines on first pass too)
     if  (DO_IN_GLOW == 1.0) {
             pixel_glowed = texture(in_glow_pass,coords).rgb;
-            pixel_in = pixel_glowed; }
-    else if ( DO_SHIFT_RGB + DO_SAT_BLEED > 0.0)
+            pixel_in = pixel_glowed; 
+    } else {
         pixel_in = texture(shift_and_bleed_pass,coords).rgb ;
-    else if (DO_FXAA > 0.0)
-        pixel_in = texture(FXAA_pass,coords).rgb ;
-    else
-        pixel_in = texture(first_pass,coords).rgb ;
+    }
 
 
     vec3 pixel_out = pixel_in;
@@ -401,27 +406,15 @@ vec4 pixel_main_pass(vec2 coords, bool bBorder_needed) {
             pixel_out = pow(pixel_out,vec3(mypow));
         }
         
-        //The following should be theoretically more correct, but it produces moiree:
-/*         vec3 vscanline_shape = scanline_shape(coords, flickering_scanlines, isinterlaced,  SCANLINE_SM_TYPE > 0.0 ) + 
-                               (pixel_bleed * SCANLINES_BLEEDING);
-         vscanline_shape = min(vscanline_shape,1.0);
-         pixel_out = vscanline_shape * pixel_out;
-*/        
-        
         //Obtain the scanlines screen by multiplying the scanline shape by the pixel color.
         //and emulate the bleeding of the color over the dark part of the scanlined screen.
-        //float scanline_shape = scanline_shape(coords, flickering_scanlines, isinterlaced,  SCANLINE_SM_TYPE > 0.0 );     
+        //float scanline_shape = scanline_shape(coords, SCANLINE_SM_TYPE > 0.0 );     
             float lum = max(max(pixel_out.r, pixel_out.g), pixel_out.b);
-            float scanline_shape = scanline_shape(coords, flickering_scanlines, isinterlaced,  SCANLINE_SM_TYPE > 0.0, lum );
-        
-        //Modify scanline weight?
-            //float l = max(max(pixel_bleed.r, pixel_bleed.g), pixel_bleed.b);
-            //scanline_shape = min(pow(scanline_shape, 1/l), 1.0);
+            float scanline_shape = scanline_shape(coords, SCANLINE_SM_TYPE > 0.0, lum );
+            
             
             pixel_out = pixel_out * ( scanline_shape + ( pixel_bleed * SCANLINES_BLEEDING * ( 1 - scanline_shape ) ));
-      
 
-        
     }
 
     
@@ -486,7 +479,7 @@ vec3 pixel_border(bool image_over) {
      */
     vec3 pixel_out = vec3(1.0);
     if (DO_AMBILIGHT == 1.0)
-        pixel_out =  texture(ambi_temporal_pass, vOutputCoord + global_noise ).rgb;
+        pixel_out =  texture(ambi_temporal_pass, vOutputCoord).rgb + vec3(global_noise);
     if (DO_BG_IMAGE == 1.0 && !image_over) {
         vec4 bg_image = pixel_background_image(false);
         pixel_out = mix(pixel_out,bg_image.rgb,bg_image.a);
@@ -579,7 +572,7 @@ vec3 compose_bezel_over(vec3 full_viewport) {
 
     //This is the reflection to be composed over the bezel);
     vec3 pixel_mirrored = texture(reflected_blurred_pass2,
-                          coords_for_mirror + random( min(global.FinalViewportSize.z,global.FinalViewportSize.w), vTexCoord ) ).rgb;
+                          coords_for_mirror + random( min(global.FinalViewportSize.z,global.FinalViewportSize.w)*1.5, vTexCoord ) ).rgb;
 
     //Take the reflection modifier from the texture blue component into account; it is/may be used to lower the reflection in the corners.
         //float reflection = (reflection_shade * 1.4 -  0.4)  * bezel.b ;
@@ -643,7 +636,7 @@ vec4 pixel_inner_frame(vec2 coords, bool bBorder_needed) {
             if (DO_VIGNETTE == 1.0) {
                 float vignette;
                 float dist = length(vec2((coords.x-0.5)*in_aspect,coords.y-0.5));
-                vignette = smoothstep(V_SIZE,0.0,dist)*V_POWER+global_noise;
+                vignette = smoothstep(V_SIZE,0.0,dist)*V_POWER;
                 if (V_BYPASS < 1.0) pixel_out = vignette * clamp(pixel_out,0.0,1.0);
                     else
                 pixel_out = vec3(vignette);
@@ -652,11 +645,12 @@ vec4 pixel_inner_frame(vec2 coords, bool bBorder_needed) {
             if (DO_SPOT == 1.0) {
             float spot;
             float dist = length(vec2((coords.x-0.5)*in_aspect,coords.y-0.5)+spot_offset);
-            spot = smoothstep(S_SIZE,0.0,dist)*S_POWER+global_noise;
+            spot = smoothstep(S_SIZE,0.0,dist)*S_POWER;
             if (S_BYPASS < 1.0) pixel_out = spot + pixel_out;
                 else
             pixel_out = vec3(spot);
             }
+            pixel_out += global_noise;
         }
 
     //smooth border (edge)
@@ -717,7 +711,7 @@ void main() {
     //Luminosity dependant zoom
     if (DO_DYNZOOM == 1.0) {
         float zoomin = 1.0 + (texture(avglum_pass, vec2(0.25,0.25)    ).a/ DYNZOOM_FACTOR);
-        coords = zoom(coords, zoomin);
+//         coords = zoom(coords, zoomin);
     }
     
     //Curvature
@@ -752,5 +746,10 @@ void main() {
         //if (vTexCoord.y < 0.5) pixel_out = texture(first_pass,vTexCoord);
         //pixel_out = texture(avglum_pass,vTexCoord);
       
+    //pixel_out = texture(reflected_blurred_pass2, vOutputCoord);
     FragColor = pixel_out;
+    
+    //FragColor = vec4(blur_shade(vTexCoord) );
+    
+    //FragColor = vec4(random(1.0, vTexCoord * params.FrameCount));
 }

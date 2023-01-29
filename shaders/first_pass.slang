@@ -152,6 +152,24 @@ void debug() {
 
 
 void main() {
+   
+      /*vec4 pixel_debug=texture(Source,vTexCoord);
+      float mymod = int(mod(vTexCoord.y * params.OutputSize.y , 2.0 )) ;
+      pixel_debug.a *= float(   (mymod != 0.0)   ) ;
+      FragColor = pixel_debug;
+      return;
+      */
+      /*if (mymod != 0.0)
+         pixel_debug.a *= 1.0;
+            else
+         pixel_debug *= 0.0;
+   
+   
+      FragColor = pixel_debug;
+      return;*/
+   
+   
+   
    //debug(); return;
 
    /* since flickering code needs
@@ -162,20 +180,25 @@ void main() {
       and outside id when we dont.
    */
 
-   if (DO_SCANLINES == 0.0) {
-      FragColor= vec4(pixel_no_flicker(vTexCoord),1.0);
-      return;
-   }
-
-   //Implicit else: DO_SCANLINES == 1.0
-   if (scanline_have_to_flicker(is_interlaced())) {
-      FragColor = vec4(pixel_flickering(),1.0);
-      return;
-   }
-
+   
+   
+   vec3 pixel_out;
+   if (DO_SCANLINES == 0.0)
+      pixel_out = pixel_no_flicker(vTexCoord);
+   
+   else if (scanline_have_to_flicker(is_interlaced()))
+      pixel_out = pixel_flickering();
+   else
    //Implicit else: DO_SCANLINES == 1.0 but no flickering needed.
-   FragColor = vec4(pixel_no_flicker(vTexCoord),1.0);
+   pixel_out = pixel_no_flicker(vTexCoord);
 
+   
+   if (RF_NOISE_STRENGTH > 0.0) {
+      vec3 noise = vec3(random(RF_NOISE_STRENGTH, vTexCoord * params.FrameCount));
+      pixel_out += noise;
+   }
+   
+   FragColor = vec4(pixel_out, 1.0);
 }
 
 
