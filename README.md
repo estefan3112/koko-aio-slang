@@ -1,17 +1,37 @@
-# Koko-aio Fork for Arcade Artwork (currently FinalBurn Neo)
+# Koko-aio Fork for Arcade Artwork (currently FinalBurn Neo and MAME 2003)
 
-Repository for creating dedicated FinalBurn Neo Arcade Artwork by using the Koko-aio Slang shader<br>
-Currently in pre-Alpha stage, testing out possibilities.<br>
+Repository for game-specific Arcade Artwork by using the Koko-aio slang shader Successfully tested under MacOS, Windows and iOS.<br>
+Currently the Koko-aio shader provides superior performance on all reasonably powered desktops, while providing enhanced shader functions, including bezel reflections.<br>
+<br>
+Main source of this artwork comes from John Merrit, who set a benchmark for realistic arcade artwork. I still very much like them, and they shine even more in combination with Koko-aio. My selection of the artwork is arbitrary, but I try to publish eye candys earlier :-).<br>
+<br>
+Requirements: a very recent RetroArch Nightly Build that supports Vulkan.<br>
 
-# How to install the additional Arcade Artwork
+# Easy install
 
-Step 1: As the RetroArch folder structure is not identical with this Github folder structure, please only take the entire folder /textures/arcade_textures and move it locally to /shaders/shaders_slang/bezel/koko-aio/textures.<br>
-Step 2: Move the content of the directory koko-aio/presets/arcade-koko-aio to /config/FinalBurn Neo/ -> by this, the game launches the right shader configuration automatically.<br>
+Step 1: Take the entire koko-aio folder as provided in the Release section and replace the one that comes with RetroArch: /shaders/shaders_slang/bezel/koko-aio<br>
+Step 2: Move all .slangp-presets to the respective core configuration directory, i.e. /config/FinalBurn Neo/ and/or /config/Mame 2003 (0.78)<br>
+<br>
+Note: The FinalBurn Neo.cfg/Mame 2003 (0.78).cfg files contain just one line that secures that the Aspect Ratio is set to 'Full'. Without this option, the background will not appear.<br>
 
-Note: The FinalBurn Neo.cfg contains one line that secures that the Aspect Ratio is set to 'Full'. Without this option, the background will not appear.
+# Dedicated install of only the additional Arcade Artwork
 
+Step 1: Take the entire folder /textures/arcade_textures and move it locally to /shaders/shaders_slang/bezel/koko-aio/textures.<br>
+Step 2: Move the content of the directory koko-aio/presets/arcade-koko-aio to /config/FinalBurn Neo/ and/or /config/Mame 2003 (0.78) -> by this, the game launches the right shader configuration automatically.<br>
+<br>
 Please also refer to the instructions contained in the ReadMe.md of these folders.<br>
 
+# Installation from the Github repository
+
+Please note that the Koko-aio github repository has a different folder structure than RetroArch. In order to make a GitHub clone work, you must move all .slang presets from the presets directory one level up. Then you must adjust the reference in the two BASE presets, so that these BASE presets refer to the same directory, and you are ready to go.
+<br>
+
+# Further clones
+
+Please see the Moon Patrol example - you can just duplicate the .slangp preset and rename it with the name of the clone. By this, you have an identical configuration for a clone. <br>
+
+
+FROM HERE THE ORIGINAL TEXT FROM FORKED REPOSITORY FOLLOWING:
 
 # Koko-aio
 
