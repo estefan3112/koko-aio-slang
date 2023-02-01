@@ -102,7 +102,9 @@ layout(set = 0, binding = 10) uniform sampler2D shift_and_bleed_pass;
 layout(set = 0, binding = 11) uniform sampler2D in_glow_pass;
 layout(set = 0, binding = 12) uniform sampler2D halo_pass;
 
-
+#ifdef STATIC_SUPPORT_BACKDROP
+    layout(set = 0, binding = 13) uniform sampler2D backdrop;
+#endif
 
 #define HALF_PI 1.5707963267949
 #define QUARTER_PI 0.785398163397448
@@ -231,7 +233,8 @@ float scanline_shape(vec2 coords, bool do_slotmask, float lum) {
     bool do_flicker = bool(vFlickeringScanlines);
 
     //...to scale scanline tickness:
-        float lum_scaled = scale_to_range(lum,SCANLINE_MIN+eps,1.0);
+        //float lum_scaled = scale_to_range(lum,SCANLINE_MIN+eps,1.0);
+        float lum_scaled = scale_to_range(lum, SCANLINE_MIN, SCANLINE_MAX);
 
     float angle_base = coords.y * pi * params.OriginalSize.y * period;// + vScanlinePhase;
 
@@ -309,19 +312,39 @@ float scanline_shape(vec2 coords, bool do_slotmask, float lum) {
         }
     }
 
- 
+
     //Thickness (min):
+
         //lines = pow(lines, 1/(lum_scaled+eps) );
-        lines = pow(lines, 1/(sqrt(lum_scaled) ) );
+        //lines = pow(lines, 1/(sqrt(lum_scaled) ) );
+//lines = pow(lines, 1/(lum_scaled*lum_scaled+eps) );
+
+//lines = pow( lines , 1/(lum_scaled ) ) ;
+
+//0.0125 is an anti-moiree measure.
+
+lines = pow(   max(lines, 0.05),   1/lum_scaled) ;
+
+//lines = pow(lines, 1/(sqrt(lum_scaled) ) );
+
+        //float extra_power_1 = 3.0;
+        //lines = pow(clamp(lines + 0.05, 0.0,1.0) , 1/(sqrt(lum_scaled*lum_scaled*extra_power_1) ) ) * extra_power_1/2.0;
+
+
+        //lines = pow(clamp(lines + 0.05, 0.0,1.0) , 1/(lum_scaled*lum_scaled));
 
     //Thickness (max):
-        
+
             //lines = pow(abs(lines), 1/(10*lum_scaled*lum_scaled));
             //float clamp_start=0.2;
             //if (lum_scaled>clamp_start) lines = clamp(lines,(lum_scaled-clamp_start)/(1-clamp_start) ,1.0); //FIXME use step?
-        
-        
-    lines = lines * ((1-SCANLINE_DARK) ) + SCANLINE_DARK ;
+//min-max, ma difficile da gestire con la slotmask.
+//    float extra_power = 2.0;
+//    float m = mod(angle_base + (vScanlinesAlternate * HALF_PI), pi);
+//    lines = exp( -pow((m-(HALF_PI)),2) / ( lum*extra_power ) ) * extra_power;
+
+
+    lines = lines * (1-SCANLINE_DARK ) + SCANLINE_DARK ;
     return lines;
 }
 
@@ -414,6 +437,7 @@ vec4 pixel_main_pass(vec2 coords, bool bBorder_needed) {
             
             
             pixel_out = pixel_out * ( scanline_shape + ( pixel_bleed * SCANLINES_BLEEDING * ( 1 - scanline_shape ) ));
+            //pixel_out *= scanline_shape;
 
     }
 
@@ -432,6 +456,21 @@ vec4 pixel_main_pass(vec2 coords, bool bBorder_needed) {
 
 float global_noise;
 
+vec3 pixel_backdrop_image() {
+    vec2 backdrop_offset=vec2(BACKDROP_OFFX,BACKDROP_OFFY);
+
+    vec2 backdrop_tex_size = textureSize(backdrop, 0);
+    float backdrop_lod = log2(backdrop_tex_size.y / global.FinalViewportSize.y);
+
+    vec2 backdrop_coords =  get_scaled_coords_aspect(
+                            vOutputCoord+backdrop_offset,
+                            global.FinalViewportSize,
+                            backdrop_tex_size.x/backdrop_tex_size.y,
+                            bool(vIsRotated));
+
+    backdrop_coords=zoom(backdrop_coords, BACKDROP_ZOOM);
+    return textureLod(backdrop, backdrop_coords, backdrop_lod).rgb;
+}
 
 
 vec4 pixel_background_image(bool over){
@@ -474,9 +513,13 @@ vec4 pixel_background_image(bool over){
 
 vec3 pixel_border(bool image_over) {
     /* Returns the surrounding of the tube/bezel:
-     * The led light alone
+     * The led lights alone
      * the led light "under" a background image (alpha driven)
+     * black if we need to overlay a game backdrop
      */
+    #ifdef STATIC_SUPPORT_BACKDROP
+        return vec3(0.0);
+    #endif
     vec3 pixel_out = vec3(1.0);
     if (DO_AMBILIGHT == 1.0)
         pixel_out =  texture(ambi_temporal_pass, vOutputCoord).rgb + vec3(global_noise);
@@ -728,6 +771,11 @@ void main() {
     //"Just" handle inner and outer frame here:
     vec4 pixel_out = main_wrap(coords);
 
+
+#ifdef STATIC_SUPPORT_BACKDROP
+    pixel_out += vec4(pixel_backdrop_image(), 1.0);
+#endif
+
     //Draw bezel
     if (DO_BEZEL == 1.0) {
         pixel_out = vec4(compose_bezel_over(pixel_out.rgb),1.0);
@@ -745,7 +793,18 @@ void main() {
         //split screen
         //if (vTexCoord.y < 0.5) pixel_out = texture(first_pass,vTexCoord);
         //pixel_out = texture(avglum_pass,vTexCoord);
-      
+          vec2 backdrop_offset=vec2(BACKDROP_OFFX,BACKDROP_OFFY);
+
+    vec2 backdrop_tex_size = textureSize(backdrop, 0);
+    float backdrop_lod = log2(backdrop_tex_size.y / global.FinalViewportSize.y);
+
+    vec2 backdrop_coords =  get_scaled_coords_aspect(
+                            vOutputCoord+backdrop_offset,
+                            global.FinalViewportSize,
+                            backdrop_tex_size.x/backdrop_tex_size.y,
+                            bool(vIsRotated));
+
+    backdrop_coords=zoom(backdrop_coords, BACKDROP_ZOOM);
     //pixel_out = texture(reflected_blurred_pass2, vOutputCoord);
     FragColor = pixel_out;
     

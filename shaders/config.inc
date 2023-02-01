@@ -41,9 +41,17 @@
 #define NEW_SCALEMOD_X (params.OriginalSize.x/360.0 / 2.2)
 #define NEW_SCALEMOD_Y (params.OriginalSize.y/270.0 / 2.2)
 
+
+	//Support for backdrops has to be enable by uncommenting:
+//#define STATIC_SUPPORT_BACKDROP 1.0
+#define BACKDROP_OFFX 0.0
+#define BACKDROP_OFFY 0.0
+#define BACKDROP_ZOOM 1.0
+
+
 #define eps 1e-5
-#define pi 3.141592654
-#define TAU  6.28318530717958647693
+#define pi  3.141592653589793
+#define TAU 6.28318530717958647693
 #define alpha_mark 0.1
 
 
@@ -129,6 +137,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float SCANLINE_SM_TYPE;
 	float SCANLINE_SM_VOFFSET;
 	float SCANLINE_MIN;
+	float SCANLINE_MAX;
 	float RGB_MASK_STRENGTH;
 	float DARKLINES_STRENGTH;
 	float GAMMA_OUT ; //1
@@ -286,7 +295,8 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 // Scanlines
 #pragma parameter DO_SCANLINES	         "★ Scanlines enable? ==>"						0.0 	0.0  1.0 1.0
-#pragma parameter SCANLINE_MIN          "        Minimum height"			  		1.0 	0.00 1.0 0.05
+#pragma parameter SCANLINE_MIN          "        Minimum height"			  		1.0 	0.05 1.0 0.05
+#pragma parameter SCANLINE_MAX          "        Maximum height"			  		1.0 	0.05 25.0 0.1
 
 #pragma parameter SCANLINE_DARK          "        Gap brightness"			  		0.0 	-0.5 1.0 0.05
 #pragma parameter SCANLINE_COMPENSATION  "        Compensate for brightness loss"				0.0	0.0 1.0 0.1
