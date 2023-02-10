@@ -71,7 +71,8 @@
 
 
 
-#define RF_NOISE_STRENGTH	global.RF_NOISE_STRENGTH
+#define DO_RF_NOISE		global.DO_RF_NOISE
+	#define RF_NOISE_STRENGTH	global.RF_NOISE_STRENGTH
 
 
 
@@ -141,6 +142,7 @@
 
 #define DO_BLOOM		params.DO_BLOOM
 	#define BLOOM_MIX		global.BLOOM_MIX
+	#define BLOOM_ADPT		global.BLOOM_ADPT
 	#define BLOOM_QUALITY		params.BLOOM_QUALITY
 	#define BLOOM_SIZE		global.BLOOM_SIZE
 	#define BLOOM_GAMMA		global.BLOOM_GAMMA

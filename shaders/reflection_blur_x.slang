@@ -29,7 +29,6 @@ layout(location = 1) in vec2 vWarp_vexp;
 layout(location = 2) in vec2 vWarp_arg2;
 
 layout(set = 0, binding = 1) uniform sampler2D first_pass;
-layout(set = 0, binding = 2) uniform sampler2D isrotated_passFeedback;
 
 #define SourceTexture first_pass
 #define SourceTextureSize global.first_passSize
@@ -61,7 +60,7 @@ vec3 blur(float Quality, float Directions, float Size, vec2 co,float lod) {
 }
 
 
-vec3 blur_unroll(float Size, vec2 co,float lod) {  
+vec3 blur_unroll(float Size, vec2 co,float lod) {
     vec3 color;
     vec2 d = SourceTextureSize.zw * Size;
     color =  textureLod( SourceTexture, co + d * vec2(-1.0,  1.0 )  ,lod).rgb ;
@@ -122,8 +121,8 @@ void main() {
       return;
    }
       
-   vec2 res = vec2(global.first_passSize.x, global.first_passSize.y);
-   vec2 dir = vec2(1.0,0.0);
+   //vec2 res = vec2(global.first_passSize.x, global.first_passSize.y);
+   //vec2 dir = vec2(1.0,0.0);
    ///Quality, Directions, Size, coords, lod
    
    vec3 pixel_blur;
@@ -131,7 +130,6 @@ void main() {
    pixel_blur = blur_unroll(1.5,coords_curved, 2.0);
    
    FragColor = vec4(apply_fuzzy_main_pass(pixel_blur),1.0);
-
 }
  
  

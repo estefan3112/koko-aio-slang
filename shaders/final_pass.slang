@@ -28,8 +28,13 @@ layout(location = 4) out float vIsRotated;
     layout(location = 8) out float vFlickeringScanlines;
     layout(location = 9) out float vScanlinePeriod;
     layout(location = 10) out float vScanlinesAlternate;
-    //layout(location = 11) out float vScanlinePhase;
 
+//Vignette, spot
+    layout(location = 11) out float vV_POWER;
+    layout(location = 12) out float vV_SIZE;
+    layout(location = 13) out float vS_POWER;
+    layout(location = 14) out float vS_SIZE;
+    
 #include "includes/functions.include.slang"
 
 void main() {
@@ -41,9 +46,6 @@ void main() {
         vTexCoord = zoom(vTexCoord + vec2(-GLOBAL_OFFX, -GLOBAL_OFFY), GLOBAL_ZOOM );
     
     vOutputCoord = TexCoord;
-
-    spot_offset = offsets_from_float(S_POSITION+420.0,40);
-    spot_offset = spot_offset / 10.0 + vec2(0.0,1.0);
 
     vFragCoord = vec2( floor(vOutputCoord.x * params.OutputSize.x),
                        floor(vOutputCoord.y * params.OutputSize.y));
@@ -69,6 +71,17 @@ void main() {
             //vScanlinePhase = vScanlinePeriod * pi - pi/4.0; //<-- needed to match scanlines done in first_pass. //FIXME check what happens for highter res.
         }
 
+    //Vignette
+        float V_SIZE_ADAPTED = V_SIZE*2.0;
+        vV_POWER = V_POWER/V_SIZE_ADAPTED;
+        vV_SIZE = (V_SIZE_ADAPTED-1.0);
+
+    //Spot:
+        spot_offset = offsets_from_float(S_POSITION+420.0,40);
+        spot_offset = spot_offset / 10.0 + vec2(0.0,1.0);
+        float S_SIZE_ADAPTED = S_SIZE*1.3;
+        vS_POWER = S_POWER/S_SIZE_ADAPTED;
+        vS_SIZE = (S_SIZE_ADAPTED-1.0);
 }
 
 
@@ -84,7 +97,10 @@ layout(location = 7) in float vIsInterlaced;
 layout(location = 8) in float vFlickeringScanlines;
 layout(location = 9) in float vScanlinePeriod;
 layout(location = 10) in float vScanlinesAlternate;
-//layout(location = 11) in float vScanlinePhase;
+layout(location = 11) in float vV_POWER;
+layout(location = 12) in float vV_SIZE;
+layout(location = 13) in float vS_POWER;
+layout(location = 14) in float vS_SIZE;
 
     
 layout(location = 0) out vec4 FragColor;
@@ -101,6 +117,7 @@ layout(set = 0, binding = 9)  uniform sampler2D bg_over;
 layout(set = 0, binding = 10) uniform sampler2D shift_and_bleed_pass;
 layout(set = 0, binding = 11) uniform sampler2D in_glow_pass;
 layout(set = 0, binding = 12) uniform sampler2D halo_pass;
+layout(set = 0, binding = 13) uniform sampler2D first_pass;
 
 #ifdef STATIC_SUPPORT_BACKDROP
     layout(set = 0, binding = 13) uniform sampler2D backdrop;
@@ -201,14 +218,7 @@ vec3 pixel_darklines(vec3 source,float darkline_every, float darkline_trans,
         bool odd_line_piu_densa = !(mod(vFragCoord.y, darkline_every/2) < VMASK_DARKLINE_SCALE && odd_line_meno_densa);
         bool odd_column = mod(vFragCoord.x + Darkline_part_w  , Darkline_part_w_x2) < Darkline_part_w;
         bool draw_mask = odd_line_piu_densa && !odd_column || odd_column && odd_line_meno_densa;
-        
-        /*
-        //quante scanline è alta la darkline
-        float darkline_height = 1/2.0;      
-        draw_mask = drawit(darkline_height,0.0, coords) && odd_column || drawit(darkline_height,0.5, coords) && !odd_column;
-        return source * float(!draw_mask);
-        */
-        
+
         return source * clamp(float(draw_mask),darkline_trans,1.0);
     }
     
@@ -323,21 +333,27 @@ float scanline_shape(vec2 coords, bool do_slotmask, float lum) {
 
 //0.0125 is an anti-moiree measure.
 
-lines = pow(   max(lines, 0.05),   1/lum_scaled) ;
+//lines = pow(   max(lines, 0.05),   1/lum_scaled) ;
 
 //lines = pow(lines, 1/(sqrt(lum_scaled) ) );
 
-        //float extra_power_1 = 3.0;
-        //lines = pow(clamp(lines + 0.05, 0.0,1.0) , 1/(sqrt(lum_scaled*lum_scaled*extra_power_1) ) ) * extra_power_1/2.0;
+//lines = pow(clamp(lines + 0.05, 0.0,1.0) , 1/sqrt(lum_scaled));
+//float extra_power_1 = 3.0;
+
+float extra_power_1 = max(SCANLINE_MAX/3.0, 1.0);
+lines = pow(clamp(lines, SCANLINE_DARK, 1.0) , 1/(sqrt(lum_scaled*lum_scaled*extra_power_1) ) );
+
+//lines = pow(clamp(lines + 0.05, 0.0,1.0) , 1/(sqrt(lum_scaled*lum_scaled*extra_power_1) ) ) * extra_power_1/2.0;
 
 
         //lines = pow(clamp(lines + 0.05, 0.0,1.0) , 1/(lum_scaled*lum_scaled));
 
     //Thickness (max):
 
-            //lines = pow(abs(lines), 1/(10*lum_scaled*lum_scaled));
-            //float clamp_start=0.2;
-            //if (lum_scaled>clamp_start) lines = clamp(lines,(lum_scaled-clamp_start)/(1-clamp_start) ,1.0); //FIXME use step?
+            /*lines = pow(abs(lines), 1/(10*lum_scaled*lum_scaled));
+            float clamp_start=0.5;
+            if (lum_scaled>clamp_start) lines = clamp(lines,(lum_scaled-clamp_start)/(1-clamp_start) ,1.0); //FIXME use step?*/
+
 //min-max, ma difficile da gestire con la slotmask.
 //    float extra_power = 2.0;
 //    float m = mod(angle_base + (vScanlinesAlternate * HALF_PI), pi);
@@ -351,8 +367,9 @@ lines = pow(   max(lines, 0.05),   1/lum_scaled) ;
 vec4 pixel_main_pass(vec2 coords, bool bBorder_needed) {
     //Exit if we don't need a border (ambient light/background picture)
     //And we are outside the the border (unsure if this double check is good for performance) //FIXME
-    if (bBorder_needed)
-        if (vTexCoord.x < 0.0 || vTexCoord.x > 1.0 || vTexCoord.y < 0.0 || vTexCoord.y > 1.0) return vec4(0.0);
+    if (bBorder_needed &&
+       (vTexCoord.x < 0.0 || vTexCoord.x > 1.0 || vTexCoord.y < 0.0 || vTexCoord.y > 1.0))
+       return vec4(0.0);
 
     vec3 pixel_in;
     vec3 pixel_glowed;
@@ -396,7 +413,6 @@ vec4 pixel_main_pass(vec2 coords, bool bBorder_needed) {
 
     }
 
-    
     float lum = clamp(max(max(pixel_out.r,pixel_out.g),pixel_out.b), 0.0,1.0);
     
     //Halo
@@ -404,7 +420,6 @@ vec4 pixel_main_pass(vec2 coords, bool bBorder_needed) {
     if (DO_HALO == 1.0 ) {
         pixel_haloed = texture(halo_pass,coords).rgb;
         pixel_out += pixel_haloed * (1 - HALO_VS_SCAN);
-        //pixel_out += (pixel_haloed * (lum));
     }
 
     /* Non flickering scanlines, Don't do them if
@@ -553,13 +568,9 @@ vec3 bezel_color(float lum)  {
     //Colorize bezel frame
     vec3 col = vec3(BEZEL_R,BEZEL_G,BEZEL_B) + lum;
     float con_max =  0.5 * BEZEL_CON + 0.5;
-
-    col.r = scale_to_range(col.r, -con_max+1, con_max); //contrast
-    col.g = scale_to_range(col.g, -con_max+1, con_max); //contrast
-    col.b = scale_to_range(col.b, -con_max+1, con_max); //contrast
+    col = scale_to_range_vec3(col, -con_max+1, con_max);
     return clamp(col,0.0,1.0);
 }
-
 
 
 vec3 compose_bezel_over(vec3 full_viewport) {
@@ -665,7 +676,14 @@ vec4 pixel_inner_frame(vec2 coords, bool bBorder_needed) {
                     over_white_correction =1- b_brightness;
             }
 
-            pixel_out = pixel_out + (bloomed * BLOOM_MIX * over_white_correction);
+            float smoothed_avglum = texture(avglum_pass, vec2(0.75)).a * BLOOM_ADPT;
+            float bloom_mix_adapted = max(0.0, BLOOM_MIX - smoothed_avglum);
+            
+            float shoulder = 0.33; //0.15; //= 0.25;
+            
+            bloom_mix_adapted = BLOOM_MIX * ( 1- pow(smoothed_avglum, shoulder-smoothed_avglum*shoulder     ));
+
+            pixel_out = pixel_out + (bloomed * bloom_mix_adapted  )* over_white_correction ;
         }
     }
 
@@ -679,21 +697,25 @@ vec4 pixel_inner_frame(vec2 coords, bool bBorder_needed) {
             float in_aspect = get_in_aspect();
 
             if (DO_VIGNETTE == 1.0) {
-                float vignette;
-                float dist = length(vec2((coords.x-0.5)*in_aspect,coords.y-0.5));
-                vignette = smoothstep(V_SIZE,0.0,dist)*V_POWER;
+                //float vignette;
+                //float dist = length(vec2((coords.x-0.5)*in_aspect,coords.y-0.5));
+                //vignette = smoothstep(V_SIZE,0.0,dist)*V_POWER;                
+                
+                float vignette = vV_POWER * (vV_SIZE + 16.0*coords.x*coords.y*(1.0-coords.x)*(1.0-coords.y));
                 if (V_BYPASS < 1.0) pixel_out = vignette * clamp(pixel_out,0.0,1.0);
                     else
                 pixel_out = vec3(vignette);
             }
 
             if (DO_SPOT == 1.0) {
-            float spot;
-            float dist = length(vec2((coords.x-0.5)*in_aspect,coords.y-0.5)+spot_offset);
-            spot = smoothstep(S_SIZE,0.0,dist)*S_POWER;
-            if (S_BYPASS < 1.0) pixel_out = spot + pixel_out;
-                else
-            pixel_out = vec3(spot);
+                //float spot;
+                //float dist = length(vec2((coords.x-0.5)*in_aspect,coords.y-0.5)+spot_offset);
+                //spot = smoothstep(S_SIZE,0.0,dist)*S_POWER;
+                vec2 scoords = clamp(coords + spot_offset, 0.0,1.0);
+                float spot = vS_POWER * (vS_SIZE + 16.0*scoords.x*scoords.y*(1.0-scoords.x)*(1.0-scoords.y));
+                if (S_BYPASS < 1.0) pixel_out = max(spot,0.0) + pixel_out;
+                    else
+                pixel_out = vec3(spot);
             }
             pixel_out += global_noise;
         }
@@ -755,8 +777,8 @@ void main() {
     vec2 coords = vTexCoord;
     //Luminosity dependant zoom
     if (DO_DYNZOOM == 1.0) {
-        float zoomin = 1.0 + (texture(avglum_pass, vec2(0.25,0.25)    ).a/ DYNZOOM_FACTOR);
-//         coords = zoom(coords, zoomin);
+        float zoomin = 1.0 + (texture(avglum_pass, vec2(0.75,0.75)    ).a/ DYNZOOM_FACTOR);
+        coords = zoom(coords, zoomin);
     }
     
     //Curvature
@@ -795,7 +817,7 @@ void main() {
         //split screen
         //if (vTexCoord.y < 0.5) pixel_out = texture(first_pass,vTexCoord);
         //pixel_out = texture(avglum_pass,vTexCoord);
-    //pixel_out = texture(reflected_blurred_pass2, vOutputCoord);
+    //pixel_out = texture(halo_pass, vOutputCoord);
     FragColor = pixel_out;
     
     //FragColor = vec4(blur_shade(vTexCoord) );

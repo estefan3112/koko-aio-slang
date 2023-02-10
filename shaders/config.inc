@@ -22,7 +22,8 @@
 	// when changing scene. (range 0..1)
 	// It is wise to correlate it with avglum_divider
 	// try between (1/avglum_divider) and (1/avglum_divider)/3
-#define AMBI_FAST_STEP 0.125 
+//#define AMBI_FAST_STEP 0.125 
+#define AMBI_FAST_STEP 0.25
 
 	//Setting the glow/halo sharpness parameter to this
 	//will skip the blurring phase and lowers the gpu use
@@ -38,6 +39,9 @@
 #define IN_GLOW_BIAS_MAX 1.0
 
 	//Try to keep blur sizes consistent across input resolutions
+#define SCALEMOD_X 360
+#define SCALEMOD_Y 270
+
 #define NEW_SCALEMOD_X (params.OriginalSize.x/360.0 / 2.2)
 #define NEW_SCALEMOD_Y (params.OriginalSize.y/270.0 / 2.2)
 
@@ -107,6 +111,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float IN_GLOW_POWER;
 	float IN_GLOW_GAMMA;
 	float BLOOM_MIX;
+	float BLOOM_ADPT;
  	float BLOOM_SIZE;
 	float BLOOM_GAMMA;
 	float BLOOM_BYPASS;
@@ -192,7 +197,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float BG_IMAGE_OFFX;
 	float BG_IMAGE_ZOOM;
 	float BG_IMAGE_ROTATION;
-	
+
 	float DO_SHIFT_RGB;
 	float SHIFT_R;
 	float SHIFT_G;
@@ -204,7 +209,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float GLOBAL_OFFX;
 	float GLOBAL_OFFY;
 
-	
+	float DO_RF_NOISE;
 	float RF_NOISE_STRENGTH;
 	
 } global;
@@ -235,8 +240,8 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 //#pragma parameter NTSC_DOT_CRAWL    "        Dot Crawl"			1.0	0.0 1.0  1.0
 #pragma parameter NTSC_MIX          "        Strength"				0.5	0.0 3.0  0.05
 
-#pragma parameter label_rfnoise	 "★ RF Noise "							0.0  0.0  1.0     1.0
-#pragma parameter RF_NOISE_STRENGTH "        Strength"				0.0 	0.0 1.0 0.01
+#pragma parameter DO_RF_NOISE	 "★ RF Noise enable? ==>"			0.0 	0.0  1.0     1.0
+#pragma parameter RF_NOISE_STRENGTH "        Strength"				0.05	0.0 1.0 0.01
 
 // YIQ/YUV bandwidth limited chroma bleeding and NTSC color artifacts.
 #pragma parameter DO_SAT_BLEED "★ CVBS: Bandwidth limited chroma enable? ==>"	0.0 	0.0 1.0 1.0
@@ -290,7 +295,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter HALO_W        "        Sharpness, horizontal"					1.75	0.35  7.0 0.05
 #pragma parameter HALO_H        "        Sharpness, Vertical"					1.75	0.35  7.0 0.05
 #pragma parameter HALO_GAMMA    "        Gamma, the higher, the less the halo on dark colors"	2.0 	1.0  10.0 0.1
-#pragma parameter HALO_VS_SCAN  "        Light up scanlines too"				0.0	0.0  1.0  0.1
+#pragma parameter HALO_VS_SCAN  "        Light up scanlines gaps too"				0.0	0.0  1.0  0.1
 
 
 // Scanlines
@@ -313,13 +318,14 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 // Bloom
 #pragma parameter DO_BLOOM           "★ Bloom enable? ==>" 				0.0  0.0  1.0  1.0
 #pragma parameter BLOOM_MIX          "        Final mix, (0.0=off)"			0.2 0.0 1.0  0.01
+#pragma parameter BLOOM_ADPT         "        Less on bright scenes"	0.0	0.0	10.0	 0.1
 #pragma parameter BLOOM_SIZE         "        Radius"					2.0  0.25 30.0 0.25
 #pragma parameter BLOOM_QUALITY      "        Quality: more is better but slower"	1.0  1.0 32.0 1.0
 #pragma parameter BLOOM_GAMMA        "        Input Gamma"				10.0  1.0 10.0 0.1
-#pragma parameter BLOOM_POWER        "        Power multiplier"				10.0  1.0 100.0 0.5
+#pragma parameter BLOOM_POWER        "        Power multiplier"			1.25  1.0 20.0 0.05
 #pragma parameter BLOOM_GAMMA_OUT    "        Output Gamma"				10.0  0.1 10.0 0.1
 #pragma parameter BLOOM_OVER_WHITE   "        Strength on bright areas (0 = aura)"	0.5  0.0 1.0  0.05
-#pragma parameter BLOOM_BYPASS       "        Bypass"					0.0  0.0 1.0  1.0
+#pragma parameter BLOOM_BYPASS       "        Bypass/Solo"				0.0  0.0 1.0  1.0
 
 
 
@@ -378,15 +384,15 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 //Vignette and spot
 #pragma parameter DO_VIGNETTE	"★ Vignette enable? ==>"	0.0  0.0  1.0  1.0
-#pragma parameter V_BYPASS	"        bypass "	        0.0  0.0  1.0  1.0
-#pragma parameter V_SIZE	"        size"			1.7  0.0  3.0  0.05
-#pragma parameter V_POWER	"        power"			1.1  0.05 2.0  0.05
+#pragma parameter V_BYPASS	"        Bypass/Solo"	        0.0  0.0  1.0  1.0
+#pragma parameter V_SIZE	"        Size"			1.7  0.0  5.0  0.05
+#pragma parameter V_POWER	"        Power"			1.1  0.05 2.0  0.05
 
 #pragma parameter DO_SPOT	"★ Spot enable? ==>"		0.0   0.0   1.0 1.0
-#pragma parameter S_BYPASS	"        bypass"	        0.0   0.0   1.0 1.0
+#pragma parameter S_BYPASS	"        Bypass/Solo"	        0.0   0.0   1.0 1.0
 #pragma parameter S_POSITION 	"        Position"		0.0   -420.0 378.0 1
-#pragma parameter S_SIZE	"        size"			0.4   0.0  1.0 0.01
-#pragma parameter S_POWER	"        power" 		0.1  0.05  2.0 0.05
+#pragma parameter S_SIZE	"        Size"			0.4   0.0  1.0 0.01
+#pragma parameter S_POWER	"        Power" 		0.05  0.01  2.0 0.01
 
 
 
@@ -402,7 +408,6 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter GLOBAL_OFFX	 "        X axis shift "			0.0  -1.0  1.0    0.0005
 #pragma parameter GLOBAL_OFFY	 "        Y axis shift "			0.0  -1.0  1.0    0.0005
 #pragma parameter GLOBAL_ZOOM	 "        Zoom"					2.0   0.0  3.0    0.0005
-
 
 
 //Aspect Ratio

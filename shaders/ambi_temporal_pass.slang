@@ -30,7 +30,7 @@ void main() {
     fstep = (border_max - border_min)  / (leds_per_strip-1);
     
     //Calc a lod for a texture sized led_strip x led_strip
-        lod = log2(params.SourceSize.y / leds_per_strip);
+        lod = log2(global.first_passSize.y / leds_per_strip);
     
     //Precalc some Curvature/Warp values:
         vWarp_vexp = 1.0/ (1 + (vec2(GEOM_WARP_X, GEOM_WARP_Y) * 0.2)) ;
@@ -48,19 +48,25 @@ layout(location = 6) in vec2 vWarp_arg2;
 
 layout(location = 0) out vec4 FragColor;
 
-layout(set = 0, binding = 2) uniform sampler2D Source;
-layout(set = 0, binding = 3) uniform sampler2D isrotated_passFeedback;
-layout(set = 0, binding = 4) uniform sampler2D PastSampler;
-layout(set = 0, binding = 5) uniform sampler2D avglum_pass;
-layout(set = 0, binding = 6) uniform sampler2D avglum_passFeedback;
+layout(set = 0, binding = 1) uniform sampler2D PastSampler;
+layout(set = 0, binding = 2) uniform sampler2D avglum_pass;
+layout(set = 0, binding = 3) uniform sampler2D avglum_passFeedback;
+layout(set = 0, binding = 4) uniform sampler2D first_pass;
+
 
 #include "includes/functions.include.slang"
+
+vec3 ambi_push_pass(vec2 coords, float f_lod) {
+   vec3 pixel_out = textureLod(first_pass, coords, f_lod).rgb;
+   pixel_out = apply_fuzzy_main_pass(pixel_out);
+   pixel_out = pixel_push_luminance(pixel_out, AMBI_POWER-1);
+   return pixel_out;
+}
 
 vec3 circle_smooth(vec2 coords, vec2 middle, float f_radius, float FALLOFF, float f_lod) {
     float fdistance=distance(middle, vec2(coords.x, coords.y));
     float circle = (1-smoothstep(f_radius-FALLOFF, f_radius+FALLOFF, fdistance));
-    vec3 circle_color = textureLod(Source, middle, f_lod).rgb * circle;
-    //return pow(circle_color, vec3(2.0));
+    vec3 circle_color = ambi_push_pass(middle, f_lod) * circle;
     return circle_color;
 }
 
@@ -68,11 +74,9 @@ vec3 circle_smooth(vec2 coords, vec2 middle, float f_radius, float FALLOFF, floa
 #define tol_end   0.94 //1-tol_start
 
 vec3 ambi_pre_pass() {
-
-    bool is_rotated = texture(isrotated_passFeedback, vec2(0.5, 0.5)).r > 0.5;
-    
+   
     //Scale to the original aspect
-    vec2 coords = get_scaled_coords(vTexCoord, global.FinalViewportSize, is_rotated);
+    vec2 coords = get_scaled_coords(vTexCoord, global.FinalViewportSize, is_rotated());
     if (DO_GLOBAL_SHZO >0.5)
         coords = zoom(coords + vec2(-GLOBAL_OFFX, -GLOBAL_OFFY), GLOBAL_ZOOM );
     
@@ -126,17 +130,19 @@ if (coords.x > tol_start && coords.x < tol_end && coords.y > tol_start && coords
 float ambi_step(float start, float end, float mystep) {
     float diff = start-end;
     if (abs(diff) < mystep) return end;
+    //Does not worth to try to unbranch:
     if (start >= end)
         return start - mystep;
             else
         return start + mystep;
+
 }
 
 vec3 ambi_step_rgb(vec3 s,vec3 d, vec3 mystep){
     //step fade (f) rom s to d
-    return vec3 ( ambi_step(s.r,d.r,mystep.r),
-                  ambi_step(s.g,d.g,mystep.g),
-                  ambi_step(s.b,d.b,mystep.b)
+    return vec3 ( ambi_step(s.r, d.r, mystep.r),
+                  ambi_step(s.g, d.g, mystep.g),
+                  ambi_step(s.b, d.b, mystep.b)
                 );
 }
 
@@ -162,15 +168,24 @@ vec4 pixel_ambilight() {
     if (scene_change_remaining > 0.0) {
         mystep = vec3(max(1.0/MAX_STEPS, AMBI_FAST_STEP)); // <- Never slow down fades due to fast step when changing scene
         scene_change_remaining -=  AMBI_FAST_STEP;
-            } else {
+    } else {
         mystep = abs((past_pixel - present_pixel) / MAX_STEPS); //OK
     }
     
     return vec4(ambi_step_rgb(past_pixel, present_pixel, mystep), scene_change_remaining);
 }
 
+//3.0 makes scene detection not working.
+#define FRAME_DIVIDER 2.0
 
-void main() {
+void main() {    
     if (DO_AMBILIGHT != 1.0) return; 
+    
+    if ( mod(params.FrameCount,FRAME_DIVIDER) != 0.0) {
+        FragColor = texture(PastSampler, vTexCoord);
+        return;
+    }
+    
+    
     FragColor = pixel_ambilight();
 }
