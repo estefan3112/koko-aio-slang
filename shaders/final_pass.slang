@@ -18,23 +18,29 @@ layout(location = 2) out vec2 spot_offset;
 layout(location = 3) out vec2 vFragCoord;
 layout(location = 4) out float vIsRotated;
 
-
 //Curvature:
-    layout(location = 5) out vec2 vWarp_vexp;
-    layout(location = 6) out vec2 vWarp_arg2;
+    #define vWarp_vexp vWarp_vexp_arg2.xy
+    #define vWarp_arg2 vWarp_vexp_arg2.zw
+    layout(location = 5) out vec4 vWarp_vexp_arg2;
 
 //Scanlines:
-    layout(location = 7) out float vIsInterlaced;
-    layout(location = 8) out float vFlickeringScanlines;
-    layout(location = 9) out float vScanlinePeriod;
-    layout(location = 10) out float vScanlinesAlternate;
+    layout(location = 6) out float vIsInterlaced;
+    layout(location = 7) out float vFlickeringScanlines;
+    layout(location = 8) out float vScanlinePeriod;
+    layout(location = 9) out float vScanlinesAlternate;
 
 //Vignette, spot
-    layout(location = 11) out float vV_POWER;
-    layout(location = 12) out float vV_SIZE;
-    layout(location = 13) out float vS_POWER;
-    layout(location = 14) out float vS_SIZE;
+    #define vV_POWER vV_POWER_SIZE.x
+    #define vV_SIZE  vV_POWER_SIZE.y
+    #define vS_POWER vS_POWER_SIZE.x
+    #define vS_SIZE  vS_POWER_SIZE.y
+    layout(location = 10) out vec2 vV_POWER_SIZE;
+    layout(location = 11) out vec2 vS_POWER_SIZE;
     
+//Vertical mask helpers
+    layout(location = 12) out float vVMASK_USE_GM;
+    
+
 #include "includes/functions.include.slang"
 
 void main() {
@@ -52,6 +58,8 @@ void main() {
 
     //Precalc some Curvature/Warp values:
         vWarp_vexp = 1.0/ (1 + (vec2(GEOM_WARP_X, GEOM_WARP_Y) * 0.2)) ;
+        
+        
         vWarp_arg2 = 1.0 - pow(vec2(0.29289321881345247559915563789515), vWarp_vexp );
         
     //Help scanline code too:
@@ -82,6 +90,11 @@ void main() {
         float S_SIZE_ADAPTED = S_SIZE*1.3;
         vS_POWER = S_POWER/S_SIZE_ADAPTED;
         vS_SIZE = (S_SIZE_ADAPTED-1.0);
+        
+    //vmask
+        //Disable Green/Magenta trick on rotated content.
+        vVMASK_USE_GM = VMASK_USE_GM * (1-vIsRotated) + SHIFT_R;
+        
 }
 
 
@@ -91,21 +104,27 @@ layout(location = 1) in vec2 vOutputCoord;
 layout(location = 2) in vec2 spot_offset;
 layout(location = 3) in vec2 vFragCoord;
 layout(location = 4) in float vIsRotated;
-layout(location = 5) in vec2 vWarp_vexp;
-layout(location = 6) in vec2 vWarp_arg2;
-layout(location = 7) in float vIsInterlaced;
-layout(location = 8) in float vFlickeringScanlines;
-layout(location = 9) in float vScanlinePeriod;
-layout(location = 10) in float vScanlinesAlternate;
-layout(location = 11) in float vV_POWER;
-layout(location = 12) in float vV_SIZE;
-layout(location = 13) in float vS_POWER;
-layout(location = 14) in float vS_SIZE;
+#define vWarp_vexp vWarp_vexp_arg2.xy
+#define vWarp_arg2 vWarp_vexp_arg2.zw
+layout(location = 5) in vec4 vWarp_vexp_arg2;  
+layout(location = 6) in float vIsInterlaced;
+layout(location = 7) in float vFlickeringScanlines;
+layout(location = 8) in float vScanlinePeriod;
+layout(location = 9) in float vScanlinesAlternate;
+#define vV_POWER vV_POWER_SIZE.x
+#define vV_SIZE  vV_POWER_SIZE.y
+#define vS_POWER vS_POWER_SIZE.x
+#define vS_SIZE  vS_POWER_SIZE.y
+layout(location = 10) in vec2 vV_POWER_SIZE;
+layout(location = 11) in vec2 vS_POWER_SIZE;
+layout(location = 12) in float vVMASK_USE_GM;
 
-    
 layout(location = 0) out vec4 FragColor;
 
 
+#ifdef STATIC_SUPPORT_BACKDROP
+    layout(set = 0, binding = 1) uniform sampler2D backdrop;
+#endif
 layout(set = 0, binding = 2)  uniform sampler2D bloom_pass_final;
 layout(set = 0, binding = 3)  uniform sampler2D reflected_blurred_pass2;
 layout(set = 0, binding = 4)  uniform sampler2D ambi_temporal_pass;
@@ -117,11 +136,7 @@ layout(set = 0, binding = 9)  uniform sampler2D bg_over;
 layout(set = 0, binding = 10) uniform sampler2D shift_and_bleed_pass;
 layout(set = 0, binding = 11) uniform sampler2D in_glow_pass;
 layout(set = 0, binding = 12) uniform sampler2D halo_pass;
-layout(set = 0, binding = 13) uniform sampler2D first_pass;
 
-#ifdef STATIC_SUPPORT_BACKDROP
-    layout(set = 0, binding = 13) uniform sampler2D backdrop;
-#endif
 
 #define HALF_PI 1.5707963267949
 #define QUARTER_PI 0.785398163397448
@@ -200,7 +215,7 @@ vec3 pixel_darklines(vec3 source,float darkline_every, float darkline_trans,
     * or slotmasks
     */
     
-    float Darkline_part_w = (3.0 - VMASK_USE_GM + VMASK_GAP) * VMASK_DARKLINE_SCALE;
+    float Darkline_part_w = (3.0 - vVMASK_USE_GM + VMASK_GAP) * VMASK_DARKLINE_SCALE;
     float Darkline_part_w_x2 = Darkline_part_w*2;
 
     darkline_every *= VMASK_DARKLINE_SCALE;
@@ -271,7 +286,7 @@ float scanline_shape(vec2 coords, bool do_slotmask, float lum) {
             lines = lines * pixel_darklines(vec3(1.0),DARKLINES_PERIOD,1-SCANLINE_SM_STRENGTH,1.0,vec3(0.0),1.0, coords).r;
 
         } else {
-            float Darkline_part_w = (3.0 - VMASK_USE_GM + VMASK_GAP) * VMASK_DARKLINE_SCALE;
+            float Darkline_part_w = (3.0 - vVMASK_USE_GM + VMASK_GAP) * VMASK_DARKLINE_SCALE;
             float Darkline_part_w_x2 = Darkline_part_w*2;
             bool odd_column = mod(vFragCoord.x + Darkline_part_w  , Darkline_part_w_x2) < Darkline_part_w;
 
@@ -397,7 +412,7 @@ vec4 pixel_main_pass(vec2 coords, bool bBorder_needed) {
         
         if (RGB_MASK_STRENGTH > 0.0) {
             //Use RGB pattern or exploit RGB layout with green and magenta?
-            if (VMASK_USE_GM < 1.0)
+            if (vVMASK_USE_GM < 1.0)
                 pixel_out = pixel_vmask(pixel_in_compensated, pixel_in_clamped, VMASK_OVERWHITE);
             else
                 pixel_out = pixel_vmask_gm(pixel_in_compensated, pixel_in_clamped, VMASK_OVERWHITE);
@@ -661,30 +676,11 @@ vec4 pixel_inner_frame(vec2 coords, bool bBorder_needed) {
     //Mix bloom texture
     if (DO_BLOOM == 1.0 ) {
         bloomed=texture(bloom_pass_final, coords).rgb ;
-        if (BLOOM_BYPASS == 1.0)
+                
+        if (BLOOM_BYPASS > 0.5)
             pixel_out = bloomed;
-        else {
-            float over_white_correction = 1.0;
-            if (BLOOM_OVER_WHITE < 1.0) {
-                    //Use mipmap to identify bright areas.
-                    vec3 avglum = texture(avglum_pass,coords).rgb;
-                    //avglum = apply_fuzzy_main_pass(avglum);
-                    float b_brightness = max(avglum.b,max(avglum.r,avglum.g));
-                    //b_brightness = max(pixel_out.b,max(pixel_out.r,pixel_out.g));
-                    
-                    b_brightness *= 1-BLOOM_OVER_WHITE;
-                    over_white_correction =1- b_brightness;
-            }
-
-            float smoothed_avglum = texture(avglum_pass, vec2(0.75)).a * BLOOM_ADPT;
-            float bloom_mix_adapted = max(0.0, BLOOM_MIX - smoothed_avglum);
-            
-            float shoulder = 0.33; //0.15; //= 0.25;
-            
-            bloom_mix_adapted = BLOOM_MIX * ( 1- pow(smoothed_avglum, shoulder-smoothed_avglum*shoulder     ));
-
-            pixel_out = pixel_out + (bloomed * bloom_mix_adapted  )* over_white_correction ;
-        }
+        else
+            pixel_out += bloomed;
     }
 
     //Black frame insertion
@@ -697,22 +693,28 @@ vec4 pixel_inner_frame(vec2 coords, bool bBorder_needed) {
             float in_aspect = get_in_aspect();
 
             if (DO_VIGNETTE == 1.0) {
-                //float vignette;
-                //float dist = length(vec2((coords.x-0.5)*in_aspect,coords.y-0.5));
-                //vignette = smoothstep(V_SIZE,0.0,dist)*V_POWER;                
+                #ifdef MAC_VIGNETTE_CURVATURE_WORKAROUND
+                    //https://github.com/kokoko3k/koko-aio-slang/issues/3
+                    float dist = length(vec2((coords.x-0.5)*in_aspect,coords.y-0.5));
+                    float vignette = smoothstep(V_SIZE,0.0,dist)*V_POWER;                
+                #else
+                    float vignette = vV_POWER * (vV_SIZE + 16.0*coords.x*coords.y*(1.0-coords.x)*(1.0-coords.y));
+                #endif
+                    if (V_BYPASS < 1.0) pixel_out = vignette * clamp(pixel_out,0.0,1.0);
+                        else
+                    pixel_out = vec3(vignette);
                 
-                float vignette = vV_POWER * (vV_SIZE + 16.0*coords.x*coords.y*(1.0-coords.x)*(1.0-coords.y));
-                if (V_BYPASS < 1.0) pixel_out = vignette * clamp(pixel_out,0.0,1.0);
-                    else
-                pixel_out = vec3(vignette);
             }
 
             if (DO_SPOT == 1.0) {
-                //float spot;
-                //float dist = length(vec2((coords.x-0.5)*in_aspect,coords.y-0.5)+spot_offset);
-                //spot = smoothstep(S_SIZE,0.0,dist)*S_POWER;
-                vec2 scoords = clamp(coords + spot_offset, 0.0,1.0);
-                float spot = vS_POWER * (vS_SIZE + 16.0*scoords.x*scoords.y*(1.0-scoords.x)*(1.0-scoords.y));
+                #ifdef MAC_VIGNETTE_CURVATURE_WORKAROUND
+                    ////https://github.com/kokoko3k/koko-aio-slang/issues/3
+                    float dist = length(vec2((coords.x-0.5)*in_aspect,coords.y-0.5)+spot_offset);
+                    float spot = smoothstep(S_SIZE,0.0,dist)*S_POWER;
+                #else
+                    vec2 scoords = clamp(coords + spot_offset, 0.0,1.0);
+                    float spot = vS_POWER * (vS_SIZE + 16.0*scoords.x*scoords.y*(1.0-scoords.x)*(1.0-scoords.y));
+                #endif
                 if (S_BYPASS < 1.0) pixel_out = max(spot,0.0) + pixel_out;
                     else
                 pixel_out = vec3(spot);

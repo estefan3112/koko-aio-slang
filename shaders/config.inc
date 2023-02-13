@@ -41,7 +41,6 @@
 	//Try to keep blur sizes consistent across input resolutions
 #define SCALEMOD_X 360
 #define SCALEMOD_Y 270
-
 #define NEW_SCALEMOD_X (params.OriginalSize.x/360.0 / 2.2)
 #define NEW_SCALEMOD_Y (params.OriginalSize.y/270.0 / 2.2)
 
@@ -51,6 +50,9 @@
 #define BACKDROP_OFFX 0.0
 #define BACKDROP_OFFY 0.0
 #define BACKDROP_ZOOM 1.0
+
+	//Workaround for https://github.com/kokoko3k/koko-aio-slang/issues/3
+//#define MAC_VIGNETTE_CURVATURE_WORKAROUND 1.0
 
 
 #define eps 1e-5
@@ -274,13 +276,13 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 
 // Mask
-#pragma parameter DO_VMASK_AND_DARKLINES "★  RGB Masks and/or Darklines enable? ==>"         	0.0 	0.0 1.0 1.0
-#pragma parameter MASK_COMPENSATION      "        Compensate for brightness loss"		0.0 	0.0 1.0 0.05
-#pragma parameter VMASK_DARKLINE_SCALE   "        (HiDPI) Vmask and Darklines multiplier"	1.0  	1.0 4.0 1.0
-#pragma parameter RGB_MASK_STRENGTH      "        RGB Mask Strength (0.0 to disable)"		0.75  	0.0 1.0 0.05
-#pragma parameter VMASK_USE_GM           "           . (LoDPI) Green,Magenta -> BGR"	0.0  	0.0 1.0 1.0
-#pragma parameter VMASK_GAP              "           . Horizontal Gap between triads"	0.0  	0.0 1.0 1.0
-#pragma parameter VMASK_OVERWHITE        "           . Affect bright colors"		1.0 	0.0 1.0 0.05
+#pragma parameter DO_VMASK_AND_DARKLINES "★  RGB Masks and/or Darklines enable? ==>"         		0.0 	0.0 1.0 1.0
+#pragma parameter MASK_COMPENSATION      "        Compensate for brightness loss"			0.0 	0.0 1.0 0.05
+#pragma parameter VMASK_DARKLINE_SCALE   "        (HiDPI) Vmask and Darklines multiplier"		1.0  	1.0 4.0 1.0
+#pragma parameter RGB_MASK_STRENGTH      "        RGB Mask Strength (0.0 to disable)"			0.75  	0.0 1.0 0.05
+#pragma parameter VMASK_USE_GM           "           . (LoDPI) Green,Magenta -> BGR"			0.0  	0.0 1.0 1.0
+#pragma parameter VMASK_GAP              "           . Horizontal Gap between triads:"			0.0  	0.0 1.0 1.0
+#pragma parameter VMASK_OVERWHITE        "           . Affect bright colors"				1.0 	0.0 1.0 0.05
 
 #pragma parameter DARKLINES_STRENGTH     "        Darklines strength (0.0 to disable)"				0.65 	0.0 1.0   0.05
 #pragma parameter DARKLINES_VOFFSET      "           . Offset"							1.0 	0.0 1.0   1.0
@@ -318,14 +320,14 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 // Bloom
 #pragma parameter DO_BLOOM           "★ Bloom enable? ==>" 				0.0  0.0  1.0  1.0
 #pragma parameter BLOOM_MIX          "        Final mix, (0.0=off)"			0.2 0.0 1.0  0.01
-#pragma parameter BLOOM_ADPT         "        Less on bright scenes"	0.0	0.0	10.0	 0.1
 #pragma parameter BLOOM_SIZE         "        Radius"					2.0  0.25 30.0 0.25
 #pragma parameter BLOOM_QUALITY      "        Quality: more is better but slower"	1.0  1.0 32.0 1.0
 #pragma parameter BLOOM_GAMMA        "        Input Gamma"				10.0  1.0 10.0 0.1
-#pragma parameter BLOOM_POWER        "        Power multiplier"			1.25  1.0 20.0 0.05
+#pragma parameter BLOOM_POWER        "        Power multiplier"				1.25  1.0 20.0 0.05
 #pragma parameter BLOOM_GAMMA_OUT    "        Output Gamma"				10.0  0.1 10.0 0.1
-#pragma parameter BLOOM_OVER_WHITE   "        Strength on bright areas (0 = aura)"	0.5  0.0 1.0  0.05
-#pragma parameter BLOOM_BYPASS       "        Bypass/Solo"				0.0  0.0 1.0  1.0
+#pragma parameter BLOOM_ADPT         "        Modulate: Less on bright scenes"		0.0	0.0	10.0	 0.1
+#pragma parameter BLOOM_OVER_WHITE   "        Modulate: Strength on bright areas (0 = aura)"	0.5  0.0 1.0  0.05
+#pragma parameter BLOOM_BYPASS       "        Bypass/Solo (1=Unmodulated, 2=Modulated)"	0.0  0.0 2.0  1.0
 
 
 
