@@ -36,10 +36,6 @@ layout(set = 0, binding = 3) uniform sampler2D avglum_passFeedback;
 #include "includes/functions.include.slang"
 
 
-float rgb_to_gray(vec3 rgb) {
-    return dot(rgb, vec3(0.299, 0.587, 0.114));
-}
-
 #define RGB_TO_GRAYSCALE = vec3(0.299, 0.587, 0.114)
 float get_avg_lum_from_mip() {
     vec3 mip = textureLod(first_pass, vec2(0.5,0.5),20.0).rgb;
@@ -49,13 +45,14 @@ float get_avg_lum_from_mip() {
 }
 
 
-
-#define SMOOTHNESS_SPEED 0.05
+//0.1 seems like a good tradeoff that works well with bloom exposire and fullscreen zoom
+//...maybe bloom exposure works best at 0.05; you may consider another zone of smooth sampling.
+#define SMOOTHNESS_SPEED 0.1
 
 float get_avglum() {
     /* avglum alpha has 3 zones::
      * 0.25 -> reduced sampling, used for to aid scene detection
-     * 0.75 -> smoothed_sampling, used to adapt bloom exposure
+     * 0.75 -> smoothed_sampling, used to adapt bloom exposure and dynamic fullscreen zoom
      * anything else: continuous sampling
      */
 

@@ -37,10 +37,6 @@ layout(location = 4) out float vIsRotated;
     layout(location = 10) out vec2 vV_POWER_SIZE;
     layout(location = 11) out vec2 vS_POWER_SIZE;
     
-//Vertical mask helpers
-    layout(location = 12) out float vVMASK_USE_GM;
-    
-
 #include "includes/functions.include.slang"
 
 void main() {
@@ -90,11 +86,7 @@ void main() {
         float S_SIZE_ADAPTED = S_SIZE*1.3;
         vS_POWER = S_POWER/S_SIZE_ADAPTED;
         vS_SIZE = (S_SIZE_ADAPTED-1.0);
-        
-    //vmask
-        //Disable Green/Magenta trick on rotated content.
-        vVMASK_USE_GM = VMASK_USE_GM * (1-vIsRotated) + SHIFT_R;
-        
+                
 }
 
 
@@ -117,7 +109,6 @@ layout(location = 9) in float vScanlinesAlternate;
 #define vS_SIZE  vS_POWER_SIZE.y
 layout(location = 10) in vec2 vV_POWER_SIZE;
 layout(location = 11) in vec2 vS_POWER_SIZE;
-layout(location = 12) in float vVMASK_USE_GM;
 
 layout(location = 0) out vec4 FragColor;
 
@@ -176,7 +167,54 @@ vec3 pixel_vmask(vec3 source, vec3 white_reference, float over_white) {
    return pixel_out;  
     
 }
+
+vec3 pixel_vmask_and_gm(vec3 source, vec3 white_reference, float over_white) {
+// Simple RGB mask emulation with or without horizontal gap
+    float ooo = 1.0 - RGB_MASK_STRENGTH;
     
+    // RGB mask:     R     G     B
+    vec3 m1_rgb =  vec3( 1.0 , ooo , ooo );  //col 1
+    vec3 m2_rgb =  vec3( ooo , 1.0 , ooo );  //col 2
+    vec3 m3_rgb =  vec3( ooo , ooo , 1.0 );  //col 3
+    vec3 gap = vec3( ooo );
+       
+    vec3 m1_gm = vec3( ooo , 1.0 , ooo );    //col 1
+    vec3 m2_gm = vec3( 1.0 , ooo , 1.0 );    //col 2
+    
+    
+    vec3 m1 = (m1_gm * VMASK_USE_GM) + (m1_rgb * (1-VMASK_USE_GM));
+    vec3 m2 = (m2_gm * VMASK_USE_GM) + (m2_rgb * (1-VMASK_USE_GM));
+    vec3 m3 = m3_rgb;
+    
+    
+    vec3 pixel_out;
+    vec3 vmasked;
+    vec4 vec_mod_rgb = vec4(3,1,2,3);
+    vec4 vec_mod_gm =  vec4(2,1,2,0.0);
+    vec4 vec_mod = (vec_mod_gm * VMASK_USE_GM) + (vec_mod_rgb* (1-VMASK_USE_GM));
+    vec_mod=(vec_mod + vec4(VMASK_GAP,0.0,0.0,0.0))* VMASK_DARKLINE_SCALE ;
+
+
+    float fcol = vOutputCoord.s * params.OutputSize.x;
+    if (mod(fcol, vec_mod.x) < vec_mod.y)
+        vmasked = m1 * source;
+    else if (mod(fcol, vec_mod.x) < vec_mod.z) 
+        vmasked = m2 * source;
+    else if (    mod(fcol, vec_mod.x) <  vec_mod.w && VMASK_USE_GM < 1.0  )
+        vmasked = m3 * source;
+    else vmasked = gap * source;
+    
+    if (over_white == 1.0) pixel_out = vmasked;
+        else {
+            float whiteness=max(max(white_reference.r,white_reference.g),white_reference.b);
+            whiteness-= over_white;
+            whiteness=  clamp(whiteness,0.0,1.0);
+            pixel_out=  mix(vmasked,source,whiteness);
+        }
+   return pixel_out;  
+    
+}
+
 
 vec3 pixel_vmask_gm(vec3 source, vec3 white_reference, float over_white) {
 // Simple RGB mask emulation with or without horizontal gap
@@ -215,7 +253,7 @@ vec3 pixel_darklines(vec3 source,float darkline_every, float darkline_trans,
     * or slotmasks
     */
     
-    float Darkline_part_w = (3.0 - vVMASK_USE_GM + VMASK_GAP) * VMASK_DARKLINE_SCALE;
+    float Darkline_part_w = (3.0 - VMASK_USE_GM + VMASK_GAP) * VMASK_DARKLINE_SCALE;
     float Darkline_part_w_x2 = Darkline_part_w*2;
 
     darkline_every *= VMASK_DARKLINE_SCALE;
@@ -286,7 +324,7 @@ float scanline_shape(vec2 coords, bool do_slotmask, float lum) {
             lines = lines * pixel_darklines(vec3(1.0),DARKLINES_PERIOD,1-SCANLINE_SM_STRENGTH,1.0,vec3(0.0),1.0, coords).r;
 
         } else {
-            float Darkline_part_w = (3.0 - vVMASK_USE_GM + VMASK_GAP) * VMASK_DARKLINE_SCALE;
+            float Darkline_part_w = (3.0 - VMASK_USE_GM + VMASK_GAP) * VMASK_DARKLINE_SCALE;
             float Darkline_part_w_x2 = Darkline_part_w*2;
             bool odd_column = mod(vFragCoord.x + Darkline_part_w  , Darkline_part_w_x2) < Darkline_part_w;
 
@@ -412,10 +450,12 @@ vec4 pixel_main_pass(vec2 coords, bool bBorder_needed) {
         
         if (RGB_MASK_STRENGTH > 0.0) {
             //Use RGB pattern or exploit RGB layout with green and magenta?
-            if (vVMASK_USE_GM < 1.0)
+            if (VMASK_USE_GM < 1.0)
                 pixel_out = pixel_vmask(pixel_in_compensated, pixel_in_clamped, VMASK_OVERWHITE);
             else
                 pixel_out = pixel_vmask_gm(pixel_in_compensated, pixel_in_clamped, VMASK_OVERWHITE);
+            //Tried to unbranch to no avail (worse performances)
+            //pixel_out = pixel_vmask_and_gm(pixel_in_compensated, pixel_in_clamped, VMASK_OVERWHITE);
         }
 
         pixel_out = pixel_push_luminance(pixel_out, DARKLINES_STRENGTH * (1.0/DARKLINES_PERIOD) * MASK_COMPENSATION); 
@@ -654,7 +694,9 @@ vec3 compose_bezel_over(vec3 full_viewport) {
 
     //Mix a bit of ambient light over the bezel
         vec4 pixel_avglum = texture(avglum_pass,vOutputCoord);
-        bezel_out = bezel_out + (pixel_avglum.rgb * 0.05);
+        //bezel_out = bezel_out + (pixel_avglum.rgb * 0.05);
+        vec3 pixel_ambilight = texture(ambi_temporal_pass, vOutputCoord).rgb * DO_AMBILIGHT;
+        bezel_out = bezel_out + pixel_ambilight * AMBI_OVER_BEZEL;
 
     //We use the green component to express Hardness/Specularity; there the reflection will be completely diffused.
     //For the task, we use a mipmap whit adeguate precision.
@@ -693,28 +735,26 @@ vec4 pixel_inner_frame(vec2 coords, bool bBorder_needed) {
             float in_aspect = get_in_aspect();
 
             if (DO_VIGNETTE == 1.0) {
-                #ifdef MAC_VIGNETTE_CURVATURE_WORKAROUND
-                    //https://github.com/kokoko3k/koko-aio-slang/issues/3
-                    float dist = length(vec2((coords.x-0.5)*in_aspect,coords.y-0.5));
-                    float vignette = smoothstep(V_SIZE,0.0,dist)*V_POWER;                
-                #else
-                    float vignette = vV_POWER * (vV_SIZE + 16.0*coords.x*coords.y*(1.0-coords.x)*(1.0-coords.y));
-                #endif
-                    if (V_BYPASS < 1.0) pixel_out = vignette * clamp(pixel_out,0.0,1.0);
-                        else
-                    pixel_out = vec3(vignette);
+                    //float dist = length(vec2((coords.x-0.5)*in_aspect,coords.y-0.5));
+                    //float vignette = smoothstep(V_SIZE,0.0,dist)*V_POWER;                
+                    float vignette = vV_POWER * (vV_SIZE + 16.0* coords.x*coords.y*(1.0-coords.x)*(1.0-coords.y));
+                    vignette = min(vignette,99999.0); //<--- big wtf here, why is this needed? 
+                    //...see: https://github.com/kokoko3k/koko-aio-slang/issues/3
+                    if (V_BYPASS < 1.0) 
+                        pixel_out = vignette * clamp(pixel_out,0.0,1.0);
+                            else
+                        pixel_out = vec3(vignette);
                 
             }
 
             if (DO_SPOT == 1.0) {
-                #ifdef MAC_VIGNETTE_CURVATURE_WORKAROUND
-                    ////https://github.com/kokoko3k/koko-aio-slang/issues/3
-                    float dist = length(vec2((coords.x-0.5)*in_aspect,coords.y-0.5)+spot_offset);
-                    float spot = smoothstep(S_SIZE,0.0,dist)*S_POWER;
-                #else
+
+                    //float dist = length(vec2((coords.x-0.5)*in_aspect,coords.y-0.5)+spot_offset);
+                    //float spot = smoothstep(S_SIZE,0.0,dist)*S_POWER;
+
                     vec2 scoords = clamp(coords + spot_offset, 0.0,1.0);
                     float spot = vS_POWER * (vS_SIZE + 16.0*scoords.x*scoords.y*(1.0-scoords.x)*(1.0-scoords.y));
-                #endif
+
                 if (S_BYPASS < 1.0) pixel_out = max(spot,0.0) + pixel_out;
                     else
                 pixel_out = vec3(spot);
@@ -819,7 +859,7 @@ void main() {
         //split screen
         //if (vTexCoord.y < 0.5) pixel_out = texture(first_pass,vTexCoord);
         //pixel_out = texture(avglum_pass,vTexCoord);
-    //pixel_out = texture(halo_pass, vOutputCoord);
+    //pixel_out = texture(ambi_temporal_pass, vOutputCoord);
     FragColor = pixel_out;
     
     //FragColor = vec4(blur_shade(vTexCoord) );
