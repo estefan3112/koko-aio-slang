@@ -18,24 +18,22 @@ layout(location = 2) out vec2 spot_offset;
 layout(location = 3) out vec2 vFragCoord;
 layout(location = 4) out float vIsRotated;
 
+
 //Curvature:
-    #define vWarp_vexp vWarp_vexp_arg2.xy
-    #define vWarp_arg2 vWarp_vexp_arg2.zw
-    layout(location = 5) out vec4 vWarp_vexp_arg2;
+    layout(location = 5) out vec2 vWarp_vexp;
+    layout(location = 6) out vec2 vWarp_arg2;
 
 //Scanlines:
-    layout(location = 6) out float vIsInterlaced;
-    layout(location = 7) out float vFlickeringScanlines;
-    layout(location = 8) out float vScanlinePeriod;
-    layout(location = 9) out float vScanlinesAlternate;
+    layout(location = 7) out float vIsInterlaced;
+    layout(location = 8) out float vFlickeringScanlines;
+    layout(location = 9) out float vScanlinePeriod;
+    layout(location = 10) out float vScanlinesAlternate;
 
 //Vignette, spot
-    #define vV_POWER vV_POWER_SIZE.x
-    #define vV_SIZE  vV_POWER_SIZE.y
-    #define vS_POWER vS_POWER_SIZE.x
-    #define vS_SIZE  vS_POWER_SIZE.y
-    layout(location = 10) out vec2 vV_POWER_SIZE;
-    layout(location = 11) out vec2 vS_POWER_SIZE;
+    layout(location = 11) out float vV_POWER;
+    layout(location = 12) out float vV_SIZE;
+    layout(location = 13) out float vS_POWER;
+    layout(location = 14) out float vS_SIZE;
     
 #include "includes/functions.include.slang"
 
@@ -96,19 +94,16 @@ layout(location = 1) in vec2 vOutputCoord;
 layout(location = 2) in vec2 spot_offset;
 layout(location = 3) in vec2 vFragCoord;
 layout(location = 4) in float vIsRotated;
-#define vWarp_vexp vWarp_vexp_arg2.xy
-#define vWarp_arg2 vWarp_vexp_arg2.zw
-layout(location = 5) in vec4 vWarp_vexp_arg2;  
-layout(location = 6) in float vIsInterlaced;
-layout(location = 7) in float vFlickeringScanlines;
-layout(location = 8) in float vScanlinePeriod;
-layout(location = 9) in float vScanlinesAlternate;
-#define vV_POWER vV_POWER_SIZE.x
-#define vV_SIZE  vV_POWER_SIZE.y
-#define vS_POWER vS_POWER_SIZE.x
-#define vS_SIZE  vS_POWER_SIZE.y
-layout(location = 10) in vec2 vV_POWER_SIZE;
-layout(location = 11) in vec2 vS_POWER_SIZE;
+layout(location = 5) in vec2 vWarp_vexp;
+layout(location = 6) in vec2 vWarp_arg2;
+layout(location = 7) in float vIsInterlaced;
+layout(location = 8) in float vFlickeringScanlines;
+layout(location = 9) in float vScanlinePeriod;
+layout(location = 10) in float vScanlinesAlternate;
+layout(location = 11) in float vV_POWER;
+layout(location = 12) in float vV_SIZE;
+layout(location = 13) in float vS_POWER;
+layout(location = 14) in float vS_SIZE;
 
 layout(location = 0) out vec4 FragColor;
 
@@ -134,7 +129,7 @@ layout(set = 0, binding = 12) uniform sampler2D halo_pass;
 
 #include "includes/functions.include.slang"
 
-vec3 pixel_vmask(vec3 source, vec3 white_reference, float over_white) {
+vec3 pixel_vmask(vec3 source, float white_reference, float over_white) {
 // Simple RGB mask emulation with or without horizontal gap
     float ooo = 1.0 - RGB_MASK_STRENGTH;
     
@@ -159,16 +154,15 @@ vec3 pixel_vmask(vec3 source, vec3 white_reference, float over_white) {
     
     if (over_white == 1.0) pixel_out = vmasked;
         else {
-            float whiteness=max(max(white_reference.r,white_reference.g),white_reference.b);
-            whiteness-= over_white;
-            whiteness=  clamp(whiteness,0.0,1.0);
-            pixel_out=  mix(vmasked,source,whiteness);
+            white_reference-= over_white;
+            white_reference=  clamp(white_reference,0.0,1.0);
+            pixel_out=  mix(vmasked,source,white_reference);
         }
    return pixel_out;  
     
 }
 
-vec3 pixel_vmask_and_gm(vec3 source, vec3 white_reference, float over_white) {
+vec3 pixel_vmask_and_gm(vec3 source, float white_reference, float over_white) {
 // Simple RGB mask emulation with or without horizontal gap
     float ooo = 1.0 - RGB_MASK_STRENGTH;
     
@@ -206,17 +200,16 @@ vec3 pixel_vmask_and_gm(vec3 source, vec3 white_reference, float over_white) {
     
     if (over_white == 1.0) pixel_out = vmasked;
         else {
-            float whiteness=max(max(white_reference.r,white_reference.g),white_reference.b);
-            whiteness-= over_white;
-            whiteness=  clamp(whiteness,0.0,1.0);
-            pixel_out=  mix(vmasked,source,whiteness);
+            white_reference-= over_white;
+            white_reference=  clamp(white_reference,0.0,1.0);
+            pixel_out=  mix(vmasked,source,white_reference);
         }
    return pixel_out;  
     
 }
 
 
-vec3 pixel_vmask_gm(vec3 source, vec3 white_reference, float over_white) {
+vec3 pixel_vmask_gm(vec3 source, float white_reference, float over_white) {
 // Simple RGB mask emulation with or without horizontal gap
     float ooo = 1.0 - RGB_MASK_STRENGTH;
     // RGB mask:     R     G     B
@@ -238,20 +231,19 @@ vec3 pixel_vmask_gm(vec3 source, vec3 white_reference, float over_white) {
 
     if (over_white == 1.0) pixel_out = vmasked;
         else {
-            float whiteness=max(max(white_reference.r,white_reference.g),white_reference.b);
-            whiteness-= over_white;
-            whiteness=  clamp(whiteness,0.0,1.0);
-            pixel_out=  mix(vmasked,source,whiteness);
+            white_reference-= over_white;
+            white_reference=  clamp(white_reference,0.0,1.0);
+            pixel_out=  mix(vmasked,source,white_reference);
         }
 
    return pixel_out;
 }
 
-vec3 pixel_darklines(vec3 source,float darkline_every, float darkline_trans,
-                     float do_offset, vec3 white_reference,float over_white, vec2 coords) {
-    /* "darklines" are vertical gaps that can be used to emulate aperturegrille
-    * or slotmasks
-    */
+/*vec3 pixel_darklines_old(vec3 source,float darkline_every, float darkline_trans,
+                     float do_offset, float white_reference,float over_white, vec2 coords) {
+    // "darklines" are vertical gaps that can be used to emulate aperturegrille
+    // or slotmasks
+    //
     
     float Darkline_part_w = (3.0 - VMASK_USE_GM + VMASK_GAP) * VMASK_DARKLINE_SCALE;
     float Darkline_part_w_x2 = Darkline_part_w*2;
@@ -260,8 +252,7 @@ vec3 pixel_darklines(vec3 source,float darkline_every, float darkline_trans,
 
     if (over_white != 1.0) {
         //less effect on bright colors.
-        float whiteness=max(max(white_reference.r,white_reference.g),white_reference.b);
-        darkline_trans+=(whiteness-over_white);
+        darkline_trans+=(white_reference-over_white);
         darkline_trans=clamp(darkline_trans,0.0,1.0);
     }
 
@@ -279,8 +270,39 @@ vec3 pixel_darklines(vec3 source,float darkline_every, float darkline_trans,
         bool draw_dark = mod(vFragCoord.y, darkline_every) < VMASK_DARKLINE_SCALE;
         bool draw_color = !draw_dark;
         return source * ( float(draw_color) +  float(draw_dark) * darkline_trans );
-}
+}*/
 
+
+vec3 pixel_darklines(vec3 source,float darkline_every, float darkline_trans,
+                     float do_offset, float white_reference,float over_white, vec2 coords) {
+    
+    
+    float period_x = (3.0 - VMASK_USE_GM + VMASK_GAP) * VMASK_DARKLINE_SCALE;
+    float period_y = darkline_every * VMASK_DARKLINE_SCALE;
+    
+    vec2 FragCoord = vFragCoord;
+
+    
+    if (over_white != 1.0) {
+        //less effect on bright colors.
+        darkline_trans+=(white_reference-over_white);
+        darkline_trans=clamp(darkline_trans,0.0,1.0);
+    }
+    
+    
+    if (do_offset > 0.0) {
+        float column = int(floor(mod(FragCoord.x, period_x*2.0)));
+        if (column < period_x) FragCoord.y+=period_y/2.0;
+    }
+    
+    float row = int(floor(mod(FragCoord.y, period_y)));
+
+    if (row < VMASK_DARKLINE_SCALE)
+        return source * darkline_trans;
+            else
+        return source;
+    
+}
 
 
 float scanline_shape(vec2 coords, bool do_slotmask, float lum) {
@@ -321,7 +343,7 @@ float scanline_shape(vec2 coords, bool do_slotmask, float lum) {
     if (do_slotmask) {
         if (do_flicker) {
             //Fallback to old darklines code to avoid glitches/artifacts.
-            lines = lines * pixel_darklines(vec3(1.0),DARKLINES_PERIOD,1-SCANLINE_SM_STRENGTH,1.0,vec3(0.0),1.0, coords).r;
+            lines = lines * pixel_darklines(vec3(1.0),DARKLINES_PERIOD,1-SCANLINE_SM_STRENGTH,1.0, 0.0 ,1.0, coords).r;
 
         } else {
             float Darkline_part_w = (3.0 - VMASK_USE_GM + VMASK_GAP) * VMASK_DARKLINE_SCALE;
@@ -417,6 +439,12 @@ lines = pow(clamp(lines, SCANLINE_DARK, 1.0) , 1/(sqrt(lum_scaled*lum_scaled*ext
     return lines;
 }
 
+float get_clamped_white_reference(vec3 pixel_in){
+    float white_reference = max(max(pixel_in.r,pixel_in.g),pixel_in.b);
+    white_reference = min(white_reference,1.0); //Clamp here for both vmask and darklines.
+    return white_reference;
+}
+
 vec4 pixel_main_pass(vec2 coords, bool bBorder_needed) {
     //Exit if we don't need a border (ambient light/background picture)
     //And we are outside the the border (unsure if this double check is good for performance) //FIXME
@@ -440,8 +468,11 @@ vec4 pixel_main_pass(vec2 coords, bool bBorder_needed) {
 
 
     vec3 pixel_out = pixel_in;
-    vec3 pixel_in_clamped = min(pixel_in,vec3(1.0)); //Clamp here for both vmask and darklines.
-
+    float white_reference;
+    if (VMASK_OVERWHITE+DRKLN_OVERWHITE  < 2.0 ) {
+        white_reference = get_clamped_white_reference(pixel_in);
+    }
+    
     //Mask and darklines:
     if (DO_VMASK_AND_DARKLINES == 1.0 ) {
         vec3 pixel_in_compensated = pixel_in;
@@ -451,11 +482,11 @@ vec4 pixel_main_pass(vec2 coords, bool bBorder_needed) {
         if (RGB_MASK_STRENGTH > 0.0) {
             //Use RGB pattern or exploit RGB layout with green and magenta?
             if (VMASK_USE_GM < 1.0)
-                pixel_out = pixel_vmask(pixel_in_compensated, pixel_in_clamped, VMASK_OVERWHITE);
+                pixel_out = pixel_vmask(pixel_in_compensated, white_reference, VMASK_OVERWHITE);
             else
-                pixel_out = pixel_vmask_gm(pixel_in_compensated, pixel_in_clamped, VMASK_OVERWHITE);
+                pixel_out = pixel_vmask_gm(pixel_in_compensated, white_reference, VMASK_OVERWHITE);
             //Tried to unbranch to no avail (worse performances)
-            //pixel_out = pixel_vmask_and_gm(pixel_in_compensated, pixel_in_clamped, VMASK_OVERWHITE);
+            //pixel_out = pixel_vmask_and_gm(pixel_in_compensated, white_reference, VMASK_OVERWHITE);
         }
 
         pixel_out = pixel_push_luminance(pixel_out, DARKLINES_STRENGTH * (1.0/DARKLINES_PERIOD) * MASK_COMPENSATION); 
@@ -463,7 +494,7 @@ vec4 pixel_main_pass(vec2 coords, bool bBorder_needed) {
         //Screen lines (slotmask aperture grille)
         if (   DARKLINES_STRENGTH > 0.0 ) {
             float MYDARKLINES_TRANSPARENCY = 1.0 - DARKLINES_STRENGTH;
-            pixel_out = pixel_darklines(pixel_out,DARKLINES_PERIOD,MYDARKLINES_TRANSPARENCY,DARKLINES_VOFFSET,pixel_in_clamped,DRKLN_OVERWHITE, coords);
+            pixel_out = pixel_darklines(pixel_out, DARKLINES_PERIOD, MYDARKLINES_TRANSPARENCY, DARKLINES_VOFFSET, white_reference, DRKLN_OVERWHITE, coords);
         }
 
     }
@@ -628,10 +659,9 @@ vec3 bezel_color(float lum)  {
 }
 
 
+#define STATIC_BEZEL_USE_MIPMAP 1.0
+
 vec3 compose_bezel_over(vec3 full_viewport) {
-    vec2 bezel_lut_size = textureSize(monitor_body_curved,0); //no need to branch here if we assume straight and curved textures are the same size.
-                                                              //FIXME ?
-    float bezel_frame_lod = log2(bezel_lut_size.y * (BEZEL_FRAME_ZOOM+1.0) /global.FinalViewportSize.y);
     vec2 coords_for_bezel = vTexCoord;
     
     if (BEZEL_FRAME_ZOOM != 0.0)
@@ -669,10 +699,19 @@ vec3 compose_bezel_over(vec3 full_viewport) {
 
     //Main lut:
     vec4 bezel;
-    if (BEZEL_USE_STRAIGHT < 0.5)
-        bezel = textureLod(monitor_body_curved,coords_for_bezel,bezel_frame_lod);
-            else
-        bezel = textureLod(monitor_body_straight,coords_for_bezel,bezel_frame_lod);
+    #ifdef STATIC_BEZEL_USE_MIPMAP
+        vec2 bezel_lut_size = textureSize(monitor_body_curved,0); //no need to branch here if we assume straight and curved textures are the same size. //FIXME?
+        float bezel_frame_lod = log2(bezel_lut_size.y * (BEZEL_FRAME_ZOOM+1.0) /global.FinalViewportSize.y);
+        if (BEZEL_USE_STRAIGHT < 0.5)
+            bezel = textureLod(monitor_body_curved,coords_for_bezel,bezel_frame_lod);
+                else
+            bezel = textureLod(monitor_body_straight,coords_for_bezel,bezel_frame_lod);
+    #else
+        if (BEZEL_USE_STRAIGHT < 0.5)
+            bezel = texture(monitor_body_curved,coords_for_bezel);
+                else
+            bezel = texture(monitor_body_straight,coords_for_bezel);
+    #endif
     
 //return mix(bezel.rgb, vec3(kx), 0.5);
     //No need to draw anything on full alpha:
