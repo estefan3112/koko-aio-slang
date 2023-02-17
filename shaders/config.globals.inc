@@ -142,7 +142,7 @@
 
 #define DO_BLOOM		params.DO_BLOOM
 	#define BLOOM_MIX		global.BLOOM_MIX
-	#define BLOOM_ADPT		global.BLOOM_ADPT
+	#define BLOOM_EYE_ADPT_SRT	global.BLOOM_EYE_ADPT_SRT
 	#define BLOOM_QUALITY		params.BLOOM_QUALITY
 	#define BLOOM_SIZE		global.BLOOM_SIZE
 	#define BLOOM_GAMMA		global.BLOOM_GAMMA
@@ -171,7 +171,7 @@
 	#define BEZEL_IMAGE_BORDER	global.BEZEL_IMAGE_BORDER
 	#define BEZEL_REFL_ZOOM		global.BEZEL_REFL_ZOOM
 	#define BEZEL_USE_STRAIGHT	global.BEZEL_USE_STRAIGHT
-
+	#define BEZEL_RFL_BLR_SHD	global.BEZEL_RFL_BLR_SHD
 
 
 #define DO_SPOT		global.DO_SPOT
@@ -195,7 +195,7 @@
 	#define BG_IMAGE_OFFX		global.BG_IMAGE_OFFX
 	#define BG_IMAGE_ZOOM		global.BG_IMAGE_ZOOM
 	#define BG_IMAGE_ROTATION	global.BG_IMAGE_ROTATION
-
+	#define BG_IMAGE_WRAP_MODE	global.BG_IMAGE_WRAP_MODE
 
 
 #define DO_AMBILIGHT		global.DO_AMBILIGHT
