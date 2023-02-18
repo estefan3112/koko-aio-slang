@@ -10,3 +10,8 @@ BG_IMAGE_ROTATION = "2.000000"
 DO_AMBILIGHT = "0.000000"
 S_POWER = "0.150000"
 bg_under = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/galaga.png"
+
+# Credits
+# shader by kokoko3k - https://github.com/kokoko3k/koko-aio-slang
+# artwork by John Merrit
+# preset and artwork adjustments by estefan3112 - https://github.com/estefan3112/koko-aio-slang

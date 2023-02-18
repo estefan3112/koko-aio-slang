@@ -15,3 +15,8 @@ DO_GLOBAL_SHZO = "1.000000"
 GLOBAL_OFFX = "0.008500"
 GLOBAL_ZOOM = "1.000000"
 bg_over = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/scramble.png"
+
+# Credits
+# shader by kokoko3k - https://github.com/kokoko3k/koko-aio-slang
+# artwork by John Merrit
+# preset and artwork adjustments by estefan3112 - https://github.com/estefan3112/koko-aio-slang

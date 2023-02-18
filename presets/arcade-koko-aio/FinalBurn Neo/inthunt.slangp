@@ -10,3 +10,8 @@ BG_IMAGE_OFFX = "-0.009000"
 BG_IMAGE_OFFY = "0.004000"
 DO_AMBILIGHT = "0.000000"
 bg_under = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/inthunt.png"
+
+# Credits
+# shader by kokoko3k - https://github.com/kokoko3k/koko-aio-slang
+# artwork by Orions Angel
+# preset and artwork adjustments by estefan3112 - https://github.com/estefan3112/koko-aio-slang
