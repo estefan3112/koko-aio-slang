@@ -39,6 +39,9 @@ Please note that the Koko-aio github repository has a different folder structure
 
 Please see the Moon Patrol example - you can just duplicate the .slangp preset and rename it with the name of the clone. By this, you have an identical configuration for a clone. <br>
 
+# Initial backdrop support
+
+The first backdrop presets are uploaded, but in order for them to work, you must create a separate shader directory called koko-aio-backdrops and put the backdrop textures there. You also need to manually edit the config.inc file in the shaders subdirectory by uncommenting backdrop support in line #56. I plan to issue a separate backdrops package in the near future.
 
 # From here, the original text from the forked repository follows:
 
