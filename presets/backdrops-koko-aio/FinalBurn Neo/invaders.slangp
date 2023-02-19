@@ -10,3 +10,9 @@ DO_GLOBAL_SHZO = "1.000000"
 GLOBAL_ZOOM = "0.830000"
 bg_over = "../../shaders/shaders_slang/bezel/koko-aio-backdrops/textures/backdrop_textures/invaders.png"
 backdrop = "../../shaders/shaders_slang/bezel/koko-aio-backdrops/textures/backdrop_textures/invaders_backdrop.png"
+
+# Credits
+# shader by kokoko3k - https://github.com/kokoko3k/koko-aio-slang
+# artwork by John Merrit
+# backdrop by Mr. Do's Arcade - https://mrdo.mameworld.info/index.php 
+# preset and artwork adjustments by estefan3112 - https://github.com/estefan3112/koko-aio-slang
