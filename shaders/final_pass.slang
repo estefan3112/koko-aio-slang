@@ -29,11 +29,9 @@ layout(location = 4) out float vIsRotated;
     layout(location = 9) out float vScanlinePeriod;
     layout(location = 10) out float vScanlinesAlternate;
 
-//Vignette, spot
-    layout(location = 11) out float vV_POWER;
-    layout(location = 12) out float vV_SIZE;
-    layout(location = 13) out float vS_POWER;
-    layout(location = 14) out float vS_SIZE;
+//Vignette, spot:
+    layout(location = 11) out float vIn_aspect;
+
 
     
 #include "includes/functions.include.slang"
@@ -41,8 +39,9 @@ layout(location = 4) out float vIsRotated;
 void main() {
     gl_Position = global.MVP * Position;
     vIsRotated = float(is_rotated());
-    vTexCoord = get_scaled_coords(TexCoord,global.FinalViewportSize, bool(vIsRotated) ) + vec2(0.00001);
-    
+    vIn_aspect = get_in_aspect();
+    vTexCoord = get_scaled_coords_aspect(TexCoord,global.FinalViewportSize, vIn_aspect, bool(vIsRotated)) + vec2(0.00001);
+
     if (DO_GLOBAL_SHZO >0.5)
         vTexCoord = zoom(vTexCoord + vec2(-GLOBAL_OFFX, -GLOBAL_OFFY), GLOBAL_ZOOM );
     
@@ -52,7 +51,12 @@ void main() {
                        floor(vOutputCoord.y * params.OutputSize.y));
 
     //Precalc some Curvature/Warp values:
-        vWarp_vexp = 1.0/ (1 + (vec2(GEOM_WARP_X, GEOM_WARP_Y) * 0.2)) ;
+        vec2 geom_warp_adapted = vec2(GEOM_WARP_X, GEOM_WARP_Y);
+        
+       /* if (DO_BEZEL > 0.0) {
+            geom_warp_adapted *= (-BEZEL_INNER_ZOOM) + 1;
+        }*/
+        vWarp_vexp = 1.0/ (1 + (vec2(geom_warp_adapted.x, geom_warp_adapted.y) * 0.2)) ;
         
         
         vWarp_arg2 = 1.0 - pow(vec2(0.29289321881345247559915563789515), vWarp_vexp );
@@ -73,19 +77,10 @@ void main() {
             //vScanlinePhase = 0.0;
             //vScanlinePhase = vScanlinePeriod * pi - pi/4.0; //<-- needed to match scanlines done in first_pass. //FIXME check what happens for highter res.
         }
-
-    //Vignette
-        float V_SIZE_ADAPTED = V_SIZE*2.0;
-        vV_POWER = V_POWER/V_SIZE_ADAPTED;
-        vV_SIZE = (V_SIZE_ADAPTED-1.0);
-
-    //Spot:
+    //SPOT
         spot_offset = offsets_from_float(S_POSITION+420.0,40);
         spot_offset = spot_offset / 10.0 + vec2(0.0,1.0);
-        float S_SIZE_ADAPTED = S_SIZE*1.3;
-        vS_POWER = S_POWER/S_SIZE_ADAPTED;
-        vS_SIZE = (S_SIZE_ADAPTED-1.0);
-                
+        
 }
 
 
@@ -101,10 +96,7 @@ layout(location = 7) in float vIsInterlaced;
 layout(location = 8) in float vFlickeringScanlines;
 layout(location = 9) in float vScanlinePeriod;
 layout(location = 10) in float vScanlinesAlternate;
-layout(location = 11) in float vV_POWER;
-layout(location = 12) in float vV_SIZE;
-layout(location = 13) in float vS_POWER;
-layout(location = 14) in float vS_SIZE;
+layout(location = 11) in float vIn_aspect;
 
 layout(location = 0) out vec4 FragColor;
 
@@ -322,6 +314,7 @@ float scanline_shape(vec2 coords, bool do_slotmask, float lum) {
         //float lum_scaled = scale_to_range(lum,SCANLINE_MIN+eps,1.0);
         float lum_scaled = scale_to_range(lum, SCANLINE_MIN, SCANLINE_MAX);
 
+     
     float angle_base = coords.y * pi * params.OriginalSize.y * period;// + vScanlinePhase;
 
     float lines = 1.0;
@@ -417,7 +410,7 @@ float scanline_shape(vec2 coords, bool do_slotmask, float lum) {
 //float extra_power_1 = 3.0;
 
 float extra_power_1 = max(SCANLINE_MAX/3.0, 1.0);
-lines = pow(clamp(lines, SCANLINE_DARK, 1.0) , 1/(sqrt(lum_scaled*lum_scaled*extra_power_1) ) );
+lines = pow(clamp(lines, SCANLINE_DARK * 2.0, 1.0) , 1/(sqrt(lum_scaled*lum_scaled*extra_power_1) ) );
 
 //lines = pow(clamp(lines + 0.05, 0.0,1.0) , 1/(sqrt(lum_scaled*lum_scaled*extra_power_1) ) ) * extra_power_1/2.0;
 
@@ -719,10 +712,12 @@ vec3 compose_bezel_over(vec3 full_viewport) {
     
 
     
-    vec2 coords_for_mirror = coords_for_bezel;
+
     //No need to draw anything outside this:
     if (coords_for_bezel.x < 0  || coords_for_bezel.y < 0 || coords_for_bezel.x > 1.0 || coords_for_bezel.y > 1.0) return full_viewport;
 
+    vec2 coords_for_mirror = coords_for_bezel;
+    
     //Main lut:
     vec4 bezel;
     #ifdef STATIC_BEZEL_USE_MIPMAP
@@ -749,27 +744,30 @@ vec3 compose_bezel_over(vec3 full_viewport) {
     //This is the reflection to be composed over the bezel);
     vec3 pixel_mirrored = texture(reflected_blurred_pass2,
                           coords_for_mirror + random( min(global.FinalViewportSize.z,global.FinalViewportSize.w)*1.5, vTexCoord ) ).rgb;
-
+//return pixel_mirrored;
     //Take the reflection modifier from the texture blue component into account; it is/may be used to lower the reflection in the corners.
         //float reflection = (reflection_shade * 1.4 -  0.4)  * bezel.b ;
         //reflection = clamp (reflection, 0.0, 1.0);
         float reflection = bezel.b;
-
-        vec3 bezel_out = bezel_colored + (pixel_mirrored * reflection * 0.5) ;
-
-    //Mix a bit of ambient light over the bezel
-        vec4 pixel_avglum = texture(avglum_pass,vOutputCoord);
-        //bezel_out = bezel_out + (pixel_avglum.rgb * 0.05);
-        vec3 pixel_ambilight = texture(ambi_temporal_pass, vOutputCoord).rgb * DO_AMBILIGHT + global_noise;
+        //return vec3(reflection);
+        pixel_mirrored = pixel_mirrored * reflection * BEZEL_REFL_STRENGTH;
+        //return pixel_mirrored;
+        vec3 bezel_out = bezel_colored + pixel_mirrored;
+        
+        //Mix ambient light over bezel? (branching this is worse)     
+        vec3 ambitemporalpass = texture(ambi_temporal_pass, vOutputCoord).rgb;
+        ambitemporalpass = max(ambitemporalpass, 0.0); //<-- this to avoid undefined results
+        vec3 pixel_ambilight = DO_AMBILIGHT * (ambitemporalpass + global_noise);
         bezel_out = bezel_out + pixel_ambilight * AMBI_OVER_BEZEL;
-
-    //We use the green component to express Hardness/Specularity; there the reflection will be completely diffused.
-    //For the task, we use a mipmap whit adeguate precision.
+        
+        //We use the green component to express Hardness/Specularity; there the reflection will be completely diffused.
+        //For the task, we use a mipmap whit adeguate precision.
         float lut_hardness = bezel.g;
         if (lut_hardness > 0.0) {
+            vec4 pixel_avglum = texture(avglum_pass,vOutputCoord);
             bezel_out = bezel_out + ( ( pixel_avglum.rgb + pixel_avglum.a*0.5)       * lut_hardness/3.5);
         }
-
+        
     return mix(full_viewport, bezel_out, bezel.a);
 }
 
@@ -797,34 +795,25 @@ vec4 pixel_inner_frame(vec2 coords, bool bBorder_needed) {
 
     //vignette and spot
         if (DO_VIGNETTE + DO_SPOT >0.0) {
-            float in_aspect = get_in_aspect();
+            //float in_aspect = get_in_aspect();
 
             if (DO_VIGNETTE == 1.0) {
-                    //float dist = length(vec2((coords.x-0.5)*in_aspect,coords.y-0.5));
-                    //float vignette = smoothstep(V_SIZE,0.0,dist)*V_POWER;                
-                    float vignette = vV_POWER * (vV_SIZE + 16.0* coords.x*coords.y*(1.0-coords.x)*(1.0-coords.y));
-                    vignette = min(vignette,99999.0); //<--- big wtf here, why is this needed? 
-                    //...see: https://github.com/kokoko3k/koko-aio-slang/issues/3
-                    if (V_BYPASS < 1.0) 
-                        pixel_out = vignette * clamp(pixel_out,0.0,1.0);
-                            else
-                        pixel_out = vec3(vignette);
-                
+                float dist = length(vec2((coords.x-0.5)*vIn_aspect,coords.y-0.5));
+                float vignette = smoothstep(V_SIZE,0.0,dist)*V_POWER;                
+                //float vignette = vV_POWER * (vV_SIZE + 16.0* coords.x*coords.y*(1.0-coords.x)*(1.0-coords.y));
+                //vignette = min(vignette,99999.0); //<--- big wtf here, why is this needed? 
+                ////...see: https://github.com/kokoko3k/koko-aio-slang/issues/3
+                pixel_out = pixel_out * vignette;
             }
 
             if (DO_SPOT == 1.0) {
-
-                    //float dist = length(vec2((coords.x-0.5)*in_aspect,coords.y-0.5)+spot_offset);
-                    //float spot = smoothstep(S_SIZE,0.0,dist)*S_POWER;
-
-                    vec2 scoords = clamp(coords + spot_offset, 0.0,1.0);
-                    float spot = vS_POWER * (vS_SIZE + 16.0*scoords.x*scoords.y*(1.0-scoords.x)*(1.0-scoords.y));
-
-                if (S_BYPASS < 1.0) pixel_out = max(spot,0.0) + pixel_out;
-                    else
-                pixel_out = vec3(spot);
+                float dist = length(vec2((coords.x-0.5)*vIn_aspect,coords.y-0.5)+spot_offset);
+                float spot = smoothstep(S_SIZE,0.0,dist)*S_POWER;
+                //vec2 scoords = clamp(coords + spot_offset, 0.0,1.0);
+                //float spot = vS_POWER * (vS_SIZE + 16.0*scoords.x*scoords.y*(1.0-scoords.x)*(1.0-scoords.y));
+                pixel_out = pixel_out + spot;
             }
-            pixel_out += global_noise;
+            //pixel_out += global_noise;
         }
 
     //smooth border (edge)
@@ -882,24 +871,28 @@ vec4 main_wrap(vec2 coords){
 void main() {
     
     vec2 coords = vTexCoord;
+
     //Luminosity dependant zoom
     if (DO_DYNZOOM == 1.0) {
         //float zoomin = 1.0 + (texture(bloom_pass_final, coords   ).a/ DYNZOOM_FACTOR * 80.0); <<-- funny.
-        float zoomin = 1.0 + (texture(avglum_pass, vec2(0.75,0.75)    ).a/ DYNZOOM_FACTOR);
-        coords = zoom(coords, zoomin);
+        //float dynzoom = 1.0 + (texture(avglum_pass, vec2(0.75,0.75)    ).a/ DYNZOOM_FACTOR);
+        float dynzoom = get_dyn_zoom(avglum_pass);
+        coords = zoom(coords, dynzoom);
+    }
+
+    //Scale coords according to bezel settings?
+    if (DO_BEZEL == 1.0) {
+        coords = zoomout_coords(coords, -BEZEL_INNER_ZOOM , 1.0);
+        coords = clamp(coords, 0.0,1.0);
     }
     
     //Curvature
     if (DO_CURVATURE == 1.0) {
         if ((GEOM_WARP_X > 0.0) || (GEOM_WARP_Y > 0.0))
             coords = Warp_fast(coords, vWarp_vexp, vWarp_arg2);
+            
     }
-
-    //Scale coords according to bezel settings?
-    if (DO_BEZEL == 1.0) {
-        coords = zoomout_coords(coords, -BEZEL_INNER_ZOOM , 1.0);
-    }
-
+     
     //"Just" handle inner and outer frame here:
     vec4 pixel_out = main_wrap(coords);
 
@@ -908,6 +901,8 @@ void main() {
     pixel_out += vec4(pixel_backdrop_image(), 1.0);
 #endif
 
+
+    
     //Draw bezel
     if (DO_BEZEL == 1.0) {
         pixel_out = vec4(compose_bezel_over(pixel_out.rgb),1.0);
@@ -925,7 +920,11 @@ void main() {
         //split screen
         //if (vTexCoord.y < 0.5) pixel_out = texture(first_pass,vTexCoord);
         //pixel_out = texture(avglum_pass,vTexCoord);
-    //pixel_out = texture(ambi_temporal_pass, vOutputCoord);
+
+    //vec4 pixel_mirrored = texture(reflected_blurred_pass2,vTexCoord);
+    //pixel_out = pixel_mirrored;
+    
+    
     FragColor = pixel_out;
     
     //FragColor = vec4(blur_shade(vTexCoord) );

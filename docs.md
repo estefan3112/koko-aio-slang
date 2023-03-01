@@ -35,11 +35,15 @@
     
     Input signal strength:
         The input signal gain
-    Sharpness (horizontal, vertical):
-        How much the glow will "spread".
-        When pushed to its maximum value, no blurring will occour.
-    Gamma:
+    Input gamma:
         Controls how much the signal has to be bright to produce the glow.
+    Glow spread amount:
+        The higher, the more the bright colors will smoothly expand.
+        It emulates the natural antialiasing you see on CRTs on bright areas.
+    Sharpness (horizontal, vertical):
+        The lower, the blurrier the image.
+        When set to zero, his value is handled using "Glow spread amount"
+        When pushed to its maximum value, no blurring will occour.
     Glow / blur bias:
         Higher negative values -> more glow : brighter colors expands over darker ones.
         Higher positive values -> means blur: all the colors are blurred.
@@ -165,14 +169,13 @@
         Handy to simulate well defined "Aura" effects.
     Power multiplier:
         Just apply a gain to the final bloom.
-    Modulate: Temporal eye exposure adaption strength
+    Modulate: Local exposure eye adaption strength
         Simulate the process through which the pupil adapt itself to different
         light conditions.
-    Modulate: Modulate: Eye temporal adaption strength
+    Modulate: Strength on bright areas (0 = aura)
         Since the light produced by the bloom effect is added to the underlying
-        image, it can produce burn effects on the already bright areas.
+        image, it can produce clipping effects on the already bright areas.
         This is actually an hack that will avoid to bloom them.
-        Don't use too low values.
     Bypass/Solo:
         See how the bloomed image looks alone.
         Use 1.0 to see naked bloom without any modulation applied
@@ -208,10 +211,8 @@
         Allows to shrink or expand the monitor frame to fit the game content.
     Image Border:
         Draws a black border around the game content.
-    Reflections zoom:
-        "Zoom" the reflections if they don't match the content.
-    Reflections blur size
-        Modulates the shade between sharp reflection and blurred reflection
+    Sharp reflections
+        Modulates from totally blurred to totally sharp reflection appearance.
 
 **Global shift/zoom image:**
     Zoom and shift everything on screen, but background pictures.

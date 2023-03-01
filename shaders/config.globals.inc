@@ -95,7 +95,7 @@
 
 #define DO_IN_GLOW		global.DO_IN_GLOW
 	#define IN_GLOW_BIAS		global.IN_GLOW_BIAS
-	#define IN_GLOW_AMOUNT		global.IN_GLOW_AMOUNT
+	#define IN_GLOW_SPREAD		global.IN_GLOW_SPREAD
 	#define IN_GLOW_W		global.IN_GLOW_W
 	#define IN_GLOW_H		global.IN_GLOW_H
 	#define IN_GLOW_POWER		global.IN_GLOW_POWER
@@ -143,6 +143,7 @@
 #define DO_BLOOM		params.DO_BLOOM
 	#define BLOOM_MIX		global.BLOOM_MIX
 	#define BLOOM_EYE_ADPT_SRT	global.BLOOM_EYE_ADPT_SRT
+	#define BLOOM_EYE_INERTIA	global.BLOOM_EYE_INERTIA
 	#define BLOOM_QUALITY		params.BLOOM_QUALITY
 	#define BLOOM_SIZE		global.BLOOM_SIZE
 	#define BLOOM_GAMMA		global.BLOOM_GAMMA
@@ -169,13 +170,12 @@
 	#define BEZEL_INNER_ZOOM	global.BEZEL_INNER_ZOOM
 	#define BEZEL_FRAME_ZOOM	global.BEZEL_FRAME_ZOOM
 	#define BEZEL_IMAGE_BORDER	global.BEZEL_IMAGE_BORDER
-	#define BEZEL_REFL_ZOOM		global.BEZEL_REFL_ZOOM
 	#define BEZEL_USE_STRAIGHT	global.BEZEL_USE_STRAIGHT
 	#define BEZEL_RFL_BLR_SHD	global.BEZEL_RFL_BLR_SHD
-
+	#define BEZEL_RFL_OFFSET	global.BEZEL_RFL_OFFSET
+	#define BEZEL_REFL_ZOOM		global.BEZEL_REFL_ZOOM
 
 #define DO_SPOT		global.DO_SPOT
-	#define S_BYPASS	global.S_BYPASS
 	#define S_POSITION	global.S_POSITION
 	#define S_SIZE		global.S_SIZE
 	#define S_POWER		global.S_POWER
@@ -183,7 +183,6 @@
 
 
 #define DO_VIGNETTE	global.DO_VIGNETTE
-	#define V_BYPASS	global.V_BYPASS
 	#define V_SIZE		global.V_SIZE
 	#define V_POWER		global.V_POWER
 

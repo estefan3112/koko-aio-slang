@@ -139,7 +139,7 @@ float ambi_step(float start, float end, float mystep) {
 }
 
 vec3 ambi_step_rgb(vec3 s,vec3 d, vec3 mystep){
-    //step fade (f) rom s to d
+    //step fade from s to d
     return vec3 ( ambi_step(s.r, d.r, mystep.r),
                   ambi_step(s.g, d.g, mystep.g),
                   ambi_step(s.b, d.b, mystep.b)
@@ -179,10 +179,14 @@ vec4 pixel_ambilight() {
 #define FRAME_DIVIDER 2.0
 
 void main() {    
-    if (DO_AMBILIGHT != 1.0) return; 
+    if (DO_AMBILIGHT != 1.0)
+        return; 
+
     
     if ( mod(params.FrameCount,FRAME_DIVIDER) != 0.0) {
-        FragColor = texture(PastSampler, vTexCoord);
+        vec4 past_sampler = texture(PastSampler, vTexCoord);
+        past_sampler = max(past_sampler, 0.0); // <- Sanitize input to avoid glitches when enabling the option runtime.
+        FragColor = past_sampler;
         return;
     }
     

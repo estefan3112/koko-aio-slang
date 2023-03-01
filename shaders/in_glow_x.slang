@@ -10,7 +10,17 @@ layout(location = 1) out float vIN_GLOW_W;
 void main() {
    gl_Position = global.MVP * Position;
    vTexCoord = TexCoord ;  
-   vIN_GLOW_W = IN_GLOW_W / NEW_SCALEMOD_X; //Make it resolution independent.
+
+   float IN_GLOW_W_ADAPTED = IN_GLOW_W;
+   
+   //Auto calc glow sharpness via IN_GLOW_SPREAD
+   if (IN_GLOW_W <= 0.00001)
+      IN_GLOW_W_ADAPTED= IN_GLOW_SPREAD * IN_GLOW_SHARPNESS_SPREAD_RATIO_W;
+
+   //don't allow lower values that look bad:
+   IN_GLOW_W_ADAPTED = max(IN_GLOW_W_ADAPTED, MIN_IN_GLOW_SHARP);
+
+   vIN_GLOW_W = IN_GLOW_W_ADAPTED / NEW_SCALEMOD_X; //Make it resolution independent.
 }
 
 
@@ -28,9 +38,8 @@ layout(set = 0, binding = 5) uniform sampler2D shift_and_bleed_pass;
 void main() { 
    if (DO_IN_GLOW == 0.0) return;
    
-   //Pass the right texture unchanged for tighter blurs:
+   //Don't do anything if IN_GLOW_W and IN_GLOW_H are over the upper limit
    if (IN_GLOW_W >= GLOW_SHARP_MAX && IN_GLOW_H >= GLOW_SHARP_MAX) {
-      FragColor = texture(shift_and_bleed_pass, vTexCoord);
       return;
    }
    

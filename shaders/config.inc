@@ -5,21 +5,31 @@
 	//Consider content interlaced if lines are more than this
 #define MIN_LINES_INTERLACED 380
 
-	//Sort of dithering used in vignette, spot, backlight leds
+	//Sort of dithering/debanding used in vignette, spot, backlight leds
 #define NOISEPOWER 1/192.0
 //((params.OutputSize.z)*3)
 
-	//Bezel border size in relation to the game frame
-	//Use the lowest possible value for best performance
-	//It is also used to compute wrap/repeated coordinates.
-#define BEZEL_BORDER_SIZE 0.175
+	//If you change the default bezel texture, you may have to edit this to
+	//align bezel reflections and game content. (it seems to depend on the curvature amount)
+#define BEZEL_BORDER_SIZE 0.197
 
-	//The maximum radius of the reflection blur.
-#define BEZEL_REFL_BLUR_MAX 3.3
+	//The maximum radius of the reflection blur. //3.3..4.0 max
+#define BEZEL_REFL_BLUR_MAX 4.0
+
+	//Bezel reflection warping (curvature) may need a correction factor.
+	//Modify this if bezel reflections does not follow the border
+#define BEZEL_REFL_WARP_CORRECTION_FACTOR 1.9
+
+	// Define the size and the smoothness of the rectangle 
+	// in the bezel corners that will hide and blur the reflections 
+#define BEZEL_REFL_CORNER_BLANK_SIZE 0.0685
+#define BEZEL_REFL_CORNER_BLANK_SHADE 0.05  // keep it > 0.0
+
+	//The reflection intensity
+#define BEZEL_REFL_STRENGTH 0.5
 
 	// 0.0-1.0: sensitivity to scene change (ambilike stuff), 0.0 changes more
 #define AMBI_SCENE_CHG_THRSHLD 0.07  
-	
 	// The following will allow to sample at reduced interval
 	// The scene change detection logic will take advantage of it
 	// So that quick fades will still be treated as scene changes
@@ -38,6 +48,11 @@
 	//of IN_GLOW_W/H, HALO_W/H
 #define GLOW_SHARP_MAX 7	        
 
+	//Minumum glow sharpness
+	//I set this to allow negative values for glow sharpness
+	//that will calc their values from light spread amount
+#define MIN_IN_GLOW_SHARP 0.45
+
 	//Setting glow to blur bias parameter to this
 	//will skip the glow/blur mix codem and just return
 	//the blurred image
@@ -51,6 +66,11 @@
 #define NEW_SCALEMOD_X (params.OriginalSize.x/360.0 / 2.2)
 #define NEW_SCALEMOD_Y (params.OriginalSize.y/270.0 / 2.2)
 
+   // When Glow sharpness is controlled by light spread amount
+   // The following ratio is used, the lower, the blurrier:
+#define IN_GLOW_SHARPNESS_SPREAD_RATIO_W 0.8334
+#define IN_GLOW_SHARPNESS_SPREAD_RATIO_H 2.0
+
 
 	//Support for backdrops has to be enable by uncommenting:
 //#define STATIC_SUPPORT_BACKDROP 1.0
@@ -58,8 +78,8 @@
 #define BACKDROP_OFFY 0.0
 #define BACKDROP_ZOOM 1.0
 
-	//Workaround for https://github.com/kokoko3k/koko-aio-slang/issues/3
-//#define MAC_VIGNETTE_CURVATURE_WORKAROUND 1.0
+
+
 
 
 #define eps 1e-5
@@ -113,7 +133,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float DO_CCORRECTION;
 	float DO_ALT_BLANK;
 	float IN_GLOW_BIAS ;
-	float IN_GLOW_AMOUNT ;
+	float IN_GLOW_SPREAD ;
 	float SCANLINES_BLEEDING ;
 	float IN_GLOW_W;
 	float IN_GLOW_H;
@@ -121,6 +141,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float IN_GLOW_GAMMA;
 	float BLOOM_MIX;
 	float BLOOM_EYE_ADPT_SRT;
+	float BLOOM_EYE_INERTIA;
  	float BLOOM_SIZE;
 	float BLOOM_GAMMA;
 	float BLOOM_BYPASS;
@@ -175,21 +196,20 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float BEZEL_CON;
 	float BEZEL_INNER_ZOOM;
 	float BEZEL_IMAGE_BORDER;
-	float BEZEL_REFL_ZOOM;
 	float BEZEL_FRAME_ZOOM;
 	float BEZEL_USE_STRAIGHT;
 	float BEZEL_RFL_BLR_SHD;
+	float BEZEL_RFL_OFFSET;
+	float BEZEL_REFL_ZOOM;
 
 	float DO_SPOT;
 	float S_POSITION; 
 	float S_SIZE;
 	float S_POWER;
-	float S_BYPASS;
 
 	float DO_VIGNETTE;
 	float V_SIZE;
 	float V_POWER;
-	float V_BYPASS;
 
 	float DO_DYNZOOM;
 	float DYNZOOM_FACTOR;
@@ -277,10 +297,10 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 //Offset RGB
 #pragma parameter DO_SHIFT_RGB       "★ RGB deconvergence enable? (bad with FXAA) ==>"	0.0	 0.0 1.0 1.0
-#pragma parameter OFFSET_STRENGTH "        Strength"			0.3 	 0.0 1.0 0.05
+#pragma parameter OFFSET_STRENGTH "        Strength"			0.6 	 0.0 1.0 0.05
 #pragma parameter SHIFT_R         "        Red offset"			-40.0 	-210.0 189.0 1
-#pragma parameter SHIFT_G         "        Green offset"		40.0 	-210.0 189.0 1
-#pragma parameter SHIFT_B         "        Blue offset"			3.0 	-210.0 189.0 1
+#pragma parameter SHIFT_G         "        Green offset"		2.0 	-210.0 189.0 1
+#pragma parameter SHIFT_B         "        Blue offset"			40.0 	-210.0 189.0 1
 #pragma parameter BLANK6 " " 0.0 0.0 1.0 1.0
 
 
@@ -288,10 +308,10 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 // Input Blur / light glowing
 #pragma parameter DO_IN_GLOW               "★ Glow/Blur enable? ==>"	 					0.0	0.0 1.0 1.0
 #pragma parameter IN_GLOW_POWER            "        Input signal strength"					0.45 	0.0 5.0 0.05
-#pragma parameter IN_GLOW_W                "        Sharpness, horizontal"					2.5	0.35 7.0 0.05
-#pragma parameter IN_GLOW_H                "        Sharpness, vertical"					2.5	0.35 7.0 0.05
-#pragma parameter IN_GLOW_GAMMA            "        Gamma, the higher, the less the glow on dark colors"	1.0 	1.0 10.0 0.1
-#pragma parameter IN_GLOW_AMOUNT           "        Light spread amount"					0.6 	0.0 4.0 0.05
+#pragma parameter IN_GLOW_GAMMA            "        Input gamma, the higher, the less glow on dark colors"	1.0 	1.0 10.0 0.1
+#pragma parameter IN_GLOW_SPREAD           "        Glow spread amount"					0.6 	0.0 4.0 0.05
+#pragma parameter IN_GLOW_W                "        Sharpness X (0 = controlled by glow spread)"		2.5	0.0 7.0 0.05
+#pragma parameter IN_GLOW_H                "        Sharpness Y (0 = controlled by glow spread)"		2.5	0.0 7.0 0.05
 #pragma parameter IN_GLOW_BIAS             "        Glow to blur bias"					    	1.0     0.0 1.0 0.05 
 #pragma parameter BLANK7 " " 0.0 0.0 1.0 1.0
 
@@ -342,19 +362,19 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter SCANLINE_SM_VOFFSET      "           . Offset (type 1 only)"					45.0 	0.0 158.0 1.0
 #pragma parameter BLANK12 " " 0.0 0.0 1.0 1.0
 
-
-
+//p1.20,r2.0
 // Bloom
-#pragma parameter DO_BLOOM           "★ Bloom enable? ==>" 					0.0  0.0  1.0  1.0
-#pragma parameter BLOOM_MIX          "        Final mix, (0.0=off)"				0.2 0.0 1.0  0.01
-#pragma parameter BLOOM_SIZE         "        Radius"						2.0  0.25 30.0 0.25
-#pragma parameter BLOOM_QUALITY      "        Quality: more is better but slower"		1.0  1.0 8.0 1.0
-#pragma parameter BLOOM_GAMMA        "        Gamma in (threshold)"				8.0  1.0 10.0 0.5
-#pragma parameter BLOOM_GAMMA_OUT    "        Gamma out (contour smoothness)"			0.8  0.1 10.0 0.1
-#pragma parameter BLOOM_POWER        "        Power multiplier"					1.4  1.0 20.0 0.05
-#pragma parameter BLOOM_EYE_ADPT_SRT "        Modulate: temporal eye exposure adaption strength"	1.1   0.0 10.0 0.05
+#pragma parameter DO_BLOOM           "★ Bloom enable? ==>" 						0.0  0.0  1.0  1.0
+#pragma parameter BLOOM_MIX          "        Final mix, (0.0=off)"					0.45 0.0 1.0  0.01
+#pragma parameter BLOOM_SIZE         "        Radius"							4.0  0.25 30.0 0.25
+#pragma parameter BLOOM_QUALITY      "        Quality: more is better but slower"			1.0  1.0 8.0 1.0
+#pragma parameter BLOOM_GAMMA        "        Gamma in (threshold)"					8.0  1.0 10.0 0.5
+#pragma parameter BLOOM_GAMMA_OUT    "        Gamma out (contour smoothness)"				1.0  0.1 10.0 0.1
+#pragma parameter BLOOM_POWER        "        Power multiplier"						1.20  1.0 20.0 0.05  
+#pragma parameter BLOOM_EYE_ADPT_SRT "        Modulate: Local exposure eye adaption strength"		0.7   0.0 10.0 0.05
+#pragma parameter BLOOM_EYE_INERTIA  "        Modulate: Time before eye adaption starts"		1500  10.0 10000 50.0
 #pragma parameter BLOOM_OVER_WHITE   "        Modulate: Strength on bright areas (0 = aura)"		0.5  0.0 1.0  0.05
-#pragma parameter BLOOM_BYPASS       "        Bypass/Solo (1=Unmodulated, 2=Modulated)"	0.0  0.0 2.0  1.0
+#pragma parameter BLOOM_BYPASS       "        Bypass/Solo (1=Unmodulated, 2=Modulated)"			0.0  0.0 2.0  1.0
 #pragma parameter BLANK13 " " 0.0 0.0 1.0 1.0
 
 
@@ -379,8 +399,10 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter BEZEL_INNER_ZOOM   "        Image zoom"		-0.18   -1.5 0.5 0.01
 #pragma parameter BEZEL_FRAME_ZOOM   "        Frame zoom"		0.0   -1.5 0.5 0.01
 #pragma parameter BEZEL_IMAGE_BORDER "        Image border"		1.01   1.0 1.2 0.01
-#pragma parameter BEZEL_REFL_ZOOM    "        Reflections zoom"		0.955   0.0 2.0 0.005
-#pragma parameter BEZEL_RFL_BLR_SHD  "        Reflections blur size"	25.0    0.0 100.0 1.0
+#pragma parameter BEZEL_RFL_BLR_SHD  "        Sharp reflections"	0.0    -1.0 1.0 0.1
+#pragma parameter BEZEL_RFL_OFFSET   "        Align reflections: offset"	0.003    -0.01 0.01 0.001
+#pragma parameter BEZEL_REFL_ZOOM   "        Align reflections: zoom"		0.98    0.8 1.2 0.001
+
 #pragma parameter BLANK15 " " 0.0 0.0 1.0 1.0
 
 
@@ -402,7 +424,6 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 //Emulates leds under the monitor frame that slowly reacts to image contents
 #pragma parameter DO_AMBILIGHT	  "★ Ambient light leds enable? ==> "					1.0  0.0  1.0     1.0
 #pragma parameter LABEL_WARNING3  "    ⚠ RetroArch aspect needs to be set to Full! ⚠"			1.0  1.0  1.0     1.0
-#pragma parameter LABEL_WARNING4  "    ⚠ Resize the window once if you see glitches! ⚠"			1.0  1.0  1.0     1.0
 #pragma parameter AMBI_STEPS	  "        Slowness"							60.0 5.0  1000.0  5.0
 #pragma parameter AMBI_FALLOFF    "        Light Falloff"						0.7  0.1  3.0     0.01
 #pragma parameter AMBI_POWER      "        Led power"							1.5  1.0  7.0     0.05
@@ -415,22 +436,20 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 //Modulate the image zooming depending on the image luminosity.
 //You can lower the effect power through the DYNZOOM_FACTOR parameter.
 #pragma parameter DO_DYNZOOM	     "★ Luminosity dependant zoom enable? ==>"		1.0   0.0   1.0  1.0
-#pragma parameter DYNZOOM_FACTOR     "        Narrowness"				80.0  30.0  120.0 1.0
+#pragma parameter DYNZOOM_FACTOR     "        Narrowness"				80.0  15.0  120.0 0.5
 #pragma parameter BLANK18 " " 0.0 0.0 1.0 1.0
 
 
 
 //Vignette and spot
 #pragma parameter DO_VIGNETTE	"★ Vignette enable? ==>"	0.0  0.0  1.0  1.0
-#pragma parameter V_BYPASS	"        Bypass/Solo"	        0.0  0.0  1.0  1.0
 #pragma parameter V_SIZE	"        Size"			1.7  0.0  5.0  0.05
-#pragma parameter V_POWER	"        Power"			1.1  0.05 2.0  0.05
+#pragma parameter V_POWER	"        Power"			1.1  0.05 2.0  0.01
 
 #pragma parameter DO_SPOT	"★ Spot enable? ==>"		0.0   0.0   1.0 1.0
-#pragma parameter S_BYPASS	"        Bypass/Solo"	        0.0   0.0   1.0 1.0
 #pragma parameter S_POSITION 	"        Position"		0.0   -420.0 378.0 1
-#pragma parameter S_SIZE	"        Size"			0.4   0.0  1.0 0.01
-#pragma parameter S_POWER	"        Power" 		0.05  0.01  2.0 0.01
+#pragma parameter S_SIZE	"        Size"			0.4   0.0   1.0 0.01
+#pragma parameter S_POWER	"        Power" 		0.1   0.05  2.0 0.01
 #pragma parameter BLANK19 " " 0.0 0.0 1.0 1.0
 
 
@@ -454,8 +473,9 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 //Aspect Ratio
 #pragma parameter label_ar	 "★ Aspect Ratio "							0.0  0.0  1.0     1.0
-#pragma parameter ASPECT_X       "        Aspect Ratio Numerator (-x for a preset below)"   		0.0  -6.0 256. 1.0
+#pragma parameter ASPECT_X       "        Aspect Ratio Numerator (<=0 for a preset)"   		0.0  -6.0 256. 1.0
 #pragma parameter ASPECT_Y       "        Aspect Ratio Denominator"	  				3.0   0.0 256. 1.0
+#pragma parameter BLANK22 " " 0.0 0.0 1.0 1.0
 #pragma parameter label_aspect_presets "        Presets reference list:" 0.0 0.0 0.0 1.0
 #pragma parameter label_aspect_preset0 "          (0 =  MAME 1.33)" 0.0 0.0 0.0 1.0
 #pragma parameter label_aspect_preset1 "          (-1 = NTSC 1.5)" 0.0 0.0 0.0 1.0

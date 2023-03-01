@@ -152,8 +152,10 @@ float random(float power, vec2 seed) {
 		uv = uv * 2.0 - 1.0;
 		vec2 pow_exp = 1.0/(1.0+vec2(wx, wy) * 0.2 ) ;
 		float curvedCoordsDistance = length(uv);
+		vec2 pow_base = vec2(1.0-(curvedCoordsDistance/1.4142135623730950488016887242097));
+		pow_base = abs(pow_base); // <-- this way intel and nvidia (probably amd) acts the same.
 		uv /= curvedCoordsDistance;
-		uv *= (1.0-pow(vec2(1.0-(curvedCoordsDistance/1.4142135623730950488016887242097)),  pow_exp ));
+		uv *= (1.0-pow(pow_base,  pow_exp ));
 		uv /= (1.0-pow(vec2(0.29289321881345247559915563789515),  pow_exp ));
 		// Transform coordinates back to [0, 1]
 		return uv* 0.5 + 0.5;
@@ -167,8 +169,10 @@ float random(float power, vec2 seed) {
 		// Transform coordinates to range [-1, 1]
 		uv = uv * 2.0 - 1.0;
 		float curvedCoordsDistance = length(uv);
+		vec2 pow_base = vec2(1.0-(curvedCoordsDistance/1.4142));
+		pow_base = abs(pow_base); // <-- this way intel and nvidia (probably amd) acts the same.
 		uv /= curvedCoordsDistance;
-		uv *= 1.0-pow(vec2(1.0-(curvedCoordsDistance/1.4142)), v_exp );
+		uv *= 1.0-pow(pow_base, v_exp );
 		uv /= arg2;
 		// Transform coordinates back to [0, 1]
 		return uv * 0.5 + 0.5;
@@ -212,7 +216,7 @@ float random(float power, vec2 seed) {
 	}
 	#define is_useless(x) is_outer_frame(x)
 	bool is_outer_frame(vec4 pixel) {
-		return pixel.a == 0.0;
+		return pixel.a <= 0.004; // about 1/256
 		/*Check if a pixel is marked as border by comparing the value of its alpha channel
 		Tolerance is needed, because precision can be as low as 1/256; since I don't need
 		alpha channel, use an even large tolerance.
@@ -233,16 +237,14 @@ float random(float power, vec2 seed) {
 	}
 
 	float get_in_aspect() {
-			if (ASPECT_X ==  -1) return 1.5;   // ntsc
-			if (ASPECT_X ==  -2) return 1.25;  // pal
-			if (ASPECT_X ==  -3) return 1.143; // 8/7 snes
-			if (ASPECT_X ==  -4) return 1.428; // 10/7 megadrive
-			if (ASPECT_X ==  -5) return params.OriginalSize.x/params.OriginalSize.y; //uncorrected
-			if (ASPECT_X ==  -6) return 0.75;  // 3/4, pre-rotated (TATE) 1.33 games.
-			if (ASPECT_X == 0) {
-				return 1.3333333333333; //all mame games, not rotated
-			}
-			return ASPECT_X / ASPECT_Y ;
+		if (ASPECT_X ==  0) return 1.3333333333333; //all mame games, not rotated
+		if (ASPECT_X == -1) return 1.5;   // ntsc
+		if (ASPECT_X == -2) return 1.25;  // pal
+		if (ASPECT_X == -3) return 1.143; // 8/7 snes
+		if (ASPECT_X == -4) return 1.428; // 10/7 megadrive
+		if (ASPECT_X == -5) return params.OriginalSize.x/params.OriginalSize.y; //uncorrected
+		if (ASPECT_X == -6) return 0.75;  // 3/4, pre-rotated (TATE) 1.33 games.
+		return ASPECT_X / ASPECT_Y ;
 	}
 
 	vec2 get_scaled_coords_aspect(vec2 pTexCoord, vec4 destsize, float in_aspect , bool is_rotated){
@@ -273,17 +275,9 @@ float random(float power, vec2 seed) {
 		float offset_y = 0.0 ;
 		float in_aspect = get_in_aspect();
 		if (is_rotated) {
-			//I'm doing ping pong between th the following 2:
-			//FIXME: verify if it depends on destsize being outputsize or finalviewportsize!!
-			//scale_y = destsize.y/(destsize.x / in_aspect );
-			scale_y = destsize.x/(destsize.y / in_aspect );
-			
+			scale_y = destsize.x/(destsize.y / in_aspect );			
 			offset_y = (0.5 * scale_y ) - 0.5 ;
-			
-			
 		} else {
-			//scale_x = params.OutputSize.x/(params.OutputSize.y * in_aspect);
-			//scale_x = global.FinalViewportSize.x/(global.FinalViewportSize.y * in_aspect);
 			scale_x = destsize.x/(destsize.y * in_aspect);
 			offset_x = (0.5 * scale_x ) - 0.5 ;
 		}
@@ -425,3 +419,6 @@ float rgb_to_gray(vec3 rgb) {
 	}
 	*/
 
+float get_dyn_zoom(sampler2D tex) {
+	return 1.0 + (texture(tex, vec2(0.75,0.75)    ).a/ DYNZOOM_FACTOR) ;
+}
