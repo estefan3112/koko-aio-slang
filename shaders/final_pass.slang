@@ -103,6 +103,8 @@ layout(location = 0) out vec4 FragColor;
 
 #ifdef STATIC_SUPPORT_BACKDROP
     layout(set = 0, binding = 1) uniform sampler2D backdrop;
+        #else
+    layout(set = 0, binding = 1) uniform sampler2D first_pass;
 #endif
 layout(set = 0, binding = 2)  uniform sampler2D bloom_pass_final;
 layout(set = 0, binding = 3)  uniform sampler2D reflected_blurred_pass2;
@@ -311,8 +313,11 @@ float scanline_shape(vec2 coords, bool do_slotmask, float lum) {
     bool do_flicker = bool(vFlickeringScanlines);
 
     //...to scale scanline tickness:
-        //float lum_scaled = scale_to_range(lum,SCANLINE_MIN+eps,1.0);
-        float lum_scaled = scale_to_range(lum, SCANLINE_MIN, SCANLINE_MAX);
+    //float lum_scaled = scale_to_range(lum, SCANLINE_MIN, SCANLINE_MAX);
+    float lum_scaled = lum * SCANLINE_MAX; 
+          lum_scaled = clamp( lum_scaled, SCANLINE_MIN, SCANLINE_MAX );
+              
+        
 
      
     float angle_base = coords.y * pi * params.OriginalSize.y * period;// + vScanlinePhase;
@@ -530,8 +535,8 @@ vec4 pixel_main_pass(vec2 coords, bool bBorder_needed) {
             float lum = max(max(pixel_out.r, pixel_out.g), pixel_out.b);
             float scanline_shape = scanline_shape(coords, SCANLINE_SM_TYPE > 0.0, lum );
             
-            
             pixel_out = pixel_out * ( scanline_shape + ( pixel_bleed * SCANLINES_BLEEDING * ( 1 - scanline_shape ) ));
+                        
             //pixel_out *= scanline_shape;
 
     }
@@ -543,7 +548,7 @@ vec4 pixel_main_pass(vec2 coords, bool bBorder_needed) {
      }
      
     // Apply color correction (in this pass it is just the final output gamma)
-    if (DO_CCORRECTION == 1.0) pixel_out = pow(pixel_out,vec3(GAMMA_OUT));
+    if (DO_CCORRECTION == 1.0) pixel_out = pow(max(pixel_out, vec3(0.0)),vec3(GAMMA_OUT));
 
     //Out
     return vec4(pixel_out,1.0) ; //* border(border_coords);
