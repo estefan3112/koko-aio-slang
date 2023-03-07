@@ -16,17 +16,14 @@
 	//The maximum radius of the reflection blur. //3.3..4.0 max
 #define BEZEL_REFL_BLUR_MAX 4.0
 
-	//Bezel reflection warping (curvature) may need a correction factor.
-	//Modify this if bezel reflections does not follow the border
-#define BEZEL_REFL_WARP_CORRECTION_FACTOR 1.9
-
 	// Define the size and the smoothness of the rectangle 
 	// in the bezel corners that will hide and blur the reflections 
 #define BEZEL_REFL_CORNER_BLANK_SIZE 0.0685
 #define BEZEL_REFL_CORNER_BLANK_SHADE 0.05  // keep it > 0.0
 
-	//The reflection intensity
-#define BEZEL_REFL_STRENGTH 0.5
+	//Bezel reflection warping (curvature) may need a correction factor.
+	//Modify this if bezel reflections does not follow the border
+#define BEZEL_REFL_WARP_CORRECTION_FACTOR 1.9
 
 	// 0.0-1.0: sensitivity to scene change (ambilike stuff), 0.0 changes more
 #define AMBI_SCENE_CHG_THRSHLD 0.07  
@@ -51,7 +48,7 @@
 	//Minumum glow sharpness
 	//I set this to allow negative values for glow sharpness
 	//that will calc their values from light spread amount
-#define MIN_IN_GLOW_SHARP 0.45
+#define MIN_IN_GLOW_SHARP 0.5
 
 	//Setting glow to blur bias parameter to this
 	//will skip the glow/blur mix codem and just return
@@ -141,6 +138,8 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float IN_GLOW_POWER;
 	float IN_GLOW_GAMMA;
 	float IN_GLOW_NTSC_ARTF_MULT;
+	float IN_GLOW_NTSC_ARTF_TRSH;
+	float IN_GLOW_SHOW_ARTF_MASK;
 	float BLOOM_MIX;
 	float BLOOM_EYE_ADPT_SRT;
 	float BLOOM_EYE_INERTIA;
@@ -203,6 +202,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float BEZEL_RFL_BLR_SHD;
 	float BEZEL_RFL_OFFSET;
 	float BEZEL_REFL_ZOOM;
+	float BEZEL_REFL_STRENGTH;
 
 	float DO_SPOT;
 	float S_POSITION; 
@@ -271,7 +271,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter DO_NTSC_ARTIFACTS "★ CVBS: NTSC color artifacts enable? ==>"	0.0 	0.0 1.0 1.0
 #pragma parameter NTSC_FILTER_WIDTH "        Filter width"			17.0	5.0 21.0 4.0
 #pragma parameter NTSC_FILTER_SCF   "        Subcarrier Frequency"		5.30	0.0 10.0 0.01
-#pragma parameter NTSC_FILTER_FC    "        Frequency cutoff"			2.5	0.1 10.0 0.1
+#pragma parameter NTSC_FILTER_FC    "        Frequency cutoff"			2.5	0.0 10.0 0.1
 #pragma parameter NTSC_PHASE_SHIFT  "        Phase shift"			0.0	0.0 1.0  1.0
 #pragma parameter NTSC_MIX          "        Strength"				0.5	0.0 3.0  0.1
 #pragma parameter BLANK3 " " 0.0 0.0 1.0 1.0
@@ -308,13 +308,15 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 // Input Blur / light glowing
 #pragma parameter DO_IN_GLOW               "★ Glow/Blur enable? ==>"	 					0.0	0.0 1.0 1.0
-#pragma parameter IN_GLOW_POWER            "        Input signal strength"					0.45 	0.0 5.0 0.05
+#pragma parameter IN_GLOW_POWER            "        Input signal strength"					1.0 	0.0 5.0 0.05
 #pragma parameter IN_GLOW_GAMMA            "        Input gamma, the higher, the less glow on dark colors"	1.0 	1.0 10.0 0.1
 #pragma parameter IN_GLOW_SPREAD           "        Glow spread amount"						0.6 	0.0 4.0 0.05
 #pragma parameter IN_GLOW_W                "        Sharpness X (0 = controlled by glow spread)"		2.5	0.0 7.0 0.05
 #pragma parameter IN_GLOW_H                "        Sharpness Y (0 = controlled by glow spread)"		2.5	0.0 7.0 0.05
 #pragma parameter IN_GLOW_BIAS             "        Glow to blur bias"					    	1.0     0.0 1.0 0.05
-#pragma parameter IN_GLOW_NTSC_ARTF_MULT   "        Blur NTSC artifacts more"					0.0	0.0 3.0 0.1
+#pragma parameter IN_GLOW_NTSC_ARTF_MULT   "        Blur NTSC artifacts more"					0.0	0.0 8.0 0.1
+#pragma parameter IN_GLOW_NTSC_ARTF_TRSH   "        Blur less NTSC artifacts (min treshold)"			1.0	0.0 1.0 0.05
+#pragma parameter IN_GLOW_SHOW_ARTF_MASK   "        Show NTSC artifacts mask (debug)"				0.0	0.0 1.0 1.0
 #pragma parameter BLANK7 " " 0.0 0.0 1.0 1.0
 
 
@@ -385,25 +387,27 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter DO_CURVATURE	     "★ Curvature enable? ==>"			0.0   0.0 1.0 1.0
 #pragma parameter GEOM_WARP_X        "        Warp X"				0.3  0.0 6.0 0.025
 #pragma parameter GEOM_WARP_Y        "        Warp Y"				0.0   0.0 6.0 0.025
-#pragma parameter GEOM_CORNER_SIZE   "        Corner radius"			0.01  0.01 0.1 0.005
+#pragma parameter GEOM_CORNER_SIZE   "        Corner radius"			0.005  0.005 0.1 0.001
 #pragma parameter GEOM_CORNER_SMOOTH "        Corner sharpness"			350.0 15.0 1000.0 1.0
 #pragma parameter BLANK14 " " 0.0 0.0 1.0 1.0
 
 
 
 //Bezel related
-#pragma parameter DO_BEZEL	     "★ Bezel enable? ==>"		0.0   0.0 1.0 1.0
-#pragma parameter BEZEL_USE_STRAIGHT "        Straight"			0.0	0.0 1.0  1.0 
-#pragma parameter BEZEL_R            "        Color: Red"		-0.3   -0.5 0.5  0.01
-#pragma parameter BEZEL_G            "        Color: Green"		-0.3   -0.5 0.5  0.01
-#pragma parameter BEZEL_B            "        Color: Blue"		-0.3   -0.5 0.5  0.01
-#pragma parameter BEZEL_CON          "        Contrast"			1.3   0.0  10.0 0.01
-#pragma parameter BEZEL_INNER_ZOOM   "        Image zoom"		-0.18   -1.5 0.5 0.005
-#pragma parameter BEZEL_FRAME_ZOOM   "        Frame zoom"		0.0   -1.5 0.5 0.005
-#pragma parameter BEZEL_IMAGE_BORDER "        Image border"		1.01   1.0 1.2 0.01
-#pragma parameter BEZEL_RFL_BLR_SHD  "        Sharp reflections"	0.0    -1.0 1.0 0.1
-#pragma parameter BEZEL_RFL_OFFSET   "        Align reflections: offset"	0.003    -0.01 0.01 0.001
-#pragma parameter BEZEL_REFL_ZOOM   "        Align reflections: zoom"		0.98    0.8 1.2 0.001
+#pragma parameter DO_BEZEL	      "★ Bezel enable? ==>"		0.0   0.0 1.0 1.0
+#pragma parameter BEZEL_USE_STRAIGHT  "        Straight"			0.0	0.0 1.0  1.0 
+#pragma parameter BEZEL_R             "        Color: Red"		-0.3   -0.5 0.5  0.01
+#pragma parameter BEZEL_G             "        Color: Green"		-0.3   -0.5 0.5  0.01
+#pragma parameter BEZEL_B             "        Color: Blue"		-0.3   -0.5 0.5  0.01
+#pragma parameter BEZEL_CON           "        Contrast"			1.3   0.0  10.0 0.01
+#pragma parameter BEZEL_INNER_ZOOM    "        Image zoom"		-0.18   -1.5 0.5 0.005
+#pragma parameter BEZEL_FRAME_ZOOM    "        Frame zoom"		0.0   -1.5 0.5 0.005
+#pragma parameter BEZEL_IMAGE_BORDER  "        Image border"		1.01   1.0 1.2 0.01
+#pragma parameter BEZEL_REFL_STRENGTH "        Reflection strength"	0.5    0.0 1.0 0.01
+#pragma parameter BEZEL_RFL_BLR_SHD   "        Sharp reflections"	0.0    -1.0 1.0 0.1
+#pragma parameter BEZEL_RFL_OFFSET    "        Align reflections: offset"	0.003    -0.01 0.01 0.001
+#pragma parameter BEZEL_REFL_ZOOM     "        Align reflections: zoom"		0.98    0.8 1.2 0.001
+
 
 #pragma parameter BLANK15 " " 0.0 0.0 1.0 1.0
 
@@ -429,7 +433,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter AMBI_STEPS	  "        Slowness"							60.0 5.0  1000.0  5.0
 #pragma parameter AMBI_FALLOFF    "        Light Falloff"						0.7  0.1  3.0     0.01
 #pragma parameter AMBI_POWER      "        Led power"							1.5  1.0  7.0     0.05
-#pragma parameter AMBI_OVER_BEZEL "        Colorize Bezel"						0.1 0.0 1.0     0.01
+#pragma parameter AMBI_OVER_BEZEL "        Colorize Bezel"						0.05 0.0 1.0     0.01
 #pragma parameter BLANK17 " " 0.0 0.0 1.0 1.0
 
 

@@ -50,18 +50,19 @@ vec3 kelvin2rgb(float k) {
  */
 
 float hann(float n, float N) {
-    return 0.5 * (1.0 - cos((TAU*n)/(N-1.0)));
+    return 0.5 * (1.0 - cos((TAU*n)/(N-1.0))) ;
 }
 
 float sinc(float x) {
-    if (x == 0.0) return 1.0;
-	return sin(pi*x) / (pi*x);
+   //if (x == 0.0) return 1.0;
+   x = x + eps;
+   return sin(pi*x) / (pi*x);
 }
 
 
 void main() {
    gl_Position = global.MVP * Position;
-   vTexCoord = TexCoord;
+   vTexCoord = TexCoord * 1.0001;
 
    if (DO_NTSC_ARTIFACTS > 0.0) {
       vNTSC_FILTER_FC = NTSC_FILTER_FC * 0.1;
@@ -110,32 +111,53 @@ const mat3 RGB2YIQ = mat3(
          0.1140, -0.3216, 0.3114);
 
 
+
+#define eps10 1.0e-10
+vec3 rgb2hsv(vec3 c){
+   vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+   vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
+   vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));
+
+   float d = q.x - min(q.w, q.y);
+   return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + eps10)), d / (q.x + eps10), q.x);
+}
+
 #define pi10 pi*10
-
-
-vec3 ntscdec(vec2 uv ){
+#define PHASE_SHIFT_FOR_BLUR_K pi/3
+vec4 ntscdec(vec2 uv) {
    vec2 size = params.SourceSize.xy;
    //	Sample composite signal and decode to YIQ
       vec3 YIQ_processed = vec3(0.0);
+      vec3 YIQ_processed_shifted = vec3(0.0);
+      //by doing another ntsc filtering with this histed phase, we're able to better identify
+      //artifacts that will drive the blur modulation.
+         float phase_shift_for_blur;
+         
       int N = int(NTSC_FILTER_WIDTH);
       for (int n=0; n < N; n++) {
          vec2 pos = uv + vec2(float(n-NTSC_FILTER_MIDDLE) / size.x, 0.0);
          float phase =  TAU * (vNTSC_FILTER_SCF * size.x * pos.x);
-         if (NTSC_PHASE_SHIFT > 0.5) phase += ( pos.y * -pi10 ) ; // 45 degree
-         //float phase =  TAU * (vNTSC_FILTER_SCF * size.x * pos.x) + ( pos.y * -pi10 * NTSC_PHASE_SHIFT) 
+         float phase_shift_for_blur = phase  + PHASE_SHIFT_FOR_BLUR_K;
+         
+         phase += ( pos.y * -pi10 ) * (NTSC_PHASE_SHIFT);
+         
+         //float phase =  TAU * (vNTSC_FILTER_SCF * size.x * pos.x) + ( pos.y * -pi10 * NTSC_PHASE_SHIFT)
          // ( pos.y * - 31.4);
          //Just sample luminance via yiq:
             vec3 smp = vec3((texture(Source, pos).rgb * RGB2YIQ).x);
             YIQ_processed += vec3(1.0, cos(phase), sin(phase)) * smp * vNTSC_weights[n];
+            YIQ_processed_shifted += vec3(1.0, cos(phase_shift_for_blur), sin(phase_shift_for_blur)) * smp * vNTSC_weights[n];
       }
 
    vec3 RGB_ori = texture(Source, uv).rgb;
    vec3 YIQ_ori = RGB_ori * RGB2YIQ;
 
-   //ADD artifacted Y and Q.
    vec3 YIQ_result = vec3(YIQ_ori.x, YIQ_ori.yz + YIQ_processed.yz * NTSC_MIX);
-
-  return YIQ_result * YIQ2RGB;
+   
+   float artifacts_mask = abs(YIQ_processed.y)         + abs(YIQ_processed.z) + 
+                          abs(YIQ_processed_shifted.y) + abs(YIQ_processed_shifted.z);
+   
+   return vec4(YIQ_result * YIQ2RGB, artifacts_mask);
 }
 
 #define W vec3(0.2125, 0.7154, 0.0721)
@@ -173,35 +195,43 @@ vec3 debug() {
 }
 
 void main() {
-   
+
    //FragColor = vec4(debug(), 1.0); return;
-   
-   
+
+
    //This will go into alpha channel to make glow aware of it and blur more.
    //It could be configurable.
    float artifacts = 0.0;
-   
+
    vec3 pixel_out;
    if (DO_NTSC_ARTIFACTS > 0.5) {
       vec3 pixel_source = texture(Source, vTexCoord).rgb;
-      pixel_out = ntscdec(vTexCoord);
-      artifacts = abs(pixel_source.r - pixel_out.r) + abs(pixel_source.g - pixel_out.g) + abs(pixel_source.b - pixel_out.b) ;
-      artifacts = artifacts / 3.0 ;
-      artifacts = pow(artifacts * 10, 0.5);
+      vec4 pixel_out_vec4 = ntscdec(vTexCoord);
+      pixel_out = pixel_out_vec4.rgb;
+
+      artifacts = pixel_out_vec4.a;
+
+/*
+      //artifacts = pow(artifacts, IN_GLOW_NTSC_ARTF_TRSH * 8.0);
+      artifacts = artifacts * IN_GLOW_NTSC_ARTF_MULT;
+      artifacts = smoothstep(IN_GLOW_NTSC_ARTF_TRSH, 1.0, artifacts);
+      //artifacts = min(artifacts, 1.0); //<- useless since clamp happens if not uising float framebuffer.
+*/
+      
    } else {
       pixel_out = texture(Source, vTexCoord).rgb;
    }
-   
+
    if (DO_CCORRECTION == 1.0)
       pixel_out = color_tools(pixel_out);
-   
-   FragColor = vec4(pixel_out, artifacts);
-   
 
-   
+   FragColor = vec4(pixel_out, artifacts);
+
+
+
   // FragColor = vec4(artifacts);
 
-   
+
 }
 
 
