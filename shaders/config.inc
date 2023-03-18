@@ -1,29 +1,44 @@
+
+// BEZEL STATIC CONFIG ##############################################################################################
+
 	// Uncomment this to improve bezel downscaling.
 	// If you are using standard bezel, leave commented to gain performance.
 //#define STATIC_BEZEL_USE_MIPMAP 1.0
 
-	//Consider content interlaced if lines are more than this
-#define MIN_LINES_INTERLACED 380
+	//This is used to skip calculations in the reflection blur code.
+	//set it to minimum value that allows you to see reflection entirely
+#define BEZEL_REFL_SKIP_SIZE 0.08
 
-	//Sort of dithering/debanding used in vignette, spot, backlight leds
-#define NOISEPOWER 1/192.0
-//((params.OutputSize.z)*3)
+	//This is the size (in 0..1 range) of the bezel texture that does
+	//not include the center tube, including reflection area, and the shadow.
+	//It is actually used to skip drawing game content under the bezel or
+	//over its shadow.
+	//Set it to the maximum size as long as you see the full game content
+	//in the bezel.
+#define BEZEL_BORDER_SIZE vec2(0.07, 0.07)
 
-	//If you change the default bezel texture, you may have to edit this to
-	//align bezel reflections and game content. (it seems to depend on the curvature amount)
-#define BEZEL_BORDER_SIZE 0.197
 
-	//The maximum radius of the reflection blur. //3.3..4.0 max
-#define BEZEL_REFL_BLUR_MAX 4.0
+	//In the second reflection pass, the coordinates are zoomedout by the
+	//BEZEL_REFL_ZOOMOUT_ROOM so that the image is mirrored-repeated by retroarch.
+	//they are adjusted by an inverse amount in final pass to align them
+	//lowering this value makes more room for reflections, but this steals
+	//pixels for reflection resolution, so make it higher as possible as
+	//long as you can see the reflections on the reflective area without
+	//them blanking or repeating.
+	//Modifying it require you to tweak BEZEL_REFL_CORNER_BLANK_SIZE too.
+#define BEZEL_REFL_ZOOMOUT_ROOM 0.8
+
 
 	// Define the size and the smoothness of the rectangle 
 	// in the bezel corners that will hide and blur the reflections 
-#define BEZEL_REFL_CORNER_BLANK_SIZE 0.0685
+#define BEZEL_REFL_CORNER_BLANK_SIZE 0.08
 #define BEZEL_REFL_CORNER_BLANK_SHADE 0.05  // keep it > 0.0
 
-	//Bezel reflection warping (curvature) may need a correction factor.
-	//Modify this if bezel reflections does not follow the border
-#define BEZEL_REFL_WARP_CORRECTION_FACTOR 1.9
+
+
+
+
+// AMBIENT LIGHT STATIC CONFIG ##########################################################################################
 
 	// 0.0-1.0: sensitivity to scene change (ambilike stuff), 0.0 changes more
 #define AMBI_SCENE_CHG_THRSHLD 0.07  
@@ -39,6 +54,14 @@
 //#define AMBI_FAST_STEP 0.125 
 #define AMBI_FAST_STEP 0.25
 
+
+
+
+
+
+
+// GLOW STATIC CONFIG ##########################################################################################
+
 	//Setting the glow/halo sharpness parameter to this
 	//will skip the blurring phase and lowers the gpu use
 	//Set this to the same value as used for the maximum
@@ -48,8 +71,7 @@
 	//Minumum glow sharpness
 	//I set this to allow negative values for glow sharpness
 	//that will calc their values from light spread amount
-#define MIN_IN_GLOW_SHARP 0.5
-
+#define MIN_IN_GLOW_SHARP 0.40
 	//Setting glow to blur bias parameter to this
 	//will skip the glow/blur mix codem and just return
 	//the blurred image
@@ -69,11 +91,44 @@
 #define IN_GLOW_SHARPNESS_SPREAD_RATIO_H 2.0
 
 
+
+
+
+
+
+// BACKDROP STATIC CONFIG ##########################################################################################
+
 	//Support for backdrops has to be enable by uncommenting:
 //#define STATIC_SUPPORT_BACKDROP 1.0
 #define BACKDROP_OFFX 0.0
 #define BACKDROP_OFFY 0.0
 #define BACKDROP_ZOOM 1.0
+
+
+
+
+
+
+
+// MISC STATIC CONFIG ##########################################################################################
+	//Consider content interlaced if lines are more than this
+#define MIN_LINES_INTERLACED 380
+
+	//Sort of dithering/debanding used in vignette, spot, backlight leds
+#define NOISEPOWER 1/192.0
+
+
+
+
+
+
+
+// STATIC CONFIG ENDS HERE ##########################################################################################
+
+
+
+
+
 
 
 
@@ -196,13 +251,12 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float BEZEL_B;
 	float BEZEL_CON;
 	float BEZEL_INNER_ZOOM;
-	float BEZEL_IMAGE_BORDER;
 	float BEZEL_FRAME_ZOOM;
 	float BEZEL_USE_STRAIGHT;
 	float BEZEL_RFL_BLR_SHD;
-	float BEZEL_RFL_OFFSET;
-	float BEZEL_REFL_ZOOM;
+	float BEZEL_RFL_ZOOM;
 	float BEZEL_REFL_STRENGTH;
+	float BEZEL_SPCL_STRENGTH;
 
 	float DO_SPOT;
 	float S_POSITION; 
@@ -245,6 +299,12 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 	float DO_RF_NOISE;
 	float RF_NOISE_STRENGTH;
+	
+	float DO_GAME_GEOM_OVERRIDE;
+	float GAME_GEOM_ASPECT;
+	float GAME_GEOM_VSHIFT;
+	float GAME_GEOM_HSHIFT;
+	float GAME_GEOM_ZOOM;
 	
 } global;
 
@@ -326,7 +386,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter MASK_COMPENSATION      "        Compensate for brightness loss"			0.0 	0.0 1.0 0.05
 #pragma parameter VMASK_DARKLINE_SCALE   "        (HiDPI) Vmask and Darklines multiplier"		1.0  	1.0 4.0 1.0
 #pragma parameter RGB_MASK_STRENGTH      "        RGB Mask Strength (0.0 to disable)"			0.75  	0.0 1.0 0.05
-#pragma parameter VMASK_USE_GM           "           . (LoDPI) Green,Magenta -> BGR"			0.0  	0.0 1.0 1.0
+#pragma parameter VMASK_USE_GM           "           . (LoDPI) Green,Magenta -> RGB"			0.0  	0.0 1.0 1.0
 #pragma parameter VMASK_GAP              "           . Horizontal Gap between triads:"			0.0  	0.0 1.0 1.0
 #pragma parameter VMASK_OVERWHITE        "           . Affect bright colors"				1.0 	0.0 1.0 0.05
 
@@ -357,7 +417,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter SCANLINE_COMPENSATION  "        Compensate for brightness loss"				0.0	0.0 1.0 0.1
 #pragma parameter SCANLINES_BLEEDING     "        Scanlines bleeding"						0.0 	0.0 3.0 0.05
 #pragma parameter SCANLINE_FLICKERING    "        Interlace Flicker (0=off,1=on,2=if interlaced)"		2.0 	0.0 2.0 1.0
-#pragma parameter SCANLINE_FLICKERING_POWER     "        Interlace Flicker power"		  		0.75 	0.0 4.0 0.1
+#pragma parameter SCANLINE_FLICKERING_POWER     "        Interlace Flicker power"		  		0.25 	0.0 8.0 0.01
 #pragma parameter SCANLINE_DISABLE_ON_INTERLACE "        Disable on interlaced screen"			  	0.0 	0.0 1.0 1.0
 #pragma parameter BLANK11 " " 0.0 0.0 1.0 1.0
 
@@ -375,7 +435,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter BLOOM_GAMMA        "        Gamma in (threshold)"					8.0  1.0 10.0 0.5
 #pragma parameter BLOOM_GAMMA_OUT    "        Gamma out (contour smoothness)"				1.0  0.1 10.0 0.1
 #pragma parameter BLOOM_POWER        "        Power multiplier"						1.20  1.0 20.0 0.05  
-#pragma parameter BLOOM_EYE_ADPT_SRT "        Modulate: Local exposure eye adaption strength"		0.7   0.0 10.0 0.05
+#pragma parameter BLOOM_EYE_ADPT_SRT "        Modulate: Local exposure eye adaption strength"		0.45   0.0 10.0 0.05
 #pragma parameter BLOOM_EYE_INERTIA  "        Modulate: Time before eye adaption starts"		1500  10.0 10000 50.0
 #pragma parameter BLOOM_OVER_WHITE   "        Modulate: Strength on bright areas (0 = aura)"		0.5  0.0 1.0  0.05
 #pragma parameter BLOOM_BYPASS       "        Bypass/Solo (1=Unmodulated, 2=Modulated)"			0.0  0.0 2.0  1.0
@@ -396,18 +456,16 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 //Bezel related
 #pragma parameter DO_BEZEL	      "★ Bezel enable? ==>"		0.0   0.0 1.0 1.0
 #pragma parameter BEZEL_USE_STRAIGHT  "        Straight"			0.0	0.0 1.0  1.0 
-#pragma parameter BEZEL_R             "        Color: Red"		-0.3   -0.5 0.5  0.01
-#pragma parameter BEZEL_G             "        Color: Green"		-0.3   -0.5 0.5  0.01
-#pragma parameter BEZEL_B             "        Color: Blue"		-0.3   -0.5 0.5  0.01
+#pragma parameter BEZEL_R             "        Color: Red"		-0.3   -1.0 1.0  0.01
+#pragma parameter BEZEL_G             "        Color: Green"		-0.3   -1.0 1.0  0.01
+#pragma parameter BEZEL_B             "        Color: Blue"		-0.3   -1.0 1.0  0.01
 #pragma parameter BEZEL_CON           "        Contrast"			1.3   0.0  10.0 0.01
 #pragma parameter BEZEL_INNER_ZOOM    "        Image zoom"		-0.18   -1.5 0.5 0.005
 #pragma parameter BEZEL_FRAME_ZOOM    "        Frame zoom"		0.0   -1.5 0.5 0.005
-#pragma parameter BEZEL_IMAGE_BORDER  "        Image border"		1.01   1.0 1.2 0.01
+#pragma parameter BEZEL_RFL_ZOOM      "        Reflections zoom"	0.0   -1.5 0.5 0.005
 #pragma parameter BEZEL_REFL_STRENGTH "        Reflection strength"	0.5    0.0 1.0 0.01
-#pragma parameter BEZEL_RFL_BLR_SHD   "        Sharp reflections"	0.0    -1.0 1.0 0.1
-#pragma parameter BEZEL_RFL_OFFSET    "        Align reflections: offset"	0.003    -0.01 0.01 0.001
-#pragma parameter BEZEL_REFL_ZOOM     "        Align reflections: zoom"		0.98    0.8 1.2 0.001
-
+#pragma parameter BEZEL_RFL_BLR_SHD   "        Reflections sharpness"	-0.0  -0.5 1.0 0.01
+#pragma parameter BEZEL_SPCL_STRENGTH "        Specularity strength"	0.5    0.0 3.0 0.05
 
 #pragma parameter BLANK15 " " 0.0 0.0 1.0 1.0
 
@@ -433,7 +491,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter AMBI_STEPS	  "        Slowness"							60.0 5.0  1000.0  5.0
 #pragma parameter AMBI_FALLOFF    "        Light Falloff"						0.7  0.1  3.0     0.01
 #pragma parameter AMBI_POWER      "        Led power"							1.5  1.0  7.0     0.05
-#pragma parameter AMBI_OVER_BEZEL "        Colorize Bezel"						0.05 0.0 1.0     0.01
+//#pragma parameter AMBI_OVER_BEZEL "        Colorize Bezel"						0.1 0.0 1.0     0.01
 #pragma parameter BLANK17 " " 0.0 0.0 1.0 1.0
 
 
@@ -490,7 +548,15 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter label_aspect_preset4 "          (-4 = Megadrive 10/7)" 0.0 0.0 0.0 1.0
 #pragma parameter label_aspect_preset5 "          (-5 = Uncorrected)" 0.0 0.0 0.0 1.0
 #pragma parameter label_aspect_preset6 "          (-6 = MAME rotated/TATE 0.75)" 0.0 0.0 0.0 1.0
+#pragma parameter BLANK23 " " 0.0 0.0 1.0 1.0
 
 
+
+//Content geomerty overrides
+#pragma parameter DO_GAME_GEOM_OVERRIDE	 "★ Override content geometry"		0.0   0.0  1.0 	  1.0
+#pragma parameter GAME_GEOM_ASPECT	 "        Aspect"			1.3333333333333  0.1  3.0 	  0.005
+#pragma parameter GAME_GEOM_VSHIFT	 "        Vertical position"		0.0   -10.0 10.0  0.01
+#pragma parameter GAME_GEOM_HSHIFT	 "        Horizontal position"		0.0   -10.0 10.0  0.01
+#pragma parameter GAME_GEOM_ZOOM	 "        Zoom"				1.0    0.0  2.0  0.01
 
 #include "config.globals.inc"

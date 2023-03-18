@@ -58,12 +58,21 @@ vec2 zoom(vec2 in_coords, float zoom_factor) {
    return (in_coords/zoom_factor)-off;
 }
 
+float zoom1D(float in_coord, float zoom_factor) {
+   float off = 1.0/(zoom_factor*2.0) - 0.5;
+   return (in_coord/zoom_factor)-off;
+}
+
 vec2 zoomxy(vec2 in_coords, vec2 zoom_factor) {
    vec2 off = 1.0/(zoom_factor*2.0) - 0.5;
    return (in_coords/zoom_factor)-off;
 }
 
 vec2 zoomout_coords(vec2 in_coords, float zoom_out, float aspect) {
+   // to convert to standard zoom:
+   // zoomout_coords(x) = zoom( 1/(x+1) );
+
+	
    vec2 zoom   = vec2( 1 + zoom_out, 
                        1 + (zoom_out * aspect) 
                      );
@@ -284,6 +293,13 @@ float random(float power, vec2 seed) {
 
 		vec2 scale_coord=vec2(pTexCoord.x*scale_x - offset_x , pTexCoord.y*scale_y - offset_y);
 		return scale_coord;
+	}
+	
+	vec2 content_aspect_override(vec2 co, float aspect, float in_aspect){
+		float scale_y = aspect/in_aspect;
+		float offset_y = (0.5 * scale_y ) - 0.5 ;
+		co.y = co.y*scale_y - offset_y;
+		return co;
 	}
 	
 //Blur/Glow

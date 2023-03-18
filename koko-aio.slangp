@@ -116,7 +116,7 @@ shaders = 17
        scale_type2 = source
             scale2 = 1.0
      mipmap_input2 = true
-        wrap_mode2 = "mirrored_repeat"
+        wrap_mode2 = "clamp_to border"
 
         
 
@@ -204,23 +204,24 @@ float_framebuffer7 = true
 
          
          
-# The following 2 passes will blur the mirrored part of first_pass
+# The following passes will blur the mirrored part of first_pass
 # to emulate soft bezel reflections.
-               shader9 = shaders/reflection_blur_x.slang
-                alias9 = "reflected_blurred_pass1"
+
+               shader9 = shaders/reflection_blur_pre.slang
+                alias9 = "reflected_blurred_pass_pre"
         filter_linear9 = true
            scale_type9 = source
                 scale9 = 1.0
-            wrap_mode9 = "mirrored_repeat"
+            wrap_mode9 = "clamp_to_border"
 
-               shader10 = shaders/reflection_blur_y.slang
-                alias10 = "reflected_blurred_pass2"
+            
+               shader10 = shaders/reflection_blur.slang
+                alias10 = "reflected_blurred_pass"
         filter_linear10 = true
            scale_type10 = source
                 scale10 = 1.0
+         mipmap_input10 = true
             wrap_mode10 = "mirrored_repeat"
-
-
 
 # In the following passes we emulate bloom effect.
 # Since the radius has to be high, we sample first_pass
@@ -346,8 +347,14 @@ float_framebuffer7 = true
 #    [v] Unbranch phase shift in ntsc pass, trivial
 #    [v] Negative gap brightness produces glitches on bezel (nvidia specific?)
 #        yes, due to negative pow base.         
+#    [v] Unrolled blur in relfections is not gaussiany(gaussianx), was that a mistake?
+#        No mistake, they look best that way since we need big blurs.
+#    [v] When colorizing the bezel via ambilight, a small area between the tube and the
+#        bezel border is colored and should not.
 #    [.] Darkline, vmask: whiteness can be pre-calculated outside.
 #        Half done, gained something.
+#    [v] reflection blur: can we make better use of mipmaps instead of blindly use lod = 2.0?
+#    [v] avglum_pass needs to react to content aspect override
 #    [ ] check branching conditions in first_pass.slang
 #    [ ] Better debanding?
 #    [ ] Should the flickering be aware of the scanline?
@@ -359,5 +366,17 @@ float_framebuffer7 = true
 #        Reflection strength, corner shape, size and fade?  
 #    [ ] Allow to set a different aspect for content
 #        (which could be translated to a different aspect for bezel, maybe simpler)
-#    [ ] Unrolled blur in relfections is not gaussiany(gaussianx), was that a mistake?
-
+#        Problem is reflection alignment.
+#    [ ] Ambi temporal pass, move content override code to vertex shader
+#    [..] Bezel colorization via ambilight acts strangely when the content aspect is shrinked
+#          [  ] It also bleeds over alpha channel in the internal frame.
+#          [  ] disabled by now till we find a better way to handle it.
+#               This: https://github.com/kokoko3k/koko-aio-slang/commit/1fbbee4f73948cd85e0d53db3a2d4eaab8951a8f is a reference commit
+#               where i switched from a try to a second one.
+#          [  ] maybe it can be modulated from the outside via min(coord.x,coord.y)
+#    [ ] bloom should bleed over when forcing geometry aspect
+#    [ ] reflection blurriness should not depend on input resolution
+#    [ ] specular reflections does not 100% follow the image when overriding aspect
+#    [ ] copy base presets to overlay shader
+#    [ ] Ambient light skip coords ahould be aware of the h/v shift override or black box whould appear
+#        (check local preset: testambishift)        

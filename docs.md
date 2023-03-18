@@ -52,6 +52,7 @@
         When NTSC artifacts emulation is enabled, this option will let you blur
         them more, this would help to selectively blur things like waterfalls
         in Sonic 2.
+        The value you set it will be subtracted from glow horizontal sharpness.
     Blur less NTSC artifacts (min treshold)
         In relation to the previous setting, this allow to blur only the most
         prominent artifacts.
@@ -68,7 +69,7 @@
         you may want to scale this filter by a factor.
     Vmask Strength:
         How much will the RGB mask be visible.
-    . (LoDPI) Green,Magenta -> BGR:
+    . (LoDPI) Green,Magenta -> RGB:
         By exploiting common monitors RGB subpixel order, this causes
         the RGB mask, to be emulated by using just 2 pixels instead of 3.
         Very useful for 1080p (or lower) displays and to keep more brightness.
@@ -218,8 +219,6 @@
         Allows to shrink or expand the game content to fit the monitor frame.
     Frame zoom:
         Allows to shrink or expand the monitor frame to fit the game content.
-    Image Border:
-        Draws a black border around the game content.
     Sharp reflections
         Modulates from totally blurred to totally sharp reflection appearance.
 
