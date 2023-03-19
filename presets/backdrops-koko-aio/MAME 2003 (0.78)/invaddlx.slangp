@@ -22,8 +22,8 @@ GLOBAL_ZOOM = "0.751496"
 bg_over = "../../shaders/shaders_slang/bezel/koko-aio-backdrops/textures/backdrop_textures/invaddlx.png"
 backdrop = "../../shaders/shaders_slang/bezel/koko-aio-backdrops/textures/backdrop_textures/invaddlx_backdrop.png"
 
-# Credits
-# shader by kokoko3k - https://github.com/kokoko3k/koko-aio-slang
-# artwork by John Merrit
-# backdrop by Mr. Do's Arcade - https://mrdo.mameworld.info/index.php 
-# preset and artwork adjustments by estefan3112 - https://github.com/estefan3112/koko-aio-slang
+// Credits
+// shader by kokoko3k - https://github.com/kokoko3k/koko-aio-slang
+// artwork by John Merrit
+// backdrop by Mr. Do's Arcade - https://mrdo.mameworld.info/index.php 
+// preset and artwork adjustments by estefan3112 - https://github.com/estefan3112/koko-aio-slang
