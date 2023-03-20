@@ -30,12 +30,12 @@ Step 2: Move the content of the directory koko-aio/presets/arcade-koko-aio to /c
 <br>
 Please also refer to the instructions contained in the ReadMe.md of these folders.<br>
 
-# Installation from the Github repository
+# Manual installation from the Github repository
 
 Please note that the Koko-aio github repository has a different folder structure than RetroArch. In order to make a GitHub clone work, you must move all .slang presets from the presets directory one level up. Then you must adjust the reference in the two BASE presets, so that these BASE presets refer to the same directory, and you are ready to go.
 <br>
 
-# Further clones
+# Further clones of the same game
 
 Please see the Moon Patrol example - you can just duplicate the .slangp preset and rename it with the name of the clone. By this, you have an identical configuration for a clone. <br>
 
