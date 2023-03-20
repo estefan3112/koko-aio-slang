@@ -4,7 +4,7 @@ Repository for game-specific Arcade Artwork by using the Koko-aio slang shader S
 <br>
 Main source of this artwork comes from John Merrit, who set a benchmark for realistic arcade artwork. I still very much like them, and they shine even more in combination with Koko-aio. My selection of the artwork is arbitrary, but I try to publish eye candys earlier :-).<br>
 <br>
-Requirements: a very recent RetroArch Nightly Build that supports Vulkan. Tested with FinalBurn Neo (mainly) and MAME 2003. MAME current does not work out of the box, as the rotation of this core is different.<br>
+Requirements: RetroArch 1.5.0 or a recent RetroArch Nightly Build that supports Vulkan. Tested with FinalBurn Neo (mainly) and MAME 2003/2003plus. MAME current does not work out of the box, as the rotation of this core is different.<br>
 
 # Release 0.1 contains first 21 game-specific presets - download here!
 Please see the list of game presets in the Release Notes.
