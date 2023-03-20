@@ -1,4 +1,4 @@
-# Koko-aio Fork for Arcade Artwork (currently FinalBurn Neo and MAME 2003)
+# Koko-aio Fork for Arcade Artwork (currently FinalBurn Neo and MAME 2003/2003plus)
 
 Repository for game-specific Arcade Artwork by using the Koko-aio slang shader Successfully tested under MacOS, Windows and iOS. Currently the Koko-aio shader provides superior performance on all reasonably powered desktops, while providing enhanced shader functions, including bezel reflections. It embeds game-specific artwork seamlessly and scales according to resolution.<br>
 <br>
