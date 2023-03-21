@@ -1,10 +1,10 @@
-# Koko-aio Fork for Arcade Artwork (currently FinalBurn Neo and MAME 2003)
+# Koko-aio Fork for Arcade Artwork (currently FinalBurn Neo and MAME 2003/2003plus)
 
 Repository for game-specific Arcade Artwork by using the Koko-aio slang shader Successfully tested under MacOS, Windows and iOS. Currently the Koko-aio shader provides superior performance on all reasonably powered desktops, while providing enhanced shader functions, including bezel reflections. It embeds game-specific artwork seamlessly and scales according to resolution.<br>
 <br>
 Main source of this artwork comes from John Merrit, who set a benchmark for realistic arcade artwork. I still very much like them, and they shine even more in combination with Koko-aio. My selection of the artwork is arbitrary, but I try to publish eye candys earlier :-).<br>
 <br>
-Requirements: a very recent RetroArch Nightly Build that supports Vulkan. Tested with FinalBurn Neo (mainly) and MAME 2003. MAME current does not work out of the box, as the rotation of this core is different.<br>
+Requirements: RetroArch 1.5.0 or a recent RetroArch Nightly Build that supports Vulkan. Tested with FinalBurn Neo (mainly) and MAME 2003/2003plus. MAME current does not work out of the box, as the rotation of this core is different.<br>
 
 # Release 0.1 contains first 21 game-specific presets - download here!
 Please see the list of game presets in the Release Notes.
@@ -30,12 +30,12 @@ Step 2: Move the content of the directory koko-aio/presets/arcade-koko-aio to /c
 <br>
 Please also refer to the instructions contained in the ReadMe.md of these folders.<br>
 
-# Installation from the Github repository
+# Manual installation from the Github repository
 
 Please note that the Koko-aio github repository has a different folder structure than RetroArch. In order to make a GitHub clone work, you must move all .slang presets from the presets directory one level up. Then you must adjust the reference in the two BASE presets, so that these BASE presets refer to the same directory, and you are ready to go.
 <br>
 
-# Further clones
+# Further clones of the same game
 
 Please see the Moon Patrol example - you can just duplicate the .slangp preset and rename it with the name of the clone. By this, you have an identical configuration for a clone. <br>
 
