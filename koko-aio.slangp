@@ -1,5 +1,3 @@
-
-
 #    Koko-aio shader is meant to be an all-in one crt shader.
 #    It can be configured with many parameters, so that can be
 #    scaled to run on even on modest gpus while still developed to
@@ -355,6 +353,11 @@ float_framebuffer7 = true
 #        Half done, gained something.
 #    [v] reflection blur: can we make better use of mipmaps instead of blindly use lod = 2.0?
 #    [v] avglum_pass needs to react to content aspect override
+#    [x] Ambient light skip coords should be aware of the h/v shift override or black box whould appear
+#        Not a big deal, since it happens when moving the image far, far away.
+#    [..] specular reflections does not 100% follow the image when overriding aspect
+#        It is hard and probably would require another pass for somethig nobody would ever notice.
+#        ...also, avglum_pass is used by bloom pass too.
 #    [ ] check branching conditions in first_pass.slang
 #    [ ] Better debanding?
 #    [ ] Should the flickering be aware of the scanline?
@@ -364,19 +367,13 @@ float_framebuffer7 = true
 #    [ ] Find a way to smooth borders without cropping the image
 #    [ ] Allow to configure new bezel parameters?
 #        Reflection strength, corner shape, size and fade?  
-#    [ ] Allow to set a different aspect for content
-#        (which could be translated to a different aspect for bezel, maybe simpler)
-#        Problem is reflection alignment.
-#    [ ] Ambi temporal pass, move content override code to vertex shader
 #    [..] Bezel colorization via ambilight acts strangely when the content aspect is shrinked
-#          [  ] It also bleeds over alpha channel in the internal frame.
-#          [  ] disabled by now till we find a better way to handle it.
+#          [x] It also bleeds over alpha channel in the internal frame.
+#          [x] disabled by now till we find a better way to handle it.
 #               This: https://github.com/kokoko3k/koko-aio-slang/commit/1fbbee4f73948cd85e0d53db3a2d4eaab8951a8f is a reference commit
 #               where i switched from a try to a second one.
-#          [  ] maybe it can be modulated from the outside via min(coord.x,coord.y)
+#          [x] maybe it can be modulated from the outside via min(coord.x,coord.y)
 #    [ ] bloom should bleed over when forcing geometry aspect
 #    [ ] reflection blurriness should not depend on input resolution
-#    [ ] specular reflections does not 100% follow the image when overriding aspect
 #    [ ] copy base presets to overlay shader
-#    [ ] Ambient light skip coords ahould be aware of the h/v shift override or black box whould appear
-#        (check local preset: testambishift)        
+#    [ ] check if unbranching line: if (BLOOM_BYPASS > 0.5) in final pass has some gain
