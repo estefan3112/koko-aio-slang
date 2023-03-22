@@ -265,6 +265,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float BEZEL_RFL_ZOOM;
 	float BEZEL_REFL_STRENGTH;
 	float BEZEL_SPCL_STRENGTH;
+	float BEZEL_ROUGHNESS;
 
 	float DO_SPOT;
 	float S_POSITION; 
@@ -283,9 +284,12 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float AMBI_POWER;
 	float AMBI_OVER_BEZEL;
 	float AMBI_OVER_BEZEL_SIZE;
+	float AMBI_STEPS;
+	float AMBI_BG_IMAGE_BLEND_MODE;
+	float AMBI_BG_IMAGE_FORCE;
+	
 	float ASPECT_X;
 	float ASPECT_Y;
-	float AMBI_STEPS;
 	
 	float DO_BG_IMAGE;
 	float BG_IMAGE_OVER;
@@ -366,7 +370,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 
 //Offset RGB
-#pragma parameter DO_SHIFT_RGB       "★ RGB deconvergence enable? (bad with FXAA) ==>"	0.0	 0.0 1.0 1.0
+#pragma parameter DO_SHIFT_RGB       "★ RGB deconvergence enable? ==>"	0.0	 0.0 1.0 1.0
 #pragma parameter OFFSET_STRENGTH "        Strength"			0.6 	 0.0 1.0 0.05
 #pragma parameter SHIFT_R         "        Red offset"			-40.0 	-210.0 189.0 1
 #pragma parameter SHIFT_G         "        Green offset"		2.0 	-210.0 189.0 1
@@ -464,24 +468,26 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 //Bezel related
 #pragma parameter DO_BEZEL	      "★ Bezel enable? ==>"		0.0   0.0 1.0 1.0
-#pragma parameter BEZEL_USE_STRAIGHT  "        Straight"			0.0	0.0 1.0  1.0 
+#pragma parameter BEZEL_USE_STRAIGHT  "        Straight"		0.0	0.0 1.0  1.0 
+#pragma parameter BEZEL_INNER_ZOOM    "        Image zoom"		-0.18   -1.5 0.5 0.005
+#pragma parameter BEZEL_FRAME_ZOOM    "        Frame zoom"		0.0   -1.5 0.5 0.005
 #pragma parameter BEZEL_R             "        Color: Red"		-0.3   -1.0 1.0  0.01
 #pragma parameter BEZEL_G             "        Color: Green"		-0.3   -1.0 1.0  0.01
 #pragma parameter BEZEL_B             "        Color: Blue"		-0.3   -1.0 1.0  0.01
 #pragma parameter BEZEL_CON           "        Contrast"			1.3   0.0  10.0 0.01
-#pragma parameter BEZEL_INNER_ZOOM    "        Image zoom"		-0.18   -1.5 0.5 0.005
-#pragma parameter BEZEL_FRAME_ZOOM    "        Frame zoom"		0.0   -1.5 0.5 0.005
 #pragma parameter BEZEL_RFL_ZOOM      "        Reflections zoom"	0.0   -1.5 0.5 0.005
-#pragma parameter BEZEL_REFL_STRENGTH "        Reflection strength"	0.5    0.0 1.0 0.01
+#pragma parameter BEZEL_REFL_STRENGTH "        Reflections strength"	0.5    0.0 1.0 0.01
 #pragma parameter BEZEL_RFL_BLR_SHD   "        Reflections sharpness"	-0.0  -0.5 1.0 0.01
+#pragma parameter BEZEL_ROUGHNESS     "        Reflections roughness"	1.5    0.0 5.0 0.1
 #pragma parameter BEZEL_SPCL_STRENGTH "        Specularity strength"	0.5    0.0 3.0 0.05
+
 
 #pragma parameter BLANK15 " " 0.0 0.0 1.0 1.0
 
 
 
 //Background Image
-#pragma parameter DO_BG_IMAGE	     "★ Backgound image enable? ==>"				 0.0  0.0  1.0     1.0
+#pragma parameter DO_BG_IMAGE	     "★ Back/Foreground image enable? ==>"				 0.0  0.0  1.0     1.0
 #pragma parameter LABEL_WARNING1     "    ⚠ RetroArch aspect needs to be set to Full! ⚠"	 1.0  1.0  1.0     1.0
 #pragma parameter BG_IMAGE_OVER	     "        Image over content (alpha channel driven)?"	 0.0  0.0  1.0     1.0
 #pragma parameter BG_IMAGE_OFFX	     "        Shift Image over X axis"				 0.0  -1.0  1.0    0.0005
@@ -495,13 +501,15 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 //Back leds
 //Emulates leds under the monitor frame that slowly reacts to image contents
-#pragma parameter DO_AMBILIGHT	        "★ Ambient light leds enable? ==> "			1.0  0.0  1.0     1.0
-#pragma parameter LABEL_WARNING3        "    ⚠ RetroArch aspect needs to be set to Full! ⚠"	1.0  1.0  1.0     1.0
-#pragma parameter AMBI_STEPS	        "        Slowness"					60.0 5.0  1000.0  5.0
-#pragma parameter AMBI_FALLOFF          "        Light Falloff"					0.7  0.1  3.0     0.01
-#pragma parameter AMBI_POWER            "        Led power"					1.5  1.0  7.0     0.05
-#pragma parameter AMBI_OVER_BEZEL       "        Colorize Bezel"				0.2  0.0  5.0     0.05
-#pragma parameter AMBI_OVER_BEZEL_SIZE  "        Colorization size"				0.15  0.0  0.5     0.001
+#pragma parameter DO_AMBILIGHT	            "★ Ambient light leds enable? ==> "				1.0  0.0  1.0     1.0
+#pragma parameter LABEL_WARNING3            "    ⚠ RetroArch aspect needs to be set to Full! ⚠"		1.0  1.0  1.0     1.0
+#pragma parameter AMBI_STEPS	            "        Slowness"						60.0 5.0  1000.0  5.0
+#pragma parameter AMBI_FALLOFF              "        Light Falloff"						0.7  0.1  3.0     0.01
+#pragma parameter AMBI_POWER                "        Led power"						1.5  1.0  7.0     0.05
+#pragma parameter AMBI_OVER_BEZEL           "        Colorize Bezel"					0.2  0.0  5.0     0.05
+#pragma parameter AMBI_OVER_BEZEL_SIZE      "        Colorization size"					0.15  0.0  0.5    0.001
+#pragma parameter AMBI_BG_IMAGE_BLEND_MODE  "        Back/Foreground image alpha blend (0=mix, 1/check=add)"	0.0   0.0  1.0    1.0
+#pragma parameter AMBI_BG_IMAGE_FORCE       "        Always colorize Foreground image (add mode only) "		0.0   0.0  1.0    0.1
 #pragma parameter BLANK17 " " 0.0 0.0 1.0 1.0
 
 
@@ -529,7 +537,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 
 //Global Zoom/Offset
-#pragma parameter DO_GLOBAL_SHZO	 "★ Global shift/zoom"			0.0   0.0  1.0 	  1.0
+#pragma parameter DO_GLOBAL_SHZO	 "★ Global shift/zoom enable? ==>"	0.0   0.0  1.0 	  1.0
 #pragma parameter GLOBAL_OFFX	 "        X axis shift "			0.0  -1.0  1.0    0.0005
 #pragma parameter GLOBAL_OFFY	 "        Y axis shift "			0.0  -1.0  1.0    0.0005
 #pragma parameter GLOBAL_ZOOM	 "        Zoom"					2.0   0.0  3.0    0.0005
@@ -555,11 +563,11 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 
 //Content geomerty overrides
-#pragma parameter DO_GAME_GEOM_OVERRIDE	 "★ Override content geometry"		0.0   0.0  1.0 	  1.0
-#pragma parameter GAME_GEOM_ASPECT	 "        Aspect"			1.3333333333333  0.1  3.0 	  0.005
-#pragma parameter GAME_GEOM_VSHIFT	 "        Vertical position"		0.0   -10.0 10.0  0.01
-#pragma parameter GAME_GEOM_HSHIFT	 "        Horizontal position"		0.0   -10.0 10.0  0.01
-#pragma parameter GAME_GEOM_ZOOM	 "        Zoom"				1.0    0.0  2.0  0.01
+#pragma parameter DO_GAME_GEOM_OVERRIDE	 "★ Override content geometry enable? ==>"	0.0   0.0  1.0 	  1.0
+#pragma parameter GAME_GEOM_ASPECT	 "        Aspect (0 = unchanged)"		1.3333333333333  0.0  3.0 	  0.005
+#pragma parameter GAME_GEOM_VSHIFT	 "        Vertical position"			0.0   -10.0 10.0  0.01
+#pragma parameter GAME_GEOM_HSHIFT	 "        Horizontal position"			0.0   -10.0 10.0  0.01
+#pragma parameter GAME_GEOM_ZOOM	 "        Zoom"					1.0    0.0  2.0  0.01
 #pragma parameter BLANK20 " " 0.0 0.0 1.0 1.0
 
 // Alternative blanking, needs to be statically enabled, see docs.md.

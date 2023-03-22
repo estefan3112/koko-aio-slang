@@ -176,6 +176,7 @@
 	#define BEZEL_RFL_ZOOM		global.BEZEL_RFL_ZOOM
 	#define BEZEL_REFL_STRENGTH	global.BEZEL_REFL_STRENGTH
 	#define BEZEL_SPCL_STRENGTH	global.BEZEL_SPCL_STRENGTH
+	#define BEZEL_ROUGHNESS		global.BEZEL_ROUGHNESS
 	
 #define DO_SPOT		global.DO_SPOT
 	#define S_POSITION	global.S_POSITION
@@ -200,15 +201,18 @@
 
 
 #define DO_AMBILIGHT		global.DO_AMBILIGHT
-	#define AMBI_STEPS		global.AMBI_STEPS
-	#define AMBI_FALLOFF		global.AMBI_FALLOFF
-	#define AMBI_POWER		global.AMBI_POWER
-	#define AMBI_OVER_BEZEL		global.AMBI_OVER_BEZEL
-	#define AMBI_OVER_BEZEL_SIZE	global.AMBI_OVER_BEZEL_SIZE
+	#define AMBI_STEPS			global.AMBI_STEPS
+	#define AMBI_FALLOFF			global.AMBI_FALLOFF
+	#define AMBI_POWER			global.AMBI_POWER
+	#define AMBI_OVER_BEZEL			global.AMBI_OVER_BEZEL
+	#define AMBI_OVER_BEZEL_SIZE		global.AMBI_OVER_BEZEL_SIZE
+	#define AMBI_BG_IMAGE_BLEND_MODE	global.AMBI_BG_IMAGE_BLEND_MODE
+	#define AMBI_BG_IMAGE_FORCE		global.AMBI_BG_IMAGE_FORCE
+
+//Global aspect ratio related
 	#define ASPECT_X		global.ASPECT_X
 	#define ASPECT_Y		global.ASPECT_Y
-
-
+	
 
 #define DO_DYNZOOM		global.DO_DYNZOOM
 	#define DYNZOOM_FACTOR		global.DYNZOOM_FACTOR
