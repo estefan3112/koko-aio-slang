@@ -142,7 +142,6 @@ vec3 pixel_vmask(vec3 source, float white_reference, float over_white) {
     float fcol = vOutputCoord.x * params.OutputSize.x;
     float mod_compare = mod(fcol, vec_mod.x);
     
-
     if (mod_compare < vec_mod.y)
         vmasked = m1;
     else if (mod_compare < vec_mod.z)
@@ -216,7 +215,7 @@ vec3 pixel_vmask_gm(vec3 source, float white_reference, float over_white) {
 }
 
 
-vec3 pixel_vmask_and_gm(vec3 source, float white_reference, float over_white) {
+/*vec3 pixel_vmask_and_gm(vec3 source, float white_reference, float over_white) {
     // Simple RGB mask emulation with or without horizontal gap
     float ooo = 1.0 - RGB_MASK_STRENGTH;
 
@@ -258,7 +257,7 @@ vec3 pixel_vmask_and_gm(vec3 source, float white_reference, float over_white) {
         }
    return pixel_out;
 
-}
+}*/
 
 
 vec3 pixel_darklines(vec3 source,float darkline_every, float darkline_trans,
@@ -557,26 +556,27 @@ float global_noise;
 #endif
 
 vec4 textureLod_wrap(sampler2D tex, vec2 co, float lod, float wrap_mode) {
-    /*
-    // Mirrored repeat, once, useless since is done by default
-    if (co.x > 1.0 || co.x < 0.0)
-        co.x = 1- mod(co.x, 1.0);
-    if (co.y > 1.0 || co.y < 0.0)
-        co.y = 1- mod(co.y, 1.0);
-    */
+    #ifdef ALLOW_BG_IMAGE_TEXTURE_WRAP_IN_SHADER
+        /*
+        // Mirrored repeat, once, useless since is done by default
+        if (co.x > 1.0 || co.x < 0.0)
+            co.x = 1- mod(co.x, 1.0);
+        if (co.y > 1.0 || co.y < 0.0)
+            co.y = 1- mod(co.y, 1.0);
+        */
 
-    if (wrap_mode == 1.0) {
-        //Clamp to border, black.
-        bool bOutside = (co.x < 0.0 || co.x > 1.0 || co.y < 0.0 || co.y > 1.0 ) ;
-        if (bOutside) return vec4(0.0,0.0,0.0,1.0);
-    } else if (wrap_mode == 2.0) {
-        //Clamp to edge:
-        co = clamp(co, 0.00, 1.0);
-    } else if (wrap_mode == 3.0) {
-        //Repeat no mirror:
-        co = mod(co, 1.0);
-    }
-
+        if (wrap_mode == 1.0) {
+            //Clamp to border, black.
+            bool bOutside = (co.x < 0.0 || co.x > 1.0 || co.y < 0.0 || co.y > 1.0 ) ;
+            if (bOutside) return vec4(0.0,0.0,0.0,1.0);
+        } else if (wrap_mode == 2.0) {
+            //Clamp to edge:
+            co = clamp(co, 0.00, 1.0);
+        } else if (wrap_mode == 3.0) {
+            //Repeat no mirror:
+            co = mod(co, 1.0);
+        }
+    #endif
     return textureLod(tex, co, lod);
 }
 
@@ -756,7 +756,7 @@ vec3 compose_bezel_over(vec3 full_viewport, vec2 coords_for_bezel, vec2 param_co
         //We use the green component to express Hardness/Specularity; there the reflection will be completely diffused.
         //For the task, we use a mipmap whit adeguate precision.
         if (lut_specular > 0.0) {
-            vec4 pixel_avglum = texture(avglum_pass,vTexCoord);
+            vec4 pixel_avglum = texture(avglum_pass,coords_for_mirror);
             bezel_out = bezel_out + ( ( pixel_avglum.rgb )  * lut_specular ) ;
         }
     return mix(full_viewport, bezel_out, bezel.a);
@@ -964,7 +964,7 @@ void main() {
             vec3 ambitemporalpass = texture(ambi_temporal_pass, vOutputCoord).rgb;
             vec3 pixel_ambilight = DO_AMBILIGHT * (ambitemporalpass + global_noise);
             float ambi_over_bezel_mask = create_ambi_colorize_shade(get_scaled_coords_for_bezel());
-            float bg_image_alpha_adapted = max(bg_image.a - AMBI_BG_IMAGE_FORCE - 10, 0.0);
+            float bg_image_alpha_adapted = max(bg_image.a - AMBI_BG_IMAGE_FORCE, 0.0);
             pixel_out.rgb = pixel_out.rgb + (pixel_ambilight.rgb * (ambi_over_bezel_mask) * (1- bg_image_alpha_adapted));
         }
 
