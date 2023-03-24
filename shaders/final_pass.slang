@@ -695,7 +695,12 @@ float create_ambi_colorize_shade(vec2 co) {
     float blur = AMBI_OVER_BEZEL_SIZE;
     vec2 size = vec2(1.0, 2 - AMBI_OVER_BEZEL_AR_CORRECTION)-blur;
     float radius = 0.0;
-    return  1 - fuzzyrect(co, size,  radius,  blur) * 2;
+    
+    
+    //float o =  1 - fuzzyrect(co, size,  radius,  blur) * 3;
+    //if (o < 0.0)  return 0.0;
+    
+    return  1 - min ( fuzzyrect(co, size,  radius,  blur) * 2, 1.0);
 }
     
 
@@ -747,7 +752,8 @@ vec3 compose_bezel_over(vec3 full_viewport, vec2 coords_for_bezel, vec2 param_co
 
         //Mix ambient light over bezel? (branching this is worse)
             vec3 ambitemporalpass = texture(ambi_temporal_pass, vOutputCoord).rgb;
-            vec3 pixel_ambilight = DO_AMBILIGHT * (ambitemporalpass + global_noise);
+            ambitemporalpass = max(ambitemporalpass, 0.0); //<-- antiglitch. Needed to avoid undefined variable on vulkan.
+            vec3 pixel_ambilight = DO_AMBILIGHT * (  ambitemporalpass   + global_noise);
             
             //Create a shaded box to apply ambilight on external borders only
                 float ambi_colorize_shade = create_ambi_colorize_shade(coords_for_bezel);
