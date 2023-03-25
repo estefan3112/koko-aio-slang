@@ -43,6 +43,15 @@ Please see the Moon Patrol example - you can just duplicate the .slangp preset a
 
 The first backdrop presets are uploaded, but in order for them to work, you must create a separate shader directory called koko-aio-backdrops and put the backdrop textures there. You also need to manually edit the config.inc file in the shaders subdirectory by uncommenting backdrop support in line #56. I plan to issue a separate backdrops package in the near future.
 
+# Technical Information
+
+This fork will remain as closely as possible in line with the main repository, as I frequently update from Upstream. Here is a list of deviations from Upstream:
+/shaders/config.inc - line 130: ALLOW_BG_IMAGE_TEXTURE_WRAP_IN_SHADER is enabled so as to allow a different texture wrap for the arcade artwork
+/shaders/config.globals.inc - line 200: BG_IMAGE_WRAP_MODE is hardcoded to	1.0 (wrap to edge) because that's how it should be with this arcade artwork (ending with a black border)
+koko-aio-backdrops release only:
+/shaders/config.inc - line 107: STATIC_SUPPORT_BACKDROP hardcoded to 1.0 (this is why backdrops require a separate koko-aio-backdrops instance) 
+
+
 # From here, the original text from the forked repository follows:
 
 # Koko-aio
