@@ -1,8 +1,8 @@
 # Koko-aio Fork for Arcade Artwork (currently FinalBurn Neo and MAME 2003/2003plus)
 
-Repository for game-specific Arcade Artwork by using the Koko-aio slang shader Successfully tested under MacOS, Windows and iOS. Currently the Koko-aio shader provides superior performance on all reasonably powered desktops, while providing enhanced shader functions, including bezel reflections. It embeds game-specific artwork seamlessly and scales according to resolution.<br>
+Repository for game-specific Arcade Artwork by using the Koko-aio slang shader. Successfully tested under MacOS, Windows and iPadOS. Currently the Koko-aio shader provides superior performance on all reasonably powered desktops, while providing enhanced shader functions, including bezel reflections. It embeds game-specific artwork seamlessly and scales according to resolution. The koko-aio shader is currently under steady development, thus it is a clear aim to stay in line with the Upstream changes.<br>
 <br>
-Main source of this artwork comes from John Merrit, who set a benchmark for realistic arcade artwork. I still very much like them, and they shine even more in combination with Koko-aio. My selection of the artwork is arbitrary, but I try to publish eye candys earlier :-).<br>
+Main source of this artwork comes from John Merrit, who set a benchmark for realistic arcade artwork. I still very much like them, and they shine even more in combination with Koko-aio. My selection of the artwork is arbitrary, but I try to publish eye candys earlier :-). Version 0.2 sees the inclusion of some breathtaking 4K artwork provided by Ars Invictus.<br>
 <br>
 Requirements: RetroArch 1.5.0 or a recent RetroArch Nightly Build that supports Vulkan. Tested with FinalBurn Neo (mainly) and MAME 2003/2003plus. MAME current does not work out of the box, as the rotation of this core is different.<br>
 
