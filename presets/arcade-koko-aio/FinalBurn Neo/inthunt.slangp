@@ -1,4 +1,4 @@
-#reference ":/shaders/shaders_slang/bezel/koko-aio/monitor-slotmask-bloom-bezel.slangp"
+#reference "../../shaders/shaders_slang/bezel/koko-aio/monitor-slotmask-bloom-bezel.slangp"
 BEZEL_INNER_ZOOM = "-0.725000"
 BEZEL_FRAME_ZOOM = "-0.335000"
 BEZEL_R = "-0.220000"
@@ -9,7 +9,7 @@ BG_IMAGE_OFFX = "-0.002000"
 BG_IMAGE_OFFY = "-0.010500"
 BG_IMAGE_ZOOM = "1.127991"
 DO_AMBILIGHT = "0.000000"
-bg_under = ":/shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/inthunt.png"
+bg_under = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/inthunt.png"
 
 // Credits
 // shader by kokoko3k - https://github.com/kokoko3k/koko-aio-slang

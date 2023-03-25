@@ -1,4 +1,4 @@
-#reference ":/shaders/shaders_slang/bezel/koko-aio/monitor-slotmask-bloom-bezel.slangp"
+#reference "../../shaders/shaders_slang/bezel/koko-aio/monitor-slotmask-bloom-bezel.slangp"
 LUMINANCE = "0.150000"
 BEZEL_INNER_ZOOM = "-0.382500"
 BEZEL_FRAME_ZOOM = "-0.110000"
@@ -12,7 +12,7 @@ DO_GLOBAL_SHZO = "1.000000"
 GLOBAL_OFFX = "-0.025500"
 GLOBAL_OFFY = "0.003000"
 GLOBAL_ZOOM = "1.076994"
-bg_under = ":/shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/timeplt.png"
+bg_under = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/timeplt.png"
 
 // Credits
 // shader by kokoko3k - https://github.com/kokoko3k/koko-aio-slang
