@@ -14,9 +14,14 @@ Please see the list of game presets in the Release Notes.
 # Screenshots
 Screenshots are taken under MacOS with HDR enabled.
 
+Shots from v 0.1:
+
 <img width="512" alt="1943" src="https://user-images.githubusercontent.com/24915559/215357835-23de575f-66ba-477c-be39-e8ab433a8e50.png">
 <img width="512" alt="aliensyn" src="https://user-images.githubusercontent.com/24915559/215357862-535b6e7e-dff0-4a86-9d86-f9a88f89921c.png">
 <img width="512" alt="mpatrol" src="https://user-images.githubusercontent.com/24915559/215357897-803ccc6a-6bfa-4ef2-8b58-4547b140c5e3.png">
+
+Shots from v 0.2
+
 
 # Easy install
 
