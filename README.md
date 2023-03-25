@@ -6,8 +6,10 @@ Main source of this artwork comes from John Merrit, who set a benchmark for real
 <br>
 Requirements: RetroArch 1.5.0 or a recent RetroArch Nightly Build that supports Vulkan. Tested with FinalBurn Neo (mainly) and MAME 2003/2003plus. MAME current does not work out of the box, as the rotation of this core is different.<br>
 
-# Release 0.1 contains first 21 game-specific presets - download here!
+# Release 0.2 contains 40 game-specific presets - download here!
+Backdrop games and 4k artwork included in this release.
 Please see the list of game presets in the Release Notes.
+
 
 # Screenshots
 Screenshots are taken under MacOS with HDR enabled.
@@ -41,7 +43,7 @@ Please see the Moon Patrol example - you can just duplicate the .slangp preset a
 
 # Initial backdrop support
 
-The first backdrop presets are uploaded, but in order for them to work, you must create a separate shader directory called koko-aio-backdrops and put the backdrop textures there. You also need to manually edit the config.inc file in the shaders subdirectory by uncommenting backdrop support in line #56. I plan to issue a separate backdrops package in the near future.
+The first backdrop presets are uploaded, but in order for them to work, you must create a separate shader directory called koko-aio-backdrops and put the backdrop textures there. You also need to manually edit the config.inc file in the shaders subdirectory by uncommenting backdrop support in line #107.
 
 # Technical Information
 
