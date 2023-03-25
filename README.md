@@ -14,12 +14,6 @@ Please see the list of game presets in the Release Notes.
 # Screenshots
 Screenshots are taken under MacOS with HDR enabled.
 
-Shots from v 0.1:<br>
-
-<img width="512" alt="1943" src="https://user-images.githubusercontent.com/24915559/215357835-23de575f-66ba-477c-be39-e8ab433a8e50.png">
-<img width="512" alt="aliensyn" src="https://user-images.githubusercontent.com/24915559/215357862-535b6e7e-dff0-4a86-9d86-f9a88f89921c.png">
-<img width="512" alt="mpatrol" src="https://user-images.githubusercontent.com/24915559/215357897-803ccc6a-6bfa-4ef2-8b58-4547b140c5e3.png">
-
 Shots from v 0.2:<br>
 
 <img width="851" alt="Bildschirm­foto 2023-03-25 um 22 34 39" src="https://user-images.githubusercontent.com/24915559/227745111-e03e33dc-adc4-400f-ab1e-195c959a7565.png">
@@ -28,6 +22,12 @@ Shots from v 0.2:<br>
 <img width="851" alt="Bildschirm­foto 2023-03-25 um 22 29 12" src="https://user-images.githubusercontent.com/24915559/227745178-9f5948c3-cf38-4d77-b5f6-ca394020a472.png">
 <img width="851" alt="Bildschirm­foto 2023-03-25 um 22 31 11" src="https://user-images.githubusercontent.com/24915559/227745159-bad3ff85-e90e-443d-8ce0-8c75fbdf7307.png">
 <img width="851" alt="Bildschirm­foto 2023-03-25 um 22 33 41" src="https://user-images.githubusercontent.com/24915559/227745243-2af41d24-edeb-4e2d-a22e-55a2ee665a98.png">
+<br>
+Shots from v 0.1:<br>
+
+<img width="512" alt="1943" src="https://user-images.githubusercontent.com/24915559/215357835-23de575f-66ba-477c-be39-e8ab433a8e50.png">
+<img width="512" alt="aliensyn" src="https://user-images.githubusercontent.com/24915559/215357862-535b6e7e-dff0-4a86-9d86-f9a88f89921c.png">
+<img width="512" alt="mpatrol" src="https://user-images.githubusercontent.com/24915559/215357897-803ccc6a-6bfa-4ef2-8b58-4547b140c5e3.png">
 <br>
 
 # Easy install
