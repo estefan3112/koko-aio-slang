@@ -14,29 +14,28 @@ Please see the list of game presets in the Release Notes.
 # Screenshots
 Screenshots are taken under MacOS with HDR enabled.
 
-Shots from v 0.1:
+Shots from v 0.1:<br>
 
 <img width="512" alt="1943" src="https://user-images.githubusercontent.com/24915559/215357835-23de575f-66ba-477c-be39-e8ab433a8e50.png">
 <img width="512" alt="aliensyn" src="https://user-images.githubusercontent.com/24915559/215357862-535b6e7e-dff0-4a86-9d86-f9a88f89921c.png">
 <img width="512" alt="mpatrol" src="https://user-images.githubusercontent.com/24915559/215357897-803ccc6a-6bfa-4ef2-8b58-4547b140c5e3.png">
 
-Shots from v 0.2
+Shots from v 0.2:<br>
+
 <img width="851" alt="Bildschirm­foto 2023-03-25 um 22 34 39" src="https://user-images.githubusercontent.com/24915559/227745111-e03e33dc-adc4-400f-ab1e-195c959a7565.png">
 <img width="851" alt="Bildschirm­foto 2023-03-25 um 22 32 36" src="https://user-images.githubusercontent.com/24915559/227745132-69501af9-19c0-4990-9e9c-c0e59276b073.png">
 <img width="851" alt="Bildschirm­foto 2023-03-25 um 22 30 07" src="https://user-images.githubusercontent.com/24915559/227745148-43338ee5-3d77-4db5-b35a-02755ce52bdf.png">
 <img width="851" alt="Bildschirm­foto 2023-03-25 um 22 29 12" src="https://user-images.githubusercontent.com/24915559/227745178-9f5948c3-cf38-4d77-b5f6-ca394020a472.png">
-
 <img width="851" alt="Bildschirm­foto 2023-03-25 um 22 31 11" src="https://user-images.githubusercontent.com/24915559/227745159-bad3ff85-e90e-443d-8ce0-8c75fbdf7307.png">
-
-
-
+<img width="851" alt="Bildschirm­foto 2023-03-25 um 22 33 41" src="https://user-images.githubusercontent.com/24915559/227745243-2af41d24-edeb-4e2d-a22e-55a2ee665a98.png">
+<br>
 
 # Easy install
 
-Step 1: Take the entire koko-aio folder as provided in the Release section and replace the one that comes with RetroArch: /shaders/shaders_slang/bezel/koko-aio<br>
-Step 2: Move all .slangp-presets to the respective core configuration directory, i.e. /config/FinalBurn Neo/ and/or /config/Mame 2003 (0.78)<br>
+Step 1: Take the entire zip package as provided in the Release section and replace the koko-aio folder that comes with RetroArch: /shaders/shaders_slang/bezel/koko-aio; for the backdrop presets, the parallel version of koko-aio-backdrops is required in the same directory<br>
+Step 2: Move all .slangp-presets to the respective core configuration directory, i.e. /config/FinalBurn Neo/ and/or /config/Mame 2003 (0.78) and/or /config/MAME 2003-plus<br>
 <br>
-Note: The FinalBurn Neo.cfg/Mame 2003 (0.78).cfg files contain just one line that secures that the Aspect Ratio is set to 'Full'. Without this option, the background will not appear.<br>
+Note: The FinalBurn Neo.cfg/Mame 2003 (0.78).cfg/MAME 2003-plus.cfg files contain just one line that secures that the Aspect Ratio is set to 'Full'. Without this option, the background will not appear.<br>
 
 # Dedicated install of only the additional Arcade Artwork
 
