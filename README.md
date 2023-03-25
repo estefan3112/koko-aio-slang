@@ -21,6 +21,14 @@ Shots from v 0.1:
 <img width="512" alt="mpatrol" src="https://user-images.githubusercontent.com/24915559/215357897-803ccc6a-6bfa-4ef2-8b58-4547b140c5e3.png">
 
 Shots from v 0.2
+<img width="851" alt="Bildschirm­foto 2023-03-25 um 22 34 39" src="https://user-images.githubusercontent.com/24915559/227745111-e03e33dc-adc4-400f-ab1e-195c959a7565.png">
+<img width="851" alt="Bildschirm­foto 2023-03-25 um 22 32 36" src="https://user-images.githubusercontent.com/24915559/227745132-69501af9-19c0-4990-9e9c-c0e59276b073.png">
+<img width="851" alt="Bildschirm­foto 2023-03-25 um 22 30 07" src="https://user-images.githubusercontent.com/24915559/227745148-43338ee5-3d77-4db5-b35a-02755ce52bdf.png">
+<img width="851" alt="Bildschirm­foto 2023-03-25 um 22 29 12" src="https://user-images.githubusercontent.com/24915559/227745178-9f5948c3-cf38-4d77-b5f6-ca394020a472.png">
+
+<img width="851" alt="Bildschirm­foto 2023-03-25 um 22 31 11" src="https://user-images.githubusercontent.com/24915559/227745159-bad3ff85-e90e-443d-8ce0-8c75fbdf7307.png">
+
+
 
 
 # Easy install
