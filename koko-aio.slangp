@@ -42,7 +42,7 @@
          bg_under_linear = "true"
       bg_under_wrap_mode = "mirrored_repeat"
          bg_under_mipmap = "true"
-          
+         
                  bg_over = "textures/background_over.png"
           bg_over_linear = "true"
        bg_over_wrap_mode = "mirrored_repeat"
@@ -54,7 +54,7 @@
       backdrop_wrap_mode = "mirrored_repeat"
          backdrop_mipmap = "true"
 
-shaders = 18
+shaders = 17
 
 # NTSC Color artifacts pass:
 # The very first pass emulates ntsc color artifacting.
@@ -114,7 +114,7 @@ shaders = 18
        scale_type2 = source
             scale2 = 1.0
      mipmap_input2 = true
-        wrap_mode2 = "mirrored_repeat"
+        wrap_mode2 = "clamp_to border"
 
         
 
@@ -202,23 +202,24 @@ float_framebuffer7 = true
 
          
          
-# The following 2 passes will blur the mirrored part of first_pass
+# The following passes will blur the mirrored part of first_pass
 # to emulate soft bezel reflections.
-               shader9 = shaders/reflection_blur_x.slang
-                alias9 = "reflected_blurred_pass1"
+
+               shader9 = shaders/reflection_blur_pre.slang
+                alias9 = "reflected_blurred_pass_pre"
         filter_linear9 = true
            scale_type9 = source
                 scale9 = 1.0
-            wrap_mode9 = "mirrored_repeat"
+            wrap_mode9 = "clamp_to_border"
 
-               shader10 = shaders/reflection_blur_y.slang
-                alias10 = "reflected_blurred_pass2"
+            
+               shader10 = shaders/reflection_blur.slang
+                alias10 = "reflected_blurred_pass"
         filter_linear10 = true
            scale_type10 = source
                 scale10 = 1.0
+         mipmap_input10 = true
             wrap_mode10 = "mirrored_repeat"
-
-
 
 # In the following passes we emulate bloom effect.
 # Since the radius has to be high, we sample first_pass
@@ -270,14 +271,6 @@ float_framebuffer7 = true
                 scale15 = 0.05
             wrap_mode15 = "clamp_to_border"
     float_framebuffer15 = true
-
-           shader16 = shaders/old_unused/passthrough.slang
-            alias16 = "pt"
-    filter_linear16 = true
-       scale_type16 = viewport
-       scale_x16 = 0.05
-       scale_y16 = 0.05 
-
     
 
 # This pass pass will do everything needed to happen at screen coordinates:
@@ -288,76 +281,11 @@ float_framebuffer7 = true
 # * Black frame insertions
 # * Bezel
 # * Background images
-           shader17 = shaders/final_pass.slang
-            alias17 = "final_pass"
-    filter_linear17 = true
-       scale_type17 = viewport
-            scale17 = 1.0
-        wrap_mode17 = "mirrored_repeat"
+           shader16 = shaders/final_pass.slang
+            alias16 = "final_pass"
+    filter_linear16 = true
+       scale_type16 = viewport
+            scale16 = 1.0
+        wrap_mode16 = "mirrored_repeat"
         
 
-
-
-
-        
-# TODO:
-#    [v] Guess more aspect ratios:
-#			nope: Guessing is impossible..
-#    [v] Use gauss blur for composite color bleeding?
-#    	    Tried, does not produce great visible improvements
-#    [v] Vignette and spot could be done earlier at lower res?
-#        Made a bit lighter version right in final_pass instead.
-#    [v] reference new repo from the main one
-#    [v] Noise is not visible on black or white, much more on gray, why?
-#        Probably a matter of post processing
-#    [v] Try to get rid of mark_unneeded() in reflection_blur_y
-#        didit and it is useless, no measurable perf increase.
-#    [v] Why tv presets have +5% brightness?
-#        Because the contrast is pushed too.
-#    [v] First bloom pass: why don't we use an higher lod?
-#        Using an higher lod makes the bloom less prone to detect thinner lines
-#        So, no.
-#    [v] Does bloom quality improve if we sample from original?
-#        yeah!
-#    [v] #pragmas to vertex shader to fragment shader
-#        Why and when performances start to degrade?
-#        ...It seems it happen when too many UBOs or Push constants are readed
-#           by the Vertex shader and passed to the fragment one.
-#           (not tested if the pass from fragment to vertex is needed to reproduce the issue)
-#    [v] What if i do vmask and darklines (scanlines too in alpha??)
-#        in a little pass that scales to absolute size?
-#        or even a lut with the mask...
-#        No gain, texture lookups are heavier than expected.
-#    [v] textureSize() appears to be quite heavy, consider to make bezel coords fixed.
-#        Done, expected to gain more, if something.
-#        You just use it to calc lods, is it worth?
-#    [v] Reflection blur size, make id not dependand on input resolution.
-#    [v] When colorizing bezel with ambilight, apply noise over it as well
-#    [v] Blur less near the start of the bezel
-#    [v] Make the reflection blur shade point configurable
-#    [v] Rotate image: auto (-1)... Does it work?
-#        yes.
-#    [v] Put blank lines after #pragma parameter groups
-#    [v] Bloom: would it make sense to gather the average luminosity in a wide
-#        zone around the current pixel instead of the whole scene?
-#        Yes, it works good.
-#    [v] should min_w in avglum_pass depend on content resolution?
-#        lod = log2(params.SourceSize.y / min_w); in avglum_pass is wrong (w/y?)
-#        Both fixed by specifying the lod instead of doing stupid calculations.mip_lod
-#        So fixed, and achieved what was needed.
-#    [v] When using dynamic zoom, bezel reflection should be dynamically adapted
-#        ...this is tough, zomoing reflection wouldn't work.
-#    v] Further tune reflection shade
-#    [v] Do a debug image with a white object on black backgroud to tune bloom exposure over time
-#    [.] Darkline, vmask: whiteness can be pre-calculated outside.
-#        Half done, gained something.
-#    [ ] check branching conditions in first_pass.slang
-#    [ ] Better debanding?
-#    [ ] Should the flickering be aware of the scanline?
-#        read: does a scanline dark gap increment the flickering or not?
-#    [ ] deconvergence after glow/halo?
-#    [ ] Glow spread in final pass?
-#    [ ] Find a way to smooth borders without cropping the image
-#    [ ] Set content aspect ratio only.
-#    [ ] Allow to configure new bezel parameters?
-#        Reflection strength, corner shape, size and fade?  

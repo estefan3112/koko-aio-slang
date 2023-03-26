@@ -63,11 +63,11 @@
 
 
 #define DO_NTSC_ARTIFACTS	global.DO_NTSC_ARTIFACTS
-	#define NTSC_FILTER_WIDTH	global.NTSC_FILTER_WIDTH
-	#define NTSC_FILTER_SCF		global.NTSC_FILTER_SCF
-	#define NTSC_FILTER_FC		global.NTSC_FILTER_FC
-	#define NTSC_MIX		global.NTSC_MIX
-	#define NTSC_PHASE_SHIFT	global.NTSC_PHASE_SHIFT
+	#define NTSC_FILTER_WIDTH		global.NTSC_FILTER_WIDTH
+	#define NTSC_FILTER_SCF			global.NTSC_FILTER_SCF
+	#define NTSC_FILTER_FC			global.NTSC_FILTER_FC
+	#define NTSC_MIX				global.NTSC_MIX
+	#define NTSC_PHASE_SHIFT		global.NTSC_PHASE_SHIFT
 
 
 
@@ -89,18 +89,20 @@
 	#define SHIFT_R			global.SHIFT_R
 	#define SHIFT_G			global.SHIFT_G
 	#define SHIFT_B			global.SHIFT_B
-	#define OFFSET_STRENGTH		global.OFFSET_STRENGTH
+	#define OFFSET_STRENGTH	global.OFFSET_STRENGTH
 
 
 
 #define DO_IN_GLOW		global.DO_IN_GLOW
-	#define IN_GLOW_BIAS		global.IN_GLOW_BIAS
-	#define IN_GLOW_SPREAD		global.IN_GLOW_SPREAD
-	#define IN_GLOW_W		global.IN_GLOW_W
-	#define IN_GLOW_H		global.IN_GLOW_H
-	#define IN_GLOW_POWER		global.IN_GLOW_POWER
-	#define IN_GLOW_GAMMA		global.IN_GLOW_GAMMA
-
+	#define IN_GLOW_BIAS			global.IN_GLOW_BIAS
+	#define IN_GLOW_SPREAD			global.IN_GLOW_SPREAD
+	#define IN_GLOW_W				global.IN_GLOW_W
+	#define IN_GLOW_H				global.IN_GLOW_H
+	#define IN_GLOW_POWER			global.IN_GLOW_POWER
+	#define IN_GLOW_GAMMA			global.IN_GLOW_GAMMA
+	#define IN_GLOW_NTSC_ARTF_MULT	global.IN_GLOW_NTSC_ARTF_MULT
+	#define IN_GLOW_NTSC_ARTF_TRSH	global.IN_GLOW_NTSC_ARTF_TRSH
+	#define IN_GLOW_SHOW_ARTF_MASK  global.IN_GLOW_SHOW_ARTF_MASK
 
 
 #define DO_VMASK_AND_DARKLINES	global.DO_VMASK_AND_DARKLINES
@@ -108,7 +110,7 @@
 	#define RGB_MASK_STRENGTH	global.RGB_MASK_STRENGTH
 	#define VMASK_OVERWHITE		params.VMASK_OVERWHITE
 	#define VMASK_DARKLINE_SCALE	params.VMASK_DARKLINE_SCALE
-	#define VMASK_GAP		params.VMASK_GAP
+	#define VMASK_GAP			params.VMASK_GAP
 	#define VMASK_USE_GM		params.VMASK_USE_GM
 	#define DARKLINES_STRENGTH	global.DARKLINES_STRENGTH
 	#define DRKLN_OVERWHITE		params.DRKLN_OVERWHITE
@@ -169,12 +171,13 @@
 	#define BEZEL_CON		global.BEZEL_CON
 	#define BEZEL_INNER_ZOOM	global.BEZEL_INNER_ZOOM
 	#define BEZEL_FRAME_ZOOM	global.BEZEL_FRAME_ZOOM
-	#define BEZEL_IMAGE_BORDER	global.BEZEL_IMAGE_BORDER
 	#define BEZEL_USE_STRAIGHT	global.BEZEL_USE_STRAIGHT
 	#define BEZEL_RFL_BLR_SHD	global.BEZEL_RFL_BLR_SHD
-	#define BEZEL_RFL_OFFSET	global.BEZEL_RFL_OFFSET
-	#define BEZEL_REFL_ZOOM		global.BEZEL_REFL_ZOOM
-
+	#define BEZEL_RFL_ZOOM		global.BEZEL_RFL_ZOOM
+	#define BEZEL_REFL_STRENGTH	global.BEZEL_REFL_STRENGTH
+	#define BEZEL_SPCL_STRENGTH	global.BEZEL_SPCL_STRENGTH
+	#define BEZEL_ROUGHNESS		global.BEZEL_ROUGHNESS
+	
 #define DO_SPOT		global.DO_SPOT
 	#define S_POSITION	global.S_POSITION
 	#define S_SIZE		global.S_SIZE
@@ -198,14 +201,18 @@
 
 
 #define DO_AMBILIGHT		global.DO_AMBILIGHT
-	#define AMBI_STEPS	global.AMBI_STEPS
-	#define AMBI_FALLOFF	global.AMBI_FALLOFF
-	#define AMBI_POWER	global.AMBI_POWER
-	#define AMBI_OVER_BEZEL global.AMBI_OVER_BEZEL
-	#define ASPECT_X	global.ASPECT_X
-	#define ASPECT_Y	global.ASPECT_Y
+	#define AMBI_STEPS			global.AMBI_STEPS
+	#define AMBI_FALLOFF			global.AMBI_FALLOFF
+	#define AMBI_POWER			global.AMBI_POWER
+	#define AMBI_OVER_BEZEL			global.AMBI_OVER_BEZEL
+	#define AMBI_OVER_BEZEL_SIZE		global.AMBI_OVER_BEZEL_SIZE
+	#define AMBI_BG_IMAGE_BLEND_MODE	global.AMBI_BG_IMAGE_BLEND_MODE
+	#define AMBI_BG_IMAGE_FORCE		global.AMBI_BG_IMAGE_FORCE
 
-
+//Global aspect ratio related
+	#define ASPECT_X		global.ASPECT_X
+	#define ASPECT_Y		global.ASPECT_Y
+	
 
 #define DO_DYNZOOM		global.DO_DYNZOOM
 	#define DYNZOOM_FACTOR		global.DYNZOOM_FACTOR
@@ -221,3 +228,10 @@
 	#define GLOBAL_ZOOM	global.GLOBAL_ZOOM
 	#define GLOBAL_OFFX	global.GLOBAL_OFFX
 	#define GLOBAL_OFFY	global.GLOBAL_OFFY
+
+	
+#define DO_GAME_GEOM_OVERRIDE	global.DO_GAME_GEOM_OVERRIDE
+	#define GAME_GEOM_ASPECT 	global.GAME_GEOM_ASPECT
+	#define GAME_GEOM_VSHIFT 	global.GAME_GEOM_VSHIFT
+	#define GAME_GEOM_HSHIFT 	global.GAME_GEOM_HSHIFT
+	#define GAME_GEOM_ZOOM		global.GAME_GEOM_ZOOM

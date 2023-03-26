@@ -11,7 +11,7 @@ BG_IMAGE_OFFY = "0.002500"
 DO_AMBILIGHT = "0.000000"
 bg_under = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/aliensyn.png"
 
-# Credits
-# shader by kokoko3k - https://github.com/kokoko3k/koko-aio-slang
-# artwork by John Merrit
-# preset and artwork adjustments by estefan3112 - https://github.com/estefan3112/koko-aio-slang
+// Credits
+// shader by kokoko3k - https://github.com/kokoko3k/koko-aio-slang
+// artwork by John Merrit
+// preset and artwork adjustments by estefan3112 - https://github.com/estefan3112/koko-aio-slang

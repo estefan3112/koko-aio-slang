@@ -15,9 +15,16 @@ layout(location = 1) in vec2 TexCoord;
 layout(location = 0) out vec2 vTexCoord;
 layout(location = 1) out float lod;
 
+#include "includes/functions.include.slang"
+
+
 void main() {
    gl_Position = global.MVP * Position;
-   vTexCoord = TexCoord;  
+   
+   vTexCoord = TexCoord;
+
+    if (DO_GAME_GEOM_OVERRIDE > 0.5)
+        vTexCoord = content_geom_override(vTexCoord, GAME_GEOM_ASPECT, get_in_aspect(), GAME_GEOM_VSHIFT, GAME_GEOM_HSHIFT, GAME_GEOM_ZOOM);
 }
 
 #pragma stage fragment
@@ -55,7 +62,6 @@ float get_avglum() {
      * 0.75 -> smoothed_sampling, used to adapt fullscreen zoom
      * anything else: continuous sampling
      */
-
 
     bool reduced_sampling_co =
             vTexCoord.x > 0.24 && vTexCoord.x < 0.26 &&
@@ -97,12 +103,17 @@ void main() {
     //if (DO_AMBILIGHT == 1.0 || DO_BEZEL == 1.0 || DO_DYNZOOM == 1.0) {
     if ( DO_AMBILIGHT + DO_BEZEL + DO_DYNZOOM + DO_BLOOM == 0 ) return;
     
+    
     vec4 pixel_out;
     pixel_out.a = get_avglum();
     if (DO_BEZEL + DO_BLOOM > 0.0) {
-        //Create a small mipmap to be used to light the bezel corners.
+        //Create a small mipmap to be used to light the bezel corners
+        //and by the bloom pass to identify bright areas.
         pixel_out.rgb = textureLod(first_pass, vTexCoord, mip_lod).rgb;
     }
+
     FragColor = pixel_out;
 
+    //FragColor = texture(first_pass, vTexCoord);
+    
 }

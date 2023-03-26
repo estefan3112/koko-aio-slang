@@ -90,11 +90,14 @@ vec3 pixel_offset(vec3 pixel_cur,vec2 coord, sampler2D in_texture, vec4 sourcesi
       pixel_offset.r=texture(in_texture,coord + r_offset * d).r;
       pixel_offset.g=texture(in_texture,coord + g_offset * d).g;
       pixel_offset.b=texture(in_texture,coord + b_offset * d).b;
-      //return mix(pixel_cur,pixel_offset,OFFSET_STRENGTH);
+      return mix(pixel_cur,pixel_offset,OFFSET_STRENGTH);
+      /* why did i make this? commit message : https://github.com/kokoko3k/koko-aio-slang/commit/843d71af40d32c2e2b088a71bf3ad18683812a98
+       * does not help...
       vec3 color_difformity = vec3(pixel_offset.r-pixel_cur.r, +pixel_offset.g-pixel_cur.g, pixel_offset.b - pixel_cur.b);
       vec3 pixel_offset_to_add = pixel_offset * color_difformity;
       return pixel_cur + (pixel_offset_to_add *OFFSET_STRENGTH);
       //return pixel_cur + (pixel_offset *OFFSET_STRENGTH*color_difformity);
+      */
 }
 
 
@@ -162,8 +165,7 @@ vec3 pixel_bleed(vec3 pixel_in, vec2 co, sampler2D in_texture, vec4 sourcesize2)
 
 }
 void main() {
-   //if (DO_SHIFT_RGB + DO_SAT_BLEED == 0.0) return;
-   
+   float pixel_alpha_ntsc_artifacts; // <- this holds ntsc artifacts needed by glow to modulate blur there.
    vec3 pixel_out;
    //Handle case where both are needed:
    //First shift the right source, then pass it to bleed function.
@@ -172,8 +174,10 @@ void main() {
       if (DO_SAT_BLEED > 0.0) {      
          if ( DO_FXAA == 1.0)  {
             pixel_out = pixel_bleed(pixel_out, vTexCoord, FXAA_pass, global.FXAA_passSize);
+            pixel_alpha_ntsc_artifacts = texture(FXAA_pass, vTexCoord).a;
          } else {
             pixel_out = pixel_bleed(pixel_out, vTexCoord, first_pass, global.first_passSize);
+            pixel_alpha_ntsc_artifacts = texture(first_pass, vTexCoord).a;
          }
       }
    } else
@@ -185,23 +189,28 @@ void main() {
          //Handle case where only chroma bleed is requested
          if ( DO_FXAA == 1.0)  {
             pixel_out = texture(FXAA_pass, vTexCoord).rgb;
+            pixel_alpha_ntsc_artifacts = texture(FXAA_pass, vTexCoord).a;
             pixel_out = pixel_bleed(pixel_out, vTexCoord, FXAA_pass, global.FXAA_passSize);
+            
          } else {
             pixel_out = texture(first_pass, vTexCoord).rgb;
+            pixel_alpha_ntsc_artifacts = texture(first_pass, vTexCoord).a;
             pixel_out = pixel_bleed(pixel_out, vTexCoord, first_pass, global.first_passSize);
          }
    } else
       //Passthrough
       if ( DO_FXAA == 1.0)  {
          pixel_out = texture(FXAA_pass, vTexCoord).rgb;
+         pixel_alpha_ntsc_artifacts = texture(FXAA_pass, vTexCoord).a;
       } else {
          pixel_out = texture(first_pass, vTexCoord).rgb;
+         pixel_alpha_ntsc_artifacts = texture(first_pass, vTexCoord).a;
       }
 
    //pre-gamma if needed by glow.
    if (DO_IN_GLOW > 0.5) 
       pixel_out = pow(pixel_out, vec3(IN_GLOW_GAMMA));
-     
-   FragColor = vec4(pixel_out,0.0);
-   return;
+ 
+   FragColor = vec4(pixel_out,pixel_alpha_ntsc_artifacts);
+
 }

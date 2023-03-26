@@ -10,11 +10,6 @@
     Use it if you don't want to blur the image and you still don't like
     jagged or too much pixelated images.
 
-**RGB deconvergence:**
-    Shift R,G,B components separately to mimic channel deconvergence.
-    By varying Red, Green and Blue offsets, the relative component will be
-    shifted column by column, row by row.
-
 **CVBS: NTSC color artifacts: **
     Tries to emulate typical NTSC color artifacting without emulating
     full NTSC coding/decoding pipeline.
@@ -22,12 +17,20 @@
     an accurate emulation (yet?)
     As today, it is enough to emulate rainbowing effects on genesis.
     
+** RF Noise: **
+    Emulates radio frequency noise with a given strength
+    
 **CVBS: Bandwidth limited chroma:**
     Will cause an horizontal chroma bleed which cheaply mimics the effect of
     poor composite video signals.
     It can be used with RGB shifting and image blurring to give the picture
     an ntsc look without dealing with specific encoding/decoding stuffs. 
 
+**RGB deconvergence:**
+    Shift R,G,B components separately to mimic channel deconvergence.
+    By varying Red, Green and Blue offsets, the relative component will be
+    shifted column by column, row by row.
+    
 **Glow/Blur:**
     Emulate the CRT glowing "feature", so that the brighter areas of
     the image will light their surroundings,
@@ -48,7 +51,17 @@
         Higher negative values -> more glow : brighter colors expands over darker ones.
         Higher positive values -> means blur: all the colors are blurred.
         0.0 means no blur, no glow.
-        
+    Blur NTSC artifacts more
+        When NTSC artifacts emulation is enabled, this option will let you blur
+        them more, this would help to selectively blur things like waterfalls
+        in Sonic 2.
+        The value you set it will be subtracted from glow horizontal sharpness.
+    Blur less NTSC artifacts (min treshold)
+        In relation to the previous setting, this allow to blur only the most
+        prominent artifacts.
+    Show NTSC artifacts mask (debug)
+        This will help you to set the previous 2 values as it will show only
+        the artifacts that will modify the blur.
     
 **RGB Masks and/or Darklines:**
     Emulates CRT RGB phosphors (RGB Mask),
@@ -59,7 +72,7 @@
         you may want to scale this filter by a factor.
     Vmask Strength:
         How much will the RGB mask be visible.
-    . (LoDPI) Green,Magenta -> BGR:
+    . (LoDPI) Green,Magenta -> RGB:
         By exploiting common monitors RGB subpixel order, this causes
         the RGB mask, to be emulated by using just 2 pixels instead of 3.
         Very useful for 1080p (or lower) displays and to keep more brightness.
@@ -203,20 +216,21 @@
     
     Straight
         Use a straight bezel instead of a curved one.
-    Bezel color (red,green,blue) and contrast:
-        Allows to choose the color of the monitor frame.
     Image zoom:
         Allows to shrink or expand the game content to fit the monitor frame.
     Frame zoom:
-        Allows to shrink or expand the monitor frame to fit the game content.
-    Image Border:
-        Draws a black border around the game content.
-    Sharp reflections
+          Allows to shrink or expand the monitor frame to fit the game content.
+    Bezel color (red,green,blue) and contrast:
+        Allows to choose the color of the monitor frame.
+    Reflections strength
+        The amount of reflections
+    Reflections sharpness
         Modulates from totally blurred to totally sharp reflection appearance.
-
-**Global shift/zoom image:**
-    Zoom and shift everything on screen, but background pictures.
-        
+    Specularity strength
+        The amount of specular reflection
+    Reflections roughness
+        The amount of material roughness in reflection area
+          
 **Backgound image:**
     Draws an image on screen picked from the "textures" shader subdirectory,
     named: background.png<br>
@@ -236,6 +250,10 @@
         This could be needed when dealing with vertical games.
         Use -1 to let the shader try to guess if the rotation is needed.
     Wrap mode:
+        This feature is static, to use it 
+        you have to manually enable it by removing the leading: "//"
+        from "//#define ALLOW_BG_IMAGE_TEXTURE_WRAP_IN_SHADER" in config.inc
+        
         What to do outside the image:
         0  Mirrored repeat because so is configured in main .slangp.
         1  Clamp to border and it means black.
@@ -261,7 +279,32 @@
         Note: To avoid burn-in effects, keep Light Falloff + Led power not too high.
     Colorize Bezel
         Allow to add an amount of the ambient light over the bezel frame
+    Colorization size
+        How much the ambient light should bleed over the monitor.
+        Pushing this too high would make it bleed over the tube.
+        This is not supported.
+    Back/Foreground image alpha blend
+        When displaying background or foreground images, ambient lights are
+        shown on their transparent areas (alpha channel)
+        Switching this you can choose if you want to emulate leds:
+        under the image (0/mix) or over the image (1/add)
+    Always colorize Foreground image (add mode only)
+        When "Back/Foreground image alpha blend" is set to 1/add,
+        you can choose to always colorize the foreground image by a certain amount.
+        This can be used to produce big haloes all around the tube.
+        This internally works by adding the amount of your choice to the alpha channel
+        of the foreground image.
+        
+**Luminosity dependant zoom:**
+    On older CRT monitors, the picture gets bigger when the image was brighter.
 
+**Vignette:**
+    Will cause uneven brightness of the image, more at the center,
+    less at the edges.
+    
+**Spot:**
+    Simulates external light reflected by the monitor glass.
+            
 **Aspect Ratio:**
     When using effects that need Retroarch aspect ratio option
     to be set to "full", you have to provide the source aspect
@@ -284,21 +327,27 @@
         As long as Aspect Ratio Numerator is positive, this will
         be used as the denominator of the fraction.
 
-**Luminosity dependant zoom:**
-    On older CRT monitors, the picture gets bigger when the image was brighter.
+**Global shift/zoom image:**
+    Zoom and shift everything on screen, but background pictures.
 
-**Vignette:**
-    Will cause uneven brightness of the image, more at the center,
-    less at the edges.
+**Override content geometry:**
+    Contrary to the global aspect ratio control, this changes only the game geometry.
+    Bezel stays the same.
     
-**Spot:**
-    Simulates external light reflected by the monitor glass.
+    Aspect: Change aspect ratio.
+    Vertical/Horizontal position: Shifts the game position
+    Zoom: Change the size
 
+    
 **Alternate line blanking:**
     CRT monitors \*real\* refresh was amazing, today is just "meh" in most cases.
-    This emmulates the low pixel persistance of CRT monitors 
+    This emulates the low pixel persistance of CRT monitors 
     and reduces the motion blur, typical of LCD displays, by blanking even/odd
     screen lines on even/odd frames, by sacrificing image brightness, ofc.
+    
+    This feature is static, to use it 
+    you have to manually enable it by removing the leading: "//"
+    from "//#define ALLOW_ALT_BLANK" in config.inc
     
     Frame insertion strength:
         How much the line will be blanked.
