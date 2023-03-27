@@ -39,13 +39,20 @@ void main() {
     gl_Position = global.MVP * Position;
     vIsRotated = float(is_rotated());
     vIn_aspect = get_in_aspect();
-    vTexCoord = get_scaled_coords_aspect(TexCoord,global.FinalViewportSize, vIn_aspect, bool(vIsRotated)) + vec2(0.00001);
+    
 
+    //Calculate vTexcoord as fractional or integer scaled?
+        if ( !do_integer_scale() )
+            vTexCoord = get_scaled_coords_aspect(TexCoord,global.FinalViewportSize, vIn_aspect, bool(vIsRotated)) + vec2(0.0001);
+                else
+            vTexCoord = integer_scale(TexCoord, vIn_aspect, bool(vIsRotated)) + vec2(0.0001); //<- without the offset, SCANLINE_MIN doesn't work.
+
+        
     //if (DO_GLOBAL_SHZO >0.5)
     //    vTexCoord = zoom(vTexCoord + vec2(-GLOBAL_OFFX, -GLOBAL_OFFY), GLOBAL_ZOOM );
     //..unbranched previous
     vTexCoord = (zoom(vTexCoord + vec2(-GLOBAL_OFFX, -GLOBAL_OFFY), GLOBAL_ZOOM ) * DO_GLOBAL_SHZO) + 
-                (vTexCoord * (1-DO_GLOBAL_SHZO)  );
+                (vTexCoord * (1-DO_GLOBAL_SHZO) );
 
     vOutputCoord = TexCoord;
 
@@ -53,7 +60,7 @@ void main() {
                        floor(vOutputCoord.y * params.OutputSize.y));
 
     //Precalc some Curvature/Warp values:
-        float warp_adaption =  1 - BEZEL_INNER_ZOOM * 4.0;
+        float warp_adaption =  1 - get_BEZEL_INNER_ZOOM() * 4.0;
         vec2 geom_warp_adapted = vec2(GEOM_WARP_X, GEOM_WARP_Y) * warp_adaption;
 
         vWarp_vexp = 1.0/ (1 + (vec2(geom_warp_adapted.x, geom_warp_adapted.y) * 0.2)) ;
@@ -127,13 +134,14 @@ layout(set = 0, binding = 12) uniform sampler2D halo_pass;
 
 vec3 pixel_vmask(vec3 source, float white_reference, float over_white) {
     // Simple RGB mask emulation with or without horizontal gap
-    float ooo = 1.0 - RGB_MASK_STRENGTH;
+    float ggg = 1.0 - RGB_MASK_STRENGTH;
+    float ooo = max( VMASK_USE_DUMB + 1 - RGB_MASK_STRENGTH, 0.0); //<- make a dumb mask?
 
     // RGB mask:     R     G     B
     vec3 m1 =  vec3( 1.0 , ooo , ooo );  //col 1
     vec3 m2 =  vec3( ooo , 1.0 , ooo );  //col 2
     vec3 m3 =  vec3( ooo , ooo , 1.0 );  //col 3
-    vec3 gap = vec3( ooo );
+    vec3 gap = vec3( ggg );
 
     vec3 pixel_out;
     vec3 vmasked;
@@ -175,11 +183,13 @@ vec3 pixel_vmask(vec3 source, float white_reference, float over_white) {
 
 vec3 pixel_vmask_gm(vec3 source, float white_reference, float over_white) {
     // Simple RGB mask emulation with or without horizontal gap
-    float ooo = 1.0 - RGB_MASK_STRENGTH;
+    float ggg = 1.0 - RGB_MASK_STRENGTH;
+    float ooo = max( VMASK_USE_DUMB + 1 - RGB_MASK_STRENGTH, 0.0); //<- make a dumb mask?
+    
     // RGB mask:     R     G     B
     vec3 m1 =  vec3( ooo , 1.0 , ooo );    //col 1
     vec3 m2 =  vec3( 1.0 , ooo , 1.0 );    //col 2
-    vec3 gap = vec3( ooo );
+    vec3 gap = vec3( ggg );
 
     float fcol = vOutputCoord.s * params.OutputSize.x;
     vec3 pixel_out;
@@ -305,6 +315,7 @@ float scanline_shape(vec2 coords, bool do_slotmask, float lum) {
     float lum_scaled = lum * SCANLINE_MAX;
           lum_scaled = clamp( lum_scaled, SCANLINE_MIN, SCANLINE_MAX );
 
+
     float angle_base = coords.y * pi * params.OriginalSize.y * period;// + vScanlinePhase;
 
     float lines = 1.0;
@@ -398,7 +409,11 @@ float scanline_shape(vec2 coords, bool do_slotmask, float lum) {
         //lines = pow(clamp(lines + 0.05, 0.0,1.0) , 1/sqrt(lum_scaled));
         //float extra_power_1 = 3.0;
 
+        
+
+        
         float extra_power_1 = max(SCANLINE_MAX/3.0, 1.0);
+
         lines = pow(clamp(lines, SCANLINE_DARK * 2.0, 1.0) , 1/(sqrt(lum_scaled*lum_scaled*extra_power_1) ) );
 
         //lines = pow(clamp(lines + 0.05, 0.0,1.0) , 1/(sqrt(lum_scaled*lum_scaled*extra_power_1) ) ) * extra_power_1/2.0;
@@ -603,7 +618,11 @@ vec4 pixel_background_image(bool over){
             if (BG_IMAGE_ROTATION == 2.0) back_coords.x = 1 - back_coords.x;
         }
         back_coords=zoom(back_coords, BG_IMAGE_ZOOM);
-        return textureLod_wrap(bg_over, back_coords, bg_over_lod, BG_IMAGE_WRAP_MODE);
+        vec4 pixel_bgover = textureLod_wrap(bg_over, back_coords, bg_over_lod, BG_IMAGE_WRAP_MODE);
+        return pixel_bgover;
+        
+        
+        
     }
     //under
         vec2 tex_size = textureSize(bg_under, 0); // * BG_ZOOM;
@@ -738,7 +757,9 @@ vec3 compose_bezel_over(vec3 full_viewport, vec2 coords_for_bezel, vec2 coords_f
         
         //Sample the reflection pass with small offset to simulate the roughness
             vec3 pixel_mirrored = texture(reflected_blurred_pass, coords_for_mirror + roughness).rgb; 
-        
+            float fcorners_shade = corners_shade(coords_for_bezel, 1.0);
+            pixel_mirrored*=1-(fcorners_shade);
+            
         //Push it over the specular areas and apply the reflection modifier
             pixel_mirrored = pixel_mirrored * (1 + lut_specular) * reflection_modifier;
 
@@ -858,44 +879,47 @@ vec2 get_scaled_offset(vec2 foffset, vec2 co1, vec2 co2) {
 }
 
 vec4 main_wrap(vec2 coords, vec2 outer_frame_offset){
+/* Handle inner border and outer border, not bezel */
 
+    //Calc a random noise if we need debanding
+        if (DO_VIGNETTE + DO_SPOT + DO_AMBILIGHT >0.0) global_noise = random(NOISEPOWER, vTexCoord * params.FrameCount);
 
-    /* Handle inner border and outer border, not bezel */
-    if (DO_VIGNETTE + DO_SPOT + DO_AMBILIGHT >0.0) global_noise = random(NOISEPOWER, vTexCoord * params.FrameCount);
-
-    //Just do pixel_inner_frame() and exit when there is no need to paint border.
-    if (!border_needed()) return pixel_inner_frame(coords, false);
-
-    //bezel_coords = zoomout_coords(bezel_coords, -BEZEL_INNER_ZOOM , 1.0);
-
-    //From now on, we need a border.
+    //Calc outside coords:
         bool bIs_outer_frame = vTexCoord.x < 0.0 + outer_frame_offset.x || vTexCoord.x > 1.0 - outer_frame_offset.x ||
                                vTexCoord.y < 0.0 + outer_frame_offset.y || vTexCoord.y > 1.0 - outer_frame_offset.y ;
+    
+    //If we don't need a border, we may still need to blank the outside area when doing integer scaling:
+        if (!border_needed()) {
+            return pixel_inner_frame(coords, false) * float(!bIs_outer_frame);
+        }
 
 
-        //Handle outer frame cases
-            //if we want ambilights in the outer frame, draw it and return
-            if (bIs_outer_frame)
-                return vec4(pixel_border(BG_IMAGE_OVER == 1.0),1.0);
+    /* From now on, we need a real border, so start handle outer frame cases */
 
-        //Handle inner frame cases
-            vec4 vPixel_inner_frame = pixel_inner_frame(coords, true);
-                //mix ambilight in the inner frame too, as curvature could shrink into the inner frame.
 
-                bool draw_border = true;
-                //Not painting ambilights here is the best way to cheaply draw a border around the frame
-                if (DO_BEZEL == 1.0) {
-                    vec2 vTexCoord_zoomout = zoomout_coords(vTexCoord, (-BEZEL_FRAME_ZOOM + 0.1) , 1.0);
-                    //Not using curved coords here because crazy things would happen with vertical games
-                    draw_border = (vTexCoord_zoomout.x < 0.0 || vTexCoord_zoomout.x > 1.0 ||
-                                  vTexCoord_zoomout.y < 0.0 || vTexCoord_zoomout.y > 1.0) ;
-                }
-                if (draw_border)
-                    return vec4(mix(pixel_border(BG_IMAGE_OVER == 1.0).rgb,vPixel_inner_frame.rgb,min(vPixel_inner_frame.a*1.5,1.0)),vPixel_inner_frame.a);
-                //return vec4(1.0,0.0,0.0,1.0);
+    //if we want ambilights or back/foreground images in the outer frame, draw it and return
+        if (bIs_outer_frame)
+            return vec4(pixel_border(BG_IMAGE_OVER == 1.0),1.0);
 
-        //Last case, inner border without ambilight:
-            return vPixel_inner_frame;
+    //Handle particular (?) inner frame cases
+        vec4 vPixel_inner_frame = pixel_inner_frame(coords, true);
+        
+
+        bool draw_border = true;
+        //Not painting ambilights here is the best way to cheaply draw a border around the frame
+        if (DO_BEZEL == 1.0) {
+            vec2 vTexCoord_zoomout = zoomout_coords(vTexCoord, (-BEZEL_FRAME_ZOOM + 0.1) , 1.0);
+            //Not using curved coords here because crazy things would happen with vertical games
+            draw_border = (vTexCoord_zoomout.x < 0.0 || vTexCoord_zoomout.x > 1.0 ||
+                            vTexCoord_zoomout.y < 0.0 || vTexCoord_zoomout.y > 1.0) ;
+        }
+        //mix ambilight in the inner frame too, as curvature could shrink into the inner frame.
+            if (draw_border)
+                return vec4(mix(pixel_border(BG_IMAGE_OVER == 1.0).rgb,vPixel_inner_frame.rgb,min(vPixel_inner_frame.a*1.5,1.0)),vPixel_inner_frame.a);
+        
+
+    //Last case, inner border without ambilight:
+        return vPixel_inner_frame;
 }
 
 vec2 get_scaled_coords_for_bezel() {
@@ -922,7 +946,7 @@ void main() {
     vec2 outer_frame_offset = vec2(0.0);
     
     if (DO_BEZEL == 1.0) {
-        coords = zoomout_coords(coords, -BEZEL_INNER_ZOOM , 1.0);
+        coords = zoomout_coords(coords, -get_BEZEL_INNER_ZOOM() , 1.0);
         coords_for_mirror = zoom(coords, 1/BEZEL_REFL_ZOOMOUT_ROOM);
         vec2 coords_for_bezel1 = get_scaled_coords_for_bezel();
         outer_frame_offset = get_scaled_offset(BEZEL_BORDER_SIZE, coords_for_bezel1, vTexCoord);
@@ -957,7 +981,9 @@ void main() {
     //Draw an image "Over" the bezel with an hole inside by the alpha channel
     if (DO_BG_IMAGE == 1.0 && BG_IMAGE_OVER==1.0) {
         vec4 bg_image = pixel_background_image(true);
-        pixel_out.rgb = mix(pixel_out.rgb, bg_image.rgb, bg_image.a);
+        
+        
+        pixel_out.rgb = mix(pixel_out.rgb, bg_image.rgb, bg_image.a );
         
         //If one wants to add instead of mixing ambilight, do it now.
         //Note that mixing done just before is necessary to display the

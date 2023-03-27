@@ -1,5 +1,51 @@
+//REFLECTION RELATED START
+	float circle_smooth(vec2 coords, vec2 middle, float f_radius, float FALLOFF) {
+	//Draw a circle with smoothed borders:
+	float fdistance=distance(middle, vec2(coords.x, coords.y));
+	float circle = (1-smoothstep(f_radius-FALLOFF, f_radius+FALLOFF, fdistance));
+	return circle;
+	}
 
+	float square_smooth(vec2 co, vec2 corner, float size, float smoothshade) {
+	//Draws a square with smooth borders:
+	vec4 rect = vec4(corner.x, corner.y, corner.x+size, corner.y+size);
+	vec2 hv = smoothstep(rect.xy - smoothshade, rect.xy, co) * smoothstep(co - smoothshade, co, rect.zw);
+	return  hv.x * hv.y;
+	}
 
+	float corners_shade(vec2 co, float size_multiplier){
+	//Draws 4 smooth squares or circles in the corners.
+	//They are intended to modulate the blur radius and the strength of the reflection.
+	
+	/*
+	vec4 circles;
+	float circle_radius = size; //0.13?
+	float circle_falloff = smoothsize; //0.05?
+	float circle_power =2.0;
+	circles.x = circle_smooth(co, vec2(0.0,0.0), circle_radius, circle_falloff) * circle_power;
+	circles.y = circle_smooth(co, vec2(0.0,1.0), circle_radius, circle_falloff) * circle_power;
+	circles.z = circle_smooth(co, vec2(1.0,0.0), circle_radius, circle_falloff) * circle_power;
+	circles.w = circle_smooth(co, vec2(1.0,1.0), circle_radius, circle_falloff) * circle_power;
+		
+	float circle = max(max(max(circles.x, circles.y), circles.z), circles.w);
+	circle = min(circle, 1.0);
+	circle = 1-circle;
+	
+	return circle;
+	*/      
+	vec4 squares;
+	float squaresize = BEZEL_REFL_CORNER_BLANK_SIZE * size_multiplier;
+	float squarefade = BEZEL_REFL_CORNER_BLANK_SHADE * size_multiplier;
+	//(vec2 co, vec2 corner, float size, float smoothshade) {
+	squares.x = square_smooth(co, vec2(0.0,0.0), squaresize, squarefade);
+	squares.y = square_smooth(co, vec2(1.0 - squaresize, 0.0), squaresize, squarefade);
+	squares.z = square_smooth(co, vec2(0.0, 1-squaresize), squaresize, squarefade);
+	squares.w = square_smooth(co, vec2(1-squaresize, 1-squaresize), squaresize, squarefade);
+	return max(max(max(squares.x, squares.y), squares.z), squares.w);
+	}
+//REFLECTION RELATED ENDS
+	
+	
 vec3 pixel_push_luminance(vec3 c, float strength) {
 	//if (strength == 0.0) return c; //lighter without the check.
 	float whiteness = max(max(c.r, c.g), c.b);
@@ -295,13 +341,37 @@ float random(float power, vec2 seed) {
 		return scale_coord;
 	}
 	
-/*	vec2 content_aspect_override(vec2 co, float aspect, float in_aspect){
-		float scale_y = aspect/in_aspect;
-		float offset_y = (0.5 * scale_y ) - 0.5 ;
-		co.y = co.y*scale_y - offset_y;
-		return co;
+	vec2 integer_scale(vec2 in_coords, float target_aspect, bool is_rotated) {
+		vec2 izoom;
+
+		float raw_in_aspect = params.OriginalSize.x/params.OriginalSize.y;
+		float adapted_aspect = target_aspect /raw_in_aspect;
+		in_coords.x = zoom1D(in_coords.x, adapted_aspect);
+
+		if (!is_rotated) {
+			//This is 1X integer zoom:
+			izoom = params.OriginalSize.xy / global.FinalViewportSize.xy;
+			//Find the maximum zoom allowed
+			float int_zoom = floor(global.FinalViewportSize.y / params.OriginalSize.y );
+			int_zoom = clamp(int_zoom, 1.0, GAME_GEOM_INT_SCALE_MAX);
+			izoom *= int_zoom;
+		} else {
+			izoom = params.OriginalSize.xy / global.FinalViewportSize.yx;
+			float int_zoom = floor(global.FinalViewportSize.y / (params.OriginalSize.x*adapted_aspect) );
+			int_zoom = clamp(int_zoom, 1.0, GAME_GEOM_INT_SCALE_MAX);
+			izoom *= int_zoom;
+		}
+		return zoomxy(in_coords, izoom);
 	}
-*/	
+
+	float get_BEZEL_INNER_ZOOM() {
+		return BEZEL_INNER_ZOOM * float( GAME_GEOM_INT_SCALE != 1.0 || DO_GAME_GEOM_OVERRIDE != 1.0  );
+	}
+
+	bool do_integer_scale() {
+		return DO_GAME_GEOM_OVERRIDE == 1.0 && GAME_GEOM_INT_SCALE == 1.0;
+	}
+
 
 	vec2 content_geom_override(vec2 co, float aspect, float in_aspect, float vshift, float hshift, float out_zoom){
 		//Aspect
@@ -457,6 +527,33 @@ float rgb_to_gray(vec3 rgb) {
 	}
 	*/
 
+	
+vec3 hsv2rgb(vec3 c){
+	vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+	vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+	return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
+
+#define eps10 1.0e-10
+vec3 rgb2hsv(vec3 c){
+	vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+	vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
+	vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));
+
+	float d = q.x - min(q.w, q.y);
+	return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + eps10)), d / (q.x + eps10), q.x);
+}
+	
 float get_dyn_zoom(sampler2D tex) {
 	return 1.0 + (texture(tex, vec2(0.75,0.75)    ).a/ DYNZOOM_FACTOR) ;
+}
+
+vec3 pixel_darken(vec3 color_in, float lum) {
+	//simulates a darker image by scaling brightness, saturation and contrast
+	vec3 color_hsv_in = rgb2hsv(color_in);
+	lum = scale_to_range(lum, 0.0, 1.0); 
+	vec3 color_hsv_min=color_hsv_in;
+	color_hsv_min.yz = scale_to_range_vec2(color_hsv_min.yz, -0.1, 0.1); 
+	vec3 color_rgb_min = hsv2rgb(color_hsv_min);
+	return mix(color_in, color_rgb_min, lum);
 }

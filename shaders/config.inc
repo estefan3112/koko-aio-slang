@@ -31,8 +31,8 @@
 
 	// Define the size and the smoothness of the rectangle 
 	// in the bezel corners that will hide and blur the reflections 
-#define BEZEL_REFL_CORNER_BLANK_SIZE 0.08
-#define BEZEL_REFL_CORNER_BLANK_SHADE 0.05  // keep it > 0.0
+#define BEZEL_REFL_CORNER_BLANK_SIZE 0.091
+#define BEZEL_REFL_CORNER_BLANK_SHADE 0.055  // keep it > 0.0
 
 
 	//When colorizing the bezel via ambient light, it is possible to choose where 
@@ -190,6 +190,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float DO_SCANLINES;
 	float DO_IN_GLOW;
 	float DO_VMASK_AND_DARKLINES ;
+	float VMASK_USE_DUMB;
 	float MASK_COMPENSATION ;
 	float DO_HALO ;
 	float DO_CCORRECTION;
@@ -315,6 +316,8 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float RF_NOISE_STRENGTH;
 	
 	float DO_GAME_GEOM_OVERRIDE;
+	float GAME_GEOM_INT_SCALE;
+	float GAME_GEOM_INT_SCALE_MAX;
 	float GAME_GEOM_ASPECT;
 	float GAME_GEOM_VSHIFT;
 	float GAME_GEOM_HSHIFT;
@@ -400,8 +403,9 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter MASK_COMPENSATION      "        Compensate for brightness loss"			0.0 	0.0 1.0 0.05
 #pragma parameter VMASK_DARKLINE_SCALE   "        (HiDPI) Vmask and Darklines multiplier"		1.0  	1.0 4.0 1.0
 #pragma parameter RGB_MASK_STRENGTH      "        RGB Mask Strength (0.0 to disable)"			0.75  	0.0 1.0 0.05
-#pragma parameter VMASK_USE_GM           "           . (LoDPI) Green,Magenta -> RGB"			0.0  	0.0 1.0 1.0
-#pragma parameter VMASK_GAP              "           . Horizontal Gap between triads:"			0.0  	0.0 1.0 1.0
+#pragma parameter VMASK_USE_GM           "           . Use LoDPI Green,Magenta -> RGB"			0.0  	0.0 1.0 1.0
+#pragma parameter VMASK_GAP              "           . Horizontal Gap between triads"			0.0  	0.0 1.0 1.0
+#pragma parameter VMASK_USE_DUMB         "           . Just draw gap"					0.0  	0.0 1.0 1.0
 #pragma parameter VMASK_OVERWHITE        "           . Affect bright colors"				1.0 	0.0 1.0 0.05
 
 #pragma parameter DARKLINES_STRENGTH     "        Darklines strength (0.0 to disable)"				0.65 	0.0 1.0   0.05
@@ -468,19 +472,19 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 
 //Bezel related
-#pragma parameter DO_BEZEL	      "★ Bezel enable? ==>"		0.0   0.0 1.0 1.0
-#pragma parameter BEZEL_USE_STRAIGHT  "        Straight"		0.0	0.0 1.0  1.0 
-#pragma parameter BEZEL_INNER_ZOOM    "        Image zoom"		-0.18   -1.5 0.5 0.005
-#pragma parameter BEZEL_FRAME_ZOOM    "        Frame zoom"		0.0   -1.5 0.5 0.005
-#pragma parameter BEZEL_R             "        Color: Red"		-0.3   -1.0 1.0  0.005
-#pragma parameter BEZEL_G             "        Color: Green"		-0.3   -1.0 1.0  0.005
-#pragma parameter BEZEL_B             "        Color: Blue"		-0.3   -1.0 1.0  0.005
-#pragma parameter BEZEL_CON           "        Contrast"			1.3   0.0  10.0 0.01
-#pragma parameter BEZEL_RFL_ZOOM      "        Reflections zoom"	0.0   -1.5 0.5 0.005
-#pragma parameter BEZEL_REFL_STRENGTH "        Reflections strength"	0.5    0.0 1.0 0.01
-#pragma parameter BEZEL_RFL_BLR_SHD   "        Reflections sharpness"	-0.0  -0.5 1.0 0.01
-#pragma parameter BEZEL_ROUGHNESS     "        Reflections roughness"	1.5    0.0 5.0 0.1
-#pragma parameter BEZEL_SPCL_STRENGTH "        Specularity strength"	0.5    0.0 3.0 0.05
+#pragma parameter DO_BEZEL	      "★ Bezel enable? ==>"				0.0   0.0 1.0 1.0
+#pragma parameter BEZEL_USE_STRAIGHT  "        Straight"				0.0	0.0 1.0  1.0 
+#pragma parameter BEZEL_INNER_ZOOM    "        Inner zoom (ignored if integer scaled)"	-0.18   -1.5 0.5 0.005
+#pragma parameter BEZEL_FRAME_ZOOM    "        Frame zoom"				0.0   -1.5 0.5 0.005
+#pragma parameter BEZEL_R             "        Color: Red"				-0.3   -1.0 1.0  0.005
+#pragma parameter BEZEL_G             "        Color: Green"				-0.3   -1.0 1.0  0.005
+#pragma parameter BEZEL_B             "        Color: Blue"				-0.3   -1.0 1.0  0.005
+#pragma parameter BEZEL_CON           "        Contrast"				1.3   0.0  10.0 0.01
+#pragma parameter BEZEL_RFL_ZOOM      "        Reflections zoom"			0.0   -1.5 0.5 0.005
+#pragma parameter BEZEL_REFL_STRENGTH "        Reflections strength"			0.5    0.0 1.0 0.01
+#pragma parameter BEZEL_RFL_BLR_SHD   "        Reflections sharpness"			-0.0  -0.5 1.0 0.01
+#pragma parameter BEZEL_ROUGHNESS     "        Reflections roughness"			1.5    0.0 5.0 0.1
+#pragma parameter BEZEL_SPCL_STRENGTH "        Specularity strength"			0.5    0.0 3.0 0.05
 
 
 #pragma parameter BLANK15 " " 0.0 0.0 1.0 1.0
@@ -520,6 +524,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 //Modulate the image zooming depending on the image luminosity.
 //You can lower the effect power through the DYNZOOM_FACTOR parameter.
 #pragma parameter DO_DYNZOOM	     "★ Luminosity dependant zoom enable? ==>"		1.0   0.0   1.0  1.0
+#pragma parameter LABEL_WARNING6     "⚠ Enabling this feature overrides integer scale"		1.0  1.0  1.0     1.0
 #pragma parameter DYNZOOM_FACTOR     "        Narrowness"				80.0  15.0  120.0 0.5
 #pragma parameter BLANK18 " " 0.0 0.0 1.0 1.0
 
@@ -565,11 +570,14 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 
 //Content geomerty overrides
-#pragma parameter DO_GAME_GEOM_OVERRIDE	 "★ Override content geometry enable? ==>"	0.0   0.0  1.0 	  1.0
-#pragma parameter GAME_GEOM_ASPECT	 "        Aspect (0 = unchanged)"		1.3333333333333  0.0  3.0 	  0.005
-#pragma parameter GAME_GEOM_VSHIFT	 "        Vertical position"			0.0   -10.0 10.0  0.01
-#pragma parameter GAME_GEOM_HSHIFT	 "        Horizontal position"			0.0   -10.0 10.0  0.01
-#pragma parameter GAME_GEOM_ZOOM	 "        Zoom"					1.0    0.0  2.0  0.01
+#pragma parameter DO_GAME_GEOM_OVERRIDE	  "★ Override content geometry enable? ==>"	0.0   0.0  1.0 	  1.0
+#pragma parameter GAME_GEOM_INT_SCALE     "        Integer scale (disables inner zoom)"	0.0   0.0  1.0    1.0
+#pragma parameter GAME_GEOM_INT_SCALE_MAX "        Maximum integer scale" 		10.0  1.0  100.0  1.0
+#pragma parameter LABEL_WARNING4          "    ⚠ The following will override integer scale ⚠"	1.0  1.0  1.0     1.0
+#pragma parameter GAME_GEOM_ASPECT	  "        Aspect (0 = unchanged)"		0.0    0.0  3.0	  0.005
+#pragma parameter GAME_GEOM_VSHIFT	  "        Vertical position"			0.0   -10.0 10.0  0.01
+#pragma parameter GAME_GEOM_HSHIFT	  "        Horizontal position"			0.0   -10.0 10.0  0.01
+#pragma parameter GAME_GEOM_ZOOM	  "        Zoom"					1.0    0.0  2.0  0.01
 #pragma parameter BLANK20 " " 0.0 0.0 1.0 1.0
 
 // Alternative blanking, needs to be statically enabled, see docs.md.
