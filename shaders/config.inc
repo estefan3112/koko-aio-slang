@@ -17,6 +17,17 @@
 	//in the bezel.
 #define BEZEL_BORDER_SIZE vec2(0.07, 0.07)
 
+	//This is the blank area or shadow size (one side, in percent) at the sides of the bezel as defined by the bezel texture
+	//BEZEL_SHADOW_SIZE = max shadow or blank side size / bezel_texture_size.
+	//It is used to skip drawing bg/fg or ambient light over the tube, set it to a value that allow for them to be 
+	//shown over the bezel blank/shadowed sides but not on the tube (ie: value too big)
+#define BEZEL_SHADOW_SIZE 0.06
+
+	//to speedup things, bezel rende logic can be completely skipped in the inner tube, if we
+	//already know it is completely transparent.
+	//Set the following to the maximum value that allow you to see 
+	//bezel borders and, if present in the source bezel texture, inner content/border shades
+#define BEZEL_TUBE_BLANK_SIZE 0.88
 
 	//In the second reflection pass, the coordinates are zoomedout by the
 	//BEZEL_REFL_ZOOMOUT_ROOM so that the image is mirrored-repeated by retroarch.
@@ -99,21 +110,6 @@
 
 
 
-
-
-// BACKDROP STATIC CONFIG ##########################################################################################
-
-	//Support for backdrops has to be enable by uncommenting:
-//#define STATIC_SUPPORT_BACKDROP 1.0
-#define BACKDROP_OFFX 0.0
-#define BACKDROP_OFFY 0.0
-#define BACKDROP_ZOOM 1.0
-
-
-
-
-
-
 // MISC STATIC CONFIG ##########################################################################################
 	//Consider content interlaced if lines are more than this
 #define MIN_LINES_INTERLACED 380
@@ -136,8 +132,6 @@
 
 
 // STATIC CONFIG ENDS HERE ##########################################################################################
-
-
 
 
 
@@ -331,6 +325,12 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float TILT_X;
 	float TILT_Y;
 	float TILT_BEZEL_K;
+	float TILT_FOV;
+	
+	float DO_BACKDROP; 
+	float BACKDROP_OFFX;
+	float BACKDROP_OFFY;
+	float BACKDROP_ZOOM;
 	
 } global;
 
@@ -453,7 +453,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter SCANLINE_SM_VOFFSET      "           . Offset (type 1 only)"					45.0 	0.0 158.0 1.0
 #pragma parameter BLANK12 " " 0.0 0.0 1.0 1.0
 
-//p1.20,r2.0
+
 // Bloom
 #pragma parameter DO_BLOOM           "★ Bloom enable? ==>" 						0.0  0.0  1.0  1.0
 #pragma parameter BLOOM_MIX          "        Final mix, (0.0=off)"					0.45 0.0 1.0  0.01
@@ -513,6 +513,12 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter BG_IMAGE_WRAP_MODE "            Wrap mode: default, clamp to border, edge, repeat" 0.0  0.0    3.0    1.0
 #pragma parameter BLANK16 " " 0.0 0.0 1.0 1.0
 
+//Backdrop image
+#pragma parameter DO_BACKDROP		"★ Backdrop mirrored image enable? ==>"		 0.0  0.0  1.0     1.0
+#pragma parameter BACKDROP_OFFX		"        Shift backdrop over X axis"				 0.0  -1.0  1.0    0.0005
+#pragma parameter BACKDROP_OFFY 	"        Shift backdrop over X axis"				 0.0  -1.0  1.0    0.0005
+#pragma parameter BACKDROP_ZOOM 	"        Zoom backdrop"					 1.0  -1.0  3.0    0.0005
+#pragma parameter BLANK161 " " 0.0 0.0 1.0 1.0
 
 
 //Back leds
@@ -594,7 +600,8 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter DO_TILT	  	"★ Tilt enable? ==>"				0.0   0.0  1.0 	  1.0
 #pragma parameter TILT_X	  	"        Tilt along X axis"		0.0    -0.5  0.5  0.01
 #pragma parameter TILT_Y	  	"        Tilt along Y axis"		0.0    -0.5  0.5  0.01
-#pragma parameter TILT_BEZEL_K	"        Bezel multiplier"		1.0    0.5  1.5  0.01
+#pragma parameter TILT_FOV	  	"        Fov"					1.5    0.1	3.0    0.05
+#pragma parameter TILT_BEZEL_K	"        Bezel multiplier"		1.0    0.0  1.5  0.01
 #pragma parameter BLANK_01 " " 0.0 0.0 1.0 1.0
 
 
