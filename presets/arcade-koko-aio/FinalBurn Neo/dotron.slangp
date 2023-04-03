@@ -1,4 +1,4 @@
-#reference "../../shaders/shaders_slang/bezel/koko-aio-backdrops/monitor-slotmask-bloom-bezel.slangp"
+#reference "../../shaders/shaders_slang/bezel/koko-aio/monitor-slotmask-bloom-bezel.slangp"
 LUMINANCE = "0.900000"
 SATURATION = "1.150000"
 GAMMA_OUT = "0.700000"
@@ -14,10 +14,11 @@ BEZEL_G = "-0.220000"
 BEZEL_B = "-0.220000"
 DO_BG_IMAGE = "1.000000"
 BG_IMAGE_OVER = "1.000000"
+DO_BACKDROP = "1.000000"
 DO_AMBILIGHT = "0.000000"
 DO_SPOT = "0.000000"
-bg_over = "../../shaders/shaders_slang/bezel/koko-aio-backdrops/textures/backdrop_textures/dotron_realbezel.png"
-backdrop = "../../shaders/shaders_slang/bezel/koko-aio-backdrops/textures/backdrop_textures/dotron_backdrop.png"
+bg_over = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/dotron_realbezel.png"
+backdrop = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/dotron_backdrop.png"
 
 // Credits
 // shader by kokoko3k - https://github.com/kokoko3k/koko-aio-slang
