@@ -32,7 +32,7 @@ Shots from v 0.1:<br>
 
 # Easy install
 
-Step 1: Take the entire zip package as provided in the Release section and replace the koko-aio folder that comes with RetroArch: /shaders/shaders_slang/bezel/koko-aio; for the backdrop presets, the parallel version of koko-aio-backdrops is required in the same directory<br>
+Step 1: Take the entire zip package as provided in the Release section and replace the koko-aio folder that comes with RetroArch: /shaders/shaders_slang/bezel/koko-aio; for the backdrop presets, the parallel version of koko-aio-backdrops is *no longer* required!!!<br>
 Step 2: Move all .slangp-presets to the respective core configuration directory, i.e. /config/FinalBurn Neo/ and/or /config/Mame 2003 (0.78) and/or /config/MAME 2003-plus<br>
 <br>
 Note: The FinalBurn Neo.cfg/Mame 2003 (0.78).cfg/MAME 2003-plus.cfg files contain just one line that secures that the Aspect Ratio is set to 'Full'. Without this option, the background will not appear.<br>
@@ -53,16 +53,16 @@ Please note that the Koko-aio github repository has a different folder structure
 
 Please see the Moon Patrol example - you can just duplicate the .slangp preset and rename it with the name of the clone. By this, you have an identical configuration for a clone. <br>
 
-# Initial backdrop support
+# Backdrop support
 
-The first backdrop presets are uploaded, but in order for them to work, you must create a separate shader directory called koko-aio-backdrops and put the backdrop textures there. You also need to manually edit the config.inc file in the shaders subdirectory by uncommenting backdrop support in line #107.
+With latest Github (30 March 2023), backdrop support landed in koko-aio as dynamic option. A separate shader repository is no longer required, and I have merged the backdrop presets into koko-aio - this is a great simplification for backdrops. 
 
 # Technical Information
 
 This fork will remain as closely as possible in line with the main repository, as I frequently update from Upstream. Here is a list of deviations from Upstream:
 /shaders/config.inc - line 130: ALLOW_BG_IMAGE_TEXTURE_WRAP_IN_SHADER is enabled so as to allow a different texture wrap for the arcade artwork
 /shaders/config.globals.inc - line 200: BG_IMAGE_WRAP_MODE is hardcoded to	1.0 (wrap to edge) because that's how it should be with this arcade artwork (ending with a black border)
-koko-aio-backdrops release only:
+LEGACY no longer required as of 30 March 2023: koko-aio-backdrops release only:
 /shaders/config.inc - line 107: STATIC_SUPPORT_BACKDROP hardcoded to 1.0 (this is why backdrops require a separate koko-aio-backdrops instance) 
 
 
