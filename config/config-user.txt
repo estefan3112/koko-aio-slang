@@ -97,6 +97,7 @@
 
 // #define DOT_C 0.0                    // ★ CVBS: Dot crawl
 // #define DOT_C_YUV 0.0                //         Colorspace (NTSC, PAL)
+// #define DOT_C_SPEED 8.0				//         Speed
 
 // #define DO_PPERSISTENCE  0.0         // ★ Persistence of phosphors enable?
 // #define PPERSISTENCE_START  0.9      //         Early decay
@@ -241,7 +242,7 @@
 // #define BEZEL_REFL_STRENGTH  0.5   //         Reflections strength
 // #define BEZEL_CORNER_DARK  0.8     //         Less reflections in corners
 // #define BEZEL_RFL_BLR_SHD  -0.2    //         Reflections sharpness
-// #define BEZEL_ROUGHNESS  1.0       //         Reflections roughness
+// #define BEZEL_ROUGHNESS  1.0       //         Surface roughness
 // #define BEZEL_DIFFUSION_STR  0.2   //         Diffusion strength
 // #define BEZEL_LIGHT_NO_FADEOUT 0.5 //         Specularity strength
 // #define BEZEL_SPCL_STRENGTH  0.5   //         Light fadeout distance
@@ -326,8 +327,7 @@
 // #define GAME_GEOM_OFF_FIX  0.0  //         Sharp hack through offset (0.0=disable)
 
 
-// #define DELTA_RENDER_FORCE_REFRESH  4.0  // 
-// #define DELTA_RENDER_CHECK_AREA  1.0     // 
+
 
 
 ////////////////////////////////////////////////////////////////////////////
@@ -339,6 +339,12 @@
 //
 ////////////////////////////////////////////////////////////////////////////
 
+//Renders only changed parts of screen, set to 1.0 to lower power consumption / mitigate throttling:
+#define DELTA_RENDER 0.0 
+
+// #define DELTA_RENDER_FORCE_REFRESH  4.0  //  Delta render force refresh interval
+// #define DELTA_RENDER_CHECK_AREA  1.0     //  Delta render area size
+
 
 // Use higher quality deconvergence flattering rgb scanlines when deconvergence is high
 // and by syncing them to the deconvergence settings
@@ -349,9 +355,6 @@
 // Allow texture wrapping as a shader parameter, set to 0.0 to gain some performance.
 // But in that case the wrap mode has to be defined in the preset file.
 #define ALLOW_BG_IMAGE_TEXTURE_WRAP_IN_SHADER 1.0
-
-//Renders only changed parts of screen, set to 1.0 to lower power consumption / mitigate throttling:
-#define DELTA_RENDER 0.0 
 
 //Halve rendering refresh on bezel and ambilight set to 1.0 to spare gpu cycles:
 #define HALVE_BORDER_UPDATE 0.0

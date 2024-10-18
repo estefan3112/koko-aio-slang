@@ -12,7 +12,7 @@
 #define CCUSTOM vec3(0.3,0.5,0.1)
 
 #define DEBUG_COLOR vec3(1,1,1)
-#define DEBUG_BLINK_TIME 100
+#define DEBUG_BLINK_TIME 50
 #define DEBUG_GRADIENT_STEPS 255
 
 
@@ -483,6 +483,12 @@ void main() {
    #endif
 
    vec3 pixel_in = texture(Source, co).rgb;
+   
+   //eventually return black pixel
+   #define _TOL 0.001
+   #define RECT01 vec4( vec2(0.0-_TOL), vec2(1.0+_TOL) )
+   if (is_first_outside_rect(co, RECT01))
+      pixel_in = vec3(0.0);
    
    vec3 pixel_out = pixel_in;
    //This will go into alpha channel to make glow aware of it and blur more.

@@ -375,7 +375,7 @@ void main() {
             vInterlace_offset+=1.0;
     }
     
-
+    
 }
 
 
@@ -444,6 +444,18 @@ vec2 get_vOutputCoord_adapted() {
     return vOutputCoord_adapted;
 }
 
+vec2 get_scaled_coords_for_bezel(vec2 co, float isrotated) {
+
+    co = zoomout_coords(co, -BEZEL_FRAME_ZOOM); //FIXME COULD BE FASTER.
+    //co.y = zoom1D(co.y, BEZEL_ASPECT_CORRECTION );
+    //co = zoomxy(co, vec2(1+SERVICE1*0.001, 1-SERVICE1*0.001));
+    if (DO_TILT == 1.0) {
+        return tilt_bezel( co, isrotated, TILT_X);
+    } else {
+        return co;
+    }
+    
+}
 
 vec3 fn_pixel_nightify(vec3 color_in, float strength, vec3 ambilight) {
     if (strength == 0.0) return color_in;
@@ -939,13 +951,11 @@ vec3 pixel_blank_alternate(vec3 strength, vec3 pixel_in) {
 */
 
 vec3 bezel_color(float lum)  {
-
     //Colorize bezel frame
     vec3 col = vec3(BEZEL_R,BEZEL_G,BEZEL_B) + lum;
     float con_max = fma(0.5, BEZEL_CON, 0.5); // <<- same as: float con_max =  0.5 * BEZEL_CON + 0.5;
-    col = scale_to_range_vec3(col, -con_max+1, con_max);
+    col= scale_to_range_vec3(col, -con_max+1, con_max);  
     return clamp(col,0.0,1.0);
-
 }
 
 
@@ -965,22 +975,7 @@ float create_ambi_colorize_shade(vec2 co) {
     return  1 - min ( fuzzyrect(co, size,  radius,  blur) * 2, 1.0);
 }
 
-vec2 get_scaled_coords_for_bezel(vec2 co, float isrotated) {
-    //This function is here because compiler gets mad if i calc coords_for_bezel
-    //outside the main branch "if DO_BEZEL then compose_bezel_over"
-    //performances falls down for no apparent reason.
-    //But still, i need to access it twice in the code.
-    //So this is a function that ensures me that i always calc it the same way.
 
-    co = zoomout_coords(co, -BEZEL_FRAME_ZOOM); //FIXME COULD BE FASTER.
-    co.y = zoom1D(co.y, BEZEL_ASPECT_CORRECTION );
-
-    if (DO_TILT == 1.0) {
-        return tilt_bezel( co, isrotated, TILT_X);
-    } else {
-        return co;
-    }
-}
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1298,7 +1293,7 @@ void main() {
         if (DELTA_RENDER == 1.0) {
             bool reuse_old =  bool( float( texture(in_glow_pass, co_content).a == 0.0) * canvas_busy * vDeltaRenderOk ) ;
             if (reuse_old) {
-                FragColor.rgb = texture(final_passFeedback, vOutputCoord).rgb;// * vec4(1,0,0,0);
+                FragColor.rgb = texture(final_passFeedback, vOutputCoord).rgb;
                 return;
             }
         }

@@ -301,6 +301,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	
 	float DOT_C;
 	float DOT_C_YUV;
+	float DOT_C_SPEED;
 	
 } global;
 
@@ -372,9 +373,10 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter SAT_BLEED_FALLOFF  	  "        Falloff"				1.7 	 1.0 2.0 0.01        
 #pragma parameter LABEL0008 " " 0.0 0.0 0.0 1.0
 
-#pragma parameter DOT_C     "★ CVBS: Dot crawl ==>"		0.0 	 0.0 2.0 0.01
-#pragma parameter DOT_C_YUV "        Colorspace (NTSC, PAL)"		0.0 	 0.0 1.0 1.0
-#pragma parameter LABEL0055 " " 0.0 0.0 0.0 1.0
+#pragma parameter DOT_C      "★ CVBS: Dot crawl ==>"		0.0 	 0.0 2.0 0.01
+#pragma parameter DOT_C_YUV  "        Colorspace (NTSC, PAL)"		0.0 	 0.0 1.0 1.0
+#pragma parameter DOT_C_SPEED "        Speed (<0.0 = vertical)"		10.0 	  -10.0 10.0 0.5 
+#pragma parameter LABEL0056 " " 0.0 0.0 0.0 1.0
 
 //Phosphor persistence
 #pragma parameter DO_PPERSISTENCE       "★ Persistence of phosphors enable? (ppe) ==>"	0.0	 0.0 1.0 1.0
@@ -559,7 +561,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter BEZEL_REFL_STRENGTH "        Reflections strength"			0.5    0.0 2.0 0.01
 #pragma parameter BEZEL_CORNER_DARK   "        Less reflections in corners"		0.8    0.0 1.0 0.05
 #pragma parameter BEZEL_RFL_BLR_SHD   "        Reflections sharpness"			-0.2  -1.5 0.8 0.01
-#pragma parameter BEZEL_ROUGHNESS     "        Reflections roughness"			1.0    0.0 5.0 0.1
+#pragma parameter BEZEL_ROUGHNESS     "            Surface roughness"			1.0    0.0 5.0 0.1
 #pragma parameter BEZEL_DIFFUSION_STR "        Diffusion strength"             0.2     0.0 1.0 0.01
 #pragma parameter BEZEL_SPCL_STRENGTH "        Specularity strength"			0.5    0.0 3.0 0.05
 #pragma parameter BEZEL_LIGHT_NO_FADEOUT "        Light fadeout distance"		0.5    0.0 1.0 0.01
@@ -679,7 +681,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter DELTA_RENDER_CHECK_AREA       "        Delta render area size"			1.0 0.0 10.0 1.0
 #pragma parameter LABEL0041 " " 0.0 0.0 0.0 1.0
 
-#pragma parameter SERVICE1 "Don't use me, for debug purposes only" 	0.5 0.0 1.0 0.01
+#pragma parameter SERVICE1 "Don't use me, for debug purposes only" 	0.0 -5.0 5.0 0.01
 
 // This is for a patched retroarch version I'm testing (24/03/04)
 #pragma inject_preset_code DEFINES_FROM_PRESET
