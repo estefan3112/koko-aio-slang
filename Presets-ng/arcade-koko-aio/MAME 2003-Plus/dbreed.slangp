@@ -1,18 +1,11 @@
 #reference "../../shaders/shaders_slang/bezel/koko-aio/Presets-ng/Monitor-Ambilight-immersive.slangp"
 IN_GLOW_POWER = "1.650000"
 LUMINANCE = "0.100000"
-BEZEL_INNER_ZOOM = "-0.208000"
-BEZEL_FRAME_ZOOM = "0.000000"
 BEZEL_R = "-0.220000"
 BEZEL_G = "-0.220000"
 BEZEL_B = "-0.220000"
-BG_IMAGE_ZOOM = "1.023498"
-GLOBAL_OFFY = "0.017000"
-GLOBAL_ZOOM = "0.720487"
+GLOBAL_OFFY = "0.018500"
+GLOBAL_ZOOM = "0.648993"
+BG_IMAGE_ZOOM = "1.018999"
 bg_under = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/dbreed.png"
 bg_over = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/dbreed.png"
-
-// Credits
-// shader by kokoko3k - https://github.com/kokoko3k/koko-aio-slang
-// artwork by Ars Invictus
-// preset and artwork adjustments by estefan3112 - https://github.com/estefan3112/koko-aio-slang
