@@ -3,17 +3,9 @@ IN_GLOW_POWER = "1.500000"
 BEZEL_R = "-0.220000"
 BEZEL_G = "-0.220000"
 BEZEL_B = "-0.220000"
-BG_IMAGE_OFFX = "-0.009000"
-BG_IMAGE_OFFY = "0.004000"
-BG_IMAGE_ZOOM = "1.000000"
+GLOBAL_OFFY = "0.017000"
+GLOBAL_ZOOM = "0.675494"
+BG_IMAGE_ZOOM = "1.023498"
 BG_IMAGE_NIGHTIFY = "0.400000"
-GLOBAL_OFFX = "0.011500"
-GLOBAL_OFFY = "0.015000"
-GLOBAL_ZOOM = "0.837992"
 bg_under = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/mslug.png"
 bg_over = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/mslug.png"
-
-/ Credits
-// shader by kokoko3k - https://github.com/kokoko3k/koko-aio-slang
-// artwork by ArsInvictus
-// preset and artwork adjustments by estefan3112 - https://github.com/estefan3112/koko-aio-slang
