@@ -1,0 +1,16 @@
+#reference "../../shaders/shaders_slang/bezel/koko-aio/Presets-ng/Monitor-Ambilight-immersive.slangp"
+TATE = "0.000000"
+BEZEL_R = "-0.225000"
+BEZEL_G = "-0.215000"
+BEZEL_B = "-0.215000"
+GLOBAL_ZOOM = "0.935506"
+BG_IMAGE_ZOOM = "1.000000"
+BG_IMAGE_ROTATION = "-2.000000"
+BG_IMAGE_NIGHTIFY = "0.600000"
+bg_under = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/dkong.png"
+bg_over = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/dkong.png"
+
+// Credits
+// shader by kokoko3k - https://github.com/kokoko3k/koko-aio-slang
+// artwork by John Merrit
+// preset and artwork adjustments by estefan3112 - https://github.com/estefan3112/koko-aio-slang
