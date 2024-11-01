@@ -1,15 +1,14 @@
 # Koko-aio fork for arcade Artwork 
-(now ng presets for FinalBurnNeo, MAME current and MAME 2003/2003plus)
+(RetroArch FinalBurnNeo, MAME (current) and MAME 2003/2003plus)
 
-Repository for game-specific Arcade Artwork by using the Koko-aio slang shader. Successfully tested under MacOS, Windows (limited) and iPadOS. Currently the Koko-aio shader provides superior performance on all reasonably powered desktops (including Macs), while providing enhanced shader functions, including bezel reflections, immersive ambient lights, halo/glow effects and many more. It embeds game-specific artwork seamlessly and scales according to resolution. The koko-aio shader is currently under steady development, thus it is a clear aim to stay in line with the Upstream changes.<br>
+Repository for game-specific Arcade Artwork by using the Koko-aio slang shader. Successfully tested under MacOS, Windows and iPadOS. Currently the Koko-aio shader provides superior performance on all reasonably powered desktops (including Macs), while providing enhanced shader functions, including bezel reflections, immersive ambient lights, halo/glow effects and many more. Configuration options are endless. It embeds game-specific artwork seamlessly and scales according to resolution. The koko-aio shader is currently under steady development, thus it is a clear aim to stay in line with the Upstream changes.<br>
 <br>
-Main source of this artwork comes from John Merrit, who set a benchmark for realistic arcade artwork. I still very much like them, and they shine even more in combination with Koko-aio. My selection of the artwork is arbitrary, but I try to publish eye candys earlier :-). Version 0.2 and following releases see the inclusion of some breathtaking 4K artwork provided by Ars Invictus. Version 0.4ng moves to the new ng presets and upscales all artwork to 4K<br>
+Main source of this artwork comes from John Merrit, who set a benchmark for realistic arcade artwork. I still very much like them, and after AI-upscaling to 4K, they shine even more in combination with Koko-aio. My selection of the artwork is arbitrary, but I try to publish eye candys earlier :-). Version 0.2 and following releases see the inclusion of some breathtaking 4K artwork provided by Ars Invictus. Each shader preset contains the credits (warning: If you overwrite the preset in RetroArch, credits get lost).<br>
 <br>
 Focus on highest possible quality and diversity over mass production. Also improvements of existing artwork to have a best possible experience.<br>
 <br>
-Requirements: RetroArch 1.6.0 or a newer RetroArch Nightly Build that support Vulkan. Tested with FinalBurn Neo (mainly) and MAME 2003/2003plus. MAME (current) now works out of the box, as the rotation of this core has been adjusted. Having said that, I still prefer FinalBurnNeo over MAME (current).<br>
+Requirements: RetroArch 1.6.0 upwards, you need Vulkan supoprt.<br>
 <br>
-# Release 0.4ng finally completss migration to the 'ng' shaders. It was really worth the work - download here!
 
 # Screenshots
 
