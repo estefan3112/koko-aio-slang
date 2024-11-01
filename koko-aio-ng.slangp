@@ -40,17 +40,17 @@
      
                 bg_under = "textures/background_under.png"
          bg_under_linear = "true"
-      bg_under_wrap_mode = "clamp_to_edge"
+      bg_under_wrap_mode = "clamp_to_border"
          bg_under_mipmap = "false"
          
                  bg_over = "textures/background_over.png"
           bg_over_linear = "true"
-       bg_over_wrap_mode = "clamp_to_edge"
+       bg_over_wrap_mode = "clamp_to_border"
           bg_over_mipmap = "false"
 
                 backdrop = "textures/boothill.jpg"
          backdrop_linear = "true"
-      backdrop_wrap_mode = "clamp_to_edge"
+      backdrop_wrap_mode = "clamp_to_border"
          backdrop_mipmap = "false"
          
                 sideshade = "textures/side_shade-helper.png"
