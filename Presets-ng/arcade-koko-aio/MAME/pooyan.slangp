@@ -11,7 +11,6 @@ BG_IMAGE_OFFX = "0.000000"
 BG_IMAGE_ZOOM = "1.000000"
 BG_IMAGE_ROTATION = "-2.000000"
 BG_IMAGE_NIGHTIFY = "0.500000"
-BG_IMAGE_WRAP_MODE = "1.000000"
 bg_under = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/pooyan.png"
 bg_over = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/pooyan.png"
 
