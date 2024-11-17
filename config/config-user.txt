@@ -68,6 +68,7 @@
 
 // #define DO_RF_NOISE  0.0             // ★ RF Noise enable?
 // #define RF_NOISE_STRENGTH  0.05      //         Strength
+// #define RF_NOISE_SPARK     0.07      //         Snow noise
 
 
 // #define DO_DEDITHER  0.0             // ★ Dedither enable? (not with NTSC artifacts) 
@@ -242,7 +243,8 @@
 // #define BEZEL_REFL_STRENGTH  0.5   //         Reflections strength
 // #define BEZEL_CORNER_DARK  0.8     //         Less reflections in corners
 // #define BEZEL_RFL_BLR_SHD  -0.2    //         Reflections sharpness
-// #define BEZEL_ROUGHNESS  1.0       //         Surface roughness
+// #define BEZEL_ROUGHNESS  1.0       //            Inner surface roughness
+// #define BEZEL_RFL_CONTRAST 1.0     //            Inner shadows contrast
 // #define BEZEL_DIFFUSION_STR  0.2   //         Diffusion strength
 // #define BEZEL_LIGHT_NO_FADEOUT 0.5 //         Specularity strength
 // #define BEZEL_SPCL_STRENGTH  0.5   //         Light fadeout distance
@@ -339,8 +341,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////
 
-//Renders only changed parts of screen, set to 1.0 to lower power consumption / mitigate throttling:
-#define DELTA_RENDER 0.0 
+//Renders only changed parts of screen; uncomment and set to 1.0 to lower power consumption / mitigate throttling:
+// #define DELTA_RENDER 0.0 
 
 // #define DELTA_RENDER_FORCE_REFRESH  4.0  //  Delta render force refresh interval
 // #define DELTA_RENDER_CHECK_AREA  1.0     //  Delta render area size

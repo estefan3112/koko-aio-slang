@@ -12,6 +12,10 @@
     #define GAMMA_OUT	global.GAMMA_OUT
 #endif
 
+#ifndef CLIP_TO_WHITE
+    #define CLIP_TO_WHITE	global.CLIP_TO_WHITE
+#endif
+
 #ifndef SATURATION
     #define SATURATION	global.SATURATION
 #endif
@@ -419,6 +423,10 @@
 
 #ifndef BEZEL_ROUGHNESS
     #define BEZEL_ROUGHNESS		global.BEZEL_ROUGHNESS
+#endif
+
+#ifndef BEZEL_RFL_CONTRAST
+    #define BEZEL_RFL_CONTRAST		global.BEZEL_RFL_CONTRAST
 #endif
 
 #ifndef DO_SPOT

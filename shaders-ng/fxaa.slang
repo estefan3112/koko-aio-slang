@@ -15,6 +15,8 @@ layout(location = 0) in vec4 Position;
 layout(location = 1) in vec2 TexCoord;
 layout(location = 0) out vec2 vTexCoord;
 
+layout(location = 3) out float vDynamicSeed;
+
 layout(location = 5) out vec4 vpt1;
 layout(location = 6) out vec4 vpt2;
 
@@ -32,6 +34,9 @@ void main() {
 
    gl_Position = global.MVP * Position;
    vTexCoord = TexCoord;
+   
+   //noise
+   vDynamicSeed = mod(params.FrameCount, 120.0001);
    
    //flickering helper
    vDo_flickering  = float ( scanline_have_to_flicker(is_interlaced()) || FLICKER_IN_MOTION == 1.0  ) ; 
@@ -81,6 +86,7 @@ void main() {
 #pragma stage fragment
 layout(location = 0) in vec2 vTexCoord;
 
+layout(location = 3) in float vDynamicSeed;
 
 layout(location = 5) in vec4 vpt1;
 layout(location = 6) in vec4 vpt2;
@@ -798,13 +804,16 @@ vec3 FxaaPixelShader(vec2 pos, sampler2D tex, vec4 sourcesize, vec4 outputsize) 
    dstN = directionN ? dstN : dstP;
    float subPixelOffset = (0.5 + (dstN * (-1.0/spanLength))) * lengthSign;
 
+   
+   subPixelOffset *= 2.0; //<-- KOKO, hack.
+   
    vec2 smpco;
       
    if (horzSpan) {
       smpco.x = pos.x + 0.0;
-      smpco.y = coords_NEAREST( pos + subPixelOffset, params.SourceSize ).y;
+      smpco.y = coords_NEAREST( pos, params.SourceSize ).y + subPixelOffset;
    } else {
-      smpco.x = coords_NEAREST( pos + subPixelOffset, params.SourceSize ).x;
+      smpco.x = coords_NEAREST( pos, params.SourceSize ).x + subPixelOffset;
       smpco.y = pos.y + 0.0;
    }
 
@@ -876,6 +885,24 @@ void main() {
    if (vDo_flickering==1.0) 
       pixel_out.rgb = pixel_flickering(pixel_out.rgb).rgb;
    
+   
+   
+
+   
+   if (DO_RF_NOISE > 0.01 ) {
+      //Unfortunately we need to clamp to min 0.0 again after applying noise
+      //to avoid glitches on amd (and probably nvidia too).
+      //It should be possible to change the noise function to just emit positive
+      //numbers and pre-lowering the brightness of pixel_out in the very first pass tho.
+
+         float rfnoise = get_rf_noise(vTexCoord * vDynamicSeed);
+         pixel_out.rgb += rfnoise;
+         pixel_out.rgb = max(pixel_out.rgb, vec3(0.0));
+         
+   }
+   
+    //pixel_out.rgb = max(vec3(0.0), pixel_out.rgb); 
+    
    FragColor = pixel_out;
    
 }

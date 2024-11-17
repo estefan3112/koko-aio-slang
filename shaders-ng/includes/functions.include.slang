@@ -820,7 +820,13 @@ vec2 screen_space_displacement(vec2 co, vec2 outputsize, float size) {
 		if (ASPECT_X == -4) return 1.428; // 10/7 megadrive
 		if (ASPECT_X == -5) return params.OriginalSize.x/params.OriginalSize.y; //uncorrected
 		if (ASPECT_X == -6) return 0.75;  // 3/4, pre-rotated (TATE) 1.33 games.
-
+		if (ASPECT_X == -7) {
+			#ifdef _HAS_ORIGINALASPECT_UNIFORMS
+				return global.OriginalAspectRotated;
+			#endif
+				return 1.333333; //fallback to 4:3 when uniform is not available.
+		}
+		
 		return ASPECT_X / ASPECT_Y ;
 	}
 
@@ -919,7 +925,12 @@ vec2 screen_space_displacement(vec2 co, vec2 outputsize, float size) {
 			//Find the maximum zoom allowed
 			vec2 int_zoom = floor(global.FinalViewportSize.yx / (params.OriginalSize.yx/(GAME_GEOM_INT_SCALE_OVR) ));
 			int_zoom = clamp(int_zoom, 1.0, GAME_GEOM_INT_SCALE_MAX);
-			izoom *= min(int_zoom.x, int_zoom.y/adapted_aspect);
+			
+			if (raw_in_aspect < target_aspect)
+				izoom *= min(int_zoom.x*adapted_aspect, int_zoom.y);
+			else
+				izoom *= min(int_zoom.x, int_zoom.y/adapted_aspect);
+			
 		} else {
 			izoom = params.OriginalSize.xy / global.FinalViewportSize.yx;
 			vec2 int_zoom = floor(global.FinalViewportSize.yx / (  (params.OriginalSize.xy*adapted_aspect)/(GAME_GEOM_INT_SCALE_OVR) ));
@@ -952,10 +963,20 @@ vec2 screen_space_displacement(vec2 co, vec2 outputsize, float size) {
 	vec2 content_geom_override_zoom(vec2 co, float aspect, float in_aspect, float vshift, float hshift, float out_zoom){
 		// see next (**)
 		float scale_y;
+		
+		#ifdef _HAS_ORIGINALASPECT_UNIFORMS
+			/* for aspect < 0.0, just use core aspect */
+			if (aspect < 0.0) {
+				aspect = global.OriginalAspectRotated;
+				scale_y = aspect/in_aspect;
+			} else		
+		#endif
+
 		if (aspect > 0.01) 
 			scale_y = aspect/in_aspect;
-				else
+		else
 			scale_y = 1.0;
+
 		
 		float offset_y = (0.5 * scale_y ) - 0.5 ;
 		co.y = co.y*scale_y - offset_y;
@@ -1738,7 +1759,12 @@ float distance_from_edge_linear(vec2 co, float aoe_inv) {
 float get_rf_noise(vec2 seed) {
 	// Eg: seed = vTexCoord * mod(params.FrameCount, 120.0001);
 	float anoise = random_fast(seed);
-	return (anoise - 0.5) * RF_NOISE_STRENGTH*RF_NOISE_STRENGTH 
+	return scale_to_range(anoise, - RF_NOISE_STRENGTH * RF_NOISE_STRENGTH, RF_NOISE_STRENGTH * RF_NOISE_STRENGTH)
 	       + smoothstep_fast(0.98, 1.0, anoise) * RF_NOISE_SPARK;
 }
 
+vec3 clip_to_white_maybe(vec3 c) {
+	vec3 clips = max(vec3(0), c - 1 );
+	c.rgb += vec3(  clips.g+clips.b, clips.r+clips.b, clips.r+clips.g ) * CLIP_TO_WHITE;
+	return c;
+}

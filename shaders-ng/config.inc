@@ -304,6 +304,11 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float DOT_C_YUV;
 	float DOT_C_SPEED;
 	
+	float OriginalAspectRotated;
+	
+	float BEZEL_RFL_CONTRAST;
+	
+	float CLIP_TO_WHITE;
 	
 } global;
 
@@ -314,8 +319,9 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter LABELTEST " " 		0.0 0.0 0.0 1.0
 
 
-#pragma parameter IN_GLOW_GAMMA  "★ Gamma In  "		2.0 	0.5 	10.0 0.01
-#pragma parameter GAMMA_OUT      "★ Gamma out "		0.5		0.1 	5.0  0.01
+#pragma parameter IN_GLOW_GAMMA  "★ Gamma In"			2.0 	0.5 	10.0 0.01
+#pragma parameter GAMMA_OUT      "★ Gamma out"			0.5		0.1 	5.0  0.01
+#pragma parameter CLIP_TO_WHITE  "★ Clip to white (>1 = overclip)"		0.0		0.0 	2.0  0.05
 #pragma parameter LABEL0054 " " 0.0 0.0 0.0 1.0
 
 
@@ -403,7 +409,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter LABEL0010 " " 0.0 0.0 0.0 1.0
 
 // RF Noise
-#pragma parameter DO_RF_NOISE	 "★ RF Noise? (Pre glow, Off, Post glow)  ==>"			0.0 	-1.0  1.0     1.0
+#pragma parameter DO_RF_NOISE	 "★ RF Noise? (Post glow, Off, Pre glow)  ==>"			0.0 	-1.0  1.0     1.0
 #pragma parameter RF_NOISE_STRENGTH "        Uniform noise"				0.05	0.0 1.0 0.01
 #pragma parameter RF_NOISE_SPARK    "        Snow noise"				0.07		0.0 1.0 0.01
 #pragma parameter LABEL0005 " " 0.0 0.0 0.0 1.0
@@ -514,14 +520,14 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 // Halo
 #pragma parameter DO_HALO             "★ Halo or Mask helper enable? (ha) ==>" 						0.0	0.0 1.0 1.0
-#pragma parameter HALO_NO_PREGAIN     "  Halo: Pre-attenuate input signal gain to 1x"	0.0		0.0	1.0	1.0
-#pragma parameter HALO_POWER          "  Halo: Strength (negative = 10x precision)"	0.9 	-50.0  5.0 0.01
-#pragma parameter HALO_SHARPNESS      "  Halo: Sharpness"					3.00	0.05   7.0 0.05
-#pragma parameter HALO_GAMMA          "  Halo: Gamma in: Higher -> less halo on dark colors"	2.0 	1.0  10.0 0.05
-#pragma parameter HALO_GAMMA_OUT      "  Halo: Gamma out"	 1.0	0.25  4.0 0.05
-#pragma parameter HALO_DO_MASK_HELPER "  Mask helper: Additional brighness if horizontal mask clips" 	0.0	0.0 1.0 0.05 
-#pragma parameter LABEL_HALO_HELP     "       (Mask helper: read docs-ng.md for help)" 	0.0 0.0 0.0 1.0
-#pragma parameter HALO_VS_SCAN        "  Both: Light scanlines and dot grid gaps"				0.0	0.0  1.0  0.01
+#pragma parameter HALO_NO_PREGAIN     "     Halo: Pre-attenuate input signal gain to 1x"	0.0		0.0	1.0	1.0
+#pragma parameter HALO_POWER          "     Halo: Strength (negative = 10x precision)"	0.9 	-50.0  5.0 0.01
+#pragma parameter HALO_SHARPNESS      "     Halo: Sharpness"					3.00	0.05   7.0 0.05
+#pragma parameter HALO_GAMMA          "     Halo: Gamma in: Higher -> less halo on dark colors"	2.0 	1.0  10.0 0.05
+#pragma parameter HALO_GAMMA_OUT      "     Halo: Gamma out"	 1.0	0.25  4.0 0.05
+#pragma parameter HALO_DO_MASK_HELPER "     Mask helper: Additional brighness if horizontal mask clips" 	0.0	0.0 1.0 0.05 
+#pragma parameter LABEL_HALO_HELP     "         (Mask helper: read docs-ng.md for help)" 	0.0 0.0 0.0 1.0
+#pragma parameter HALO_VS_SCAN        "     Both: Light scanlines and dot grid gaps"				0.0	0.0  1.0  0.01
 #pragma parameter LABEL0021 " " 0.0 0.0 0.0 1.0
 
 
@@ -563,7 +569,8 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter BEZEL_REFL_STRENGTH "        Reflections strength"			0.5    0.0 2.0 0.01
 #pragma parameter BEZEL_CORNER_DARK   "        Less reflections in corners"		0.8    0.0 1.0 0.05
 #pragma parameter BEZEL_RFL_BLR_SHD   "        Reflections sharpness"			-0.2  -1.5 0.8 0.01
-#pragma parameter BEZEL_ROUGHNESS     "            Surface roughness"			1.0    0.0 5.0 0.1
+#pragma parameter BEZEL_ROUGHNESS     "            Inner surface roughness"			1.0    0.0 5.0 0.1
+#pragma parameter BEZEL_RFL_CONTRAST  "            Inner shadows contrast"			 	1.0    -1.0 2.0 0.1
 #pragma parameter BEZEL_DIFFUSION_STR "        Diffusion strength"             0.2     0.0 1.0 0.01
 #pragma parameter BEZEL_SPCL_STRENGTH "        Specularity strength"			0.5    0.0 3.0 0.05
 #pragma parameter BEZEL_LIGHT_NO_FADEOUT "        Light fadeout distance"		0.5    0.0 1.0 0.01
@@ -648,6 +655,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter LABEL0048 "          (-4 = Megadrive 10/7)" 0.0 0.0 0.0 1.0
 #pragma parameter LABEL0049 "          (-5 = Uncorrected)" 0.0 0.0 0.0 1.0
 #pragma parameter LABEL0050 "          (-6 = MAME rotated/TATE 0.75)" 0.0 0.0 0.0 1.0
+#pragma parameter LABEL0055 "          (-7 = Use Core Provided Aspect)" 0.0 0.0 0.0 1.0
 #pragma parameter LABEL0051 " " 0.0 0.0 0.0 1.0
 
 //Modulate the image zooming depending on the image luminosity.
@@ -667,9 +675,9 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter DO_GAME_GEOM_OVERRIDE	  "★ Override content geometry enable? (ov)==>"	0.0   0.0  1.0 	  1.0
 #pragma parameter GAME_GEOM_INT_SCALE     "        Integer scale (2=No keep aspect)"	0.0   0.0  2.0    1.0
 #pragma parameter GAME_GEOM_INT_SCALE_MAX "        .    Maximum integer scale" 			10.0  1.0  100.0  1.0
-#pragma parameter GAME_GEOM_INT_SCALE_OVR "        .    Permit integer overscale by" 			1.04   1.00  1.1  0.01
+#pragma parameter GAME_GEOM_INT_SCALE_OVR "        .    Permit integer overscale by" 			1.04   1.00  1.15  0.01
 #pragma parameter LABEL0052           "    !! The following will override integer scale" 0.0 0.0 0.0 1.0
-#pragma parameter GAME_GEOM_ASPECT	  "        Aspect (0 = unchanged)"		0.0    0.0  3.0	  0.005
+#pragma parameter GAME_GEOM_ASPECT	  "        Aspect (0=unchanged, <0=Core Aspect)"	0.0    -0.01  3.0	  0.005
 #pragma parameter GAME_GEOM_VSHIFT	  "        Vertical position"			0.0   -10.0 10.0  0.01
 #pragma parameter GAME_GEOM_HSHIFT	  "        Horizontal position"			0.0   -10.0 10.0  0.01
 #pragma parameter GAME_GEOM_ZOOM	  "        Zoom"					1.0    0.0  2.0  0.01
@@ -690,6 +698,9 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 //User parameters goes here, they overrides almost everything:
 #include "../config/config-user.txt"
+
+// Retroarch releases past October 2024 will support this:
+#pragma include_optional "../config/config-user-optional.txt"
 
 // The following translates global.PARAMETER to PARAMETER
 #include "config.globals.inc"

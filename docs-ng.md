@@ -78,12 +78,18 @@ https://github.com/kokoko3k/koko-aio-slang-misc/tree/main
 
 **PARAMETERS:**
 
-**Gamma in:**
-        Input Gamma: set it around 2.2 to linearize values.
+**Gamma in:**<br>
+Input Gamma: set it around 2.2 to linearize values.
         
-**Gamma out:**
-        Output Gamma: set it around "1/Gamma in"; small tweaks allowed.
+**Gamma out:**<br>
+Output Gamma: set it around "1/Gamma in"; small tweaks allowed.
         
+**Clip to white:**<br>
+Human brain perceives strong colors as white, but <br>
+in crt shaders you don't want this to preserve colors.<br>
+However nice effects may be obtained (eg: with vector games). <br>
+        
+
 **Color corrections:**<br>
     Modify signal color at "input" stage.<br>
 
@@ -185,7 +191,7 @@ https://github.com/kokoko3k/koko-aio-slang-misc/tree/main
         
 ** RF Noise:**<br>
     Emulates radio frequency noise with a given strength<br>
-    1 produce noise after the Glow/Blur pass, while -1 will move it before it.
+    1 produce noise before the Glow/Blur pass, while -1 will move it after.
     Suggestions:
     If you're blurring the image, is better to use 1.<br>
     If you're glowing the image, prefer -1.<br>
@@ -572,8 +578,10 @@ https://github.com/kokoko3k/koko-aio-slang-misc/tree/main
         Show less reflections in corners
     Reflections sharpness
         Modulates from totally blurred to totally sharp reflection appearance.
-    Surface roughness
+    Inner surface roughness
         The amount of material roughness in reflection area
+    Inner shadows contrast
+        Add or remove contrast to the reflection area.
     Diffusion strength
         Mix an amount of high blurred reflection to simulate light diffusion
     Light fadeout distance
@@ -690,8 +698,8 @@ https://github.com/kokoko3k/koko-aio-slang-misc/tree/main
     Simulates external light reflected by the monitor glass.<br>
             
 **Aspect (active with ambient light or background image only):**<br>
-    If you set retroarch aspect ratio option to full, you have to provide<br>
-    the core aspect ratio to the shader manually via the following parameters.<br>
+    With RetroArch <= 1.19.1, if you set retroarch aspect ratio option to full,<br>
+    you have to provide the core aspect ratio to the shader manually.<br>
     NOTE: The following parameters are ignored when not using ambient lights
     or background/foreground images.
     In those cases, use options under "Override content geometry" section.
@@ -710,6 +718,7 @@ https://github.com/kokoko3k/koko-aio-slang-misc/tree/main
         -4 = 10/7 Megadrive 
         -5 = Uncorrected
         -6 = 0.75 MAME rotated 1.33 games in TATE mode
+        -7 = Use Core provided Aspect Ratio (requires RetroArch > 1.19.1)
     Aspect Ratio Denominator:
         As long as Aspect Ratio Numerator is positive, this will
         be used as the denominator of the fraction.
@@ -762,7 +771,8 @@ https://github.com/kokoko3k/koko-aio-slang-misc/tree/main
         Permit integer overscale by:
             When doing integer scaling, allow the image to be slightly overscanned (goes off screen).
     Aspect:
-        Change aspect ratio.
+        Forces an aspect ratio.
+        Use a negative value to use Core provided aspect ratio (requires RetroArch > 1.19.1)
     Vertical/Horizontal position:
         Shifts the game position
     Zoom: 
