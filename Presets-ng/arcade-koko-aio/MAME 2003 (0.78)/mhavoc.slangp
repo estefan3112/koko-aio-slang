@@ -1,0 +1,21 @@
+#reference "../../shaders/shaders_slang/bezel/koko-aio/Presets-VectorGFX/Vector_std_4_mame2003plus_defaults.slangp"
+BEZEL_USE_STRAIGHT = "1.000000"
+BEZEL_R = "-0.185000"
+BEZEL_G = "-0.195000"
+GLOBAL_OFFX = "-0.004500"
+GLOBAL_OFFY = "-0.036500"
+GLOBAL_ZOOM = "0.730987"
+DO_BG_IMAGE = "1.000000"
+BG_IMAGE_OVER = "1.000000"
+BG_IMAGE_NIGHTIFY = "0.300000"
+AMBI_STEPS = "5.000000"
+AMBI_BG_IMAGE_BLEND_MODE = "1.000000"
+AMBI_BG_IMAGE_FORCE = "0.500000"
+S_POWER = "0.100000"
+bg_under = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/mhavoc.png"
+bg_over = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/mhavoc.png"
+
+// Credits
+// shader by kokoko3k - https://github.com/kokoko3k/koko-aio-slang
+// artworks by Progettosnaps - https://www.progettosnaps.net/artworks/ 
+// preset and artwork merger into one by estefan3112 - https://github.com/estefan3112/koko-aio-slang
