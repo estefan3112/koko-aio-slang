@@ -1,4 +1,4 @@
-#reference "../../shaders/shaders_slang/bezel/koko-aio/Presets-VectorGFX/Vector_std_4_mame2003plus_defaults.slangp"
+#reference "../../shaders/shaders_slang/bezel/koko-aio/Presets_HiresGames_Fast/Presets-VectorGFX/Vector_std_4_mame2003plus_defaults.slangp"
 BEZEL_USE_STRAIGHT = "1.000000"
 BEZEL_R = "-0.185000"
 BEZEL_G = "-0.195000"
