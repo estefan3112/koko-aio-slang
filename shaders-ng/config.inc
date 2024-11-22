@@ -496,6 +496,8 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter LABEL0018 " " 0.0 0.0 0.0 1.0
 
 #pragma parameter PIXELGRID_DO_SHADOWMASK    "      ★ Shadowmask "	0.0 0.0 1.0 1.0
+#pragma parameter label_shadowmask           "       !! Please, ensure that horizontal mask" 0.0 0.0 0.0 1.0
+#pragma parameter label_shadowmask2          "       !! phosphor width is not too low." 0.0 0.0 0.0 1.0
 #pragma parameter PIXELGRID_SHADOWMASK_SHIFT "           . X staggering    "	1.0 0.5 4.0 0.5
 #pragma parameter PIXELGRID_SHADOWMASK_H     "           . Phosphor height "	1.0 1.0 10.0 1.0
 
@@ -706,7 +708,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #include "config.globals.inc"
 
 
-// 2014-Jan-25
+// 2024-Jan-25
 // Since we moved some mandatory defines from config-static.inc to config-user.txt
 // It is possible that users overriding config-user.txt will run into errors
 // if they don't check for updated config-user.

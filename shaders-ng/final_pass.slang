@@ -595,8 +595,9 @@ vec4 fn_pixel_grid(vec2 in_coords, vec4 pixel_in, float min_inLum, float max_inL
             freq_base_unfloored.x = vPG_freq_base_screen_unfloored.x * vPG_period_multiplier_x;
         }
     
-    //shadowmask
-    //works by staggering odd rows by 1.5X triad
+    // Shadowmask
+    // Works by staggering odd rows by 1.5X triad
+    // Pay attention to phosphor width; if too low may, vanify shadowmask.
     PG_offsets = vPG_offsets_and_size.rgb + //base offsets staggered (+)
                 float( PIXELGRID_DO_SHADOWMASK *                                      // user wants shadowmask
                        sin(freq_base_screen.y * 2.0 / PIXELGRID_SHADOWMASK_H ) > 0.0  // sin > 0.0 means the row is even
@@ -1324,11 +1325,13 @@ void main() {
             pixel_out = fn_pixel_content(co_content) * canvas_busy;
                       
             #ifndef D3D_WORKAROUND
-                if (LCD_ANTIGHOSTING > 0.0) {
-                    vec3 feedback = texture(final_passFeedback, vOutputCoord).rgb;
-                    vec3 diff=(feedback - pixel_out);
-                    pixel_out = mix(pixel_out, pixel_out-diff, LCD_ANTIGHOSTING );
-                }
+                #ifdef LCD_ANTIGHOSTING
+                    if (LCD_ANTIGHOSTING > 0.0) {
+                        vec3 feedback = texture(final_passFeedback, vOutputCoord).rgb;
+                        vec3 diff=(feedback - pixel_out);
+                        pixel_out = mix(pixel_out, pixel_out-diff, LCD_ANTIGHOSTING );
+                    }
+                #endif
             #endif
 
         } else {
