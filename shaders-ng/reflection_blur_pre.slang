@@ -59,6 +59,9 @@ float borders_gradient(vec2 co, float smoothness) {
 
 void main() {
    
+   if (fps_halver_is_skipped_frame())
+      return;
+   
    if (DO_BEZEL == 0.0) return;
    
    #define skip_border BEZEL_REFL_SKIP_SIZE

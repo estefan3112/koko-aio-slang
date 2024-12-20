@@ -100,6 +100,9 @@ float contrast(float col, float contrast) {
 
 void main() {
    
+   if (fps_halver_is_skipped_frame())
+      return;
+   
    if (DO_BEZEL == 0.0) return;
    
    //Skip unuseful pixels

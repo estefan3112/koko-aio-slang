@@ -113,14 +113,16 @@ vec3 apply_noise_to(vec3 c) {
 
 
 void main() { 
-
+   
+   if (fps_halver_is_skipped_frame())
+      return;
 
    //Delta render?
    float DR_changed = 1.0;
-   if (DELTA_RENDER == 1.0) {
+   if (delta_render_enabled() == 1.0) {
      if (vDeltaRenderOk == 1.0) {
          DR_changed = delta_render_changed(colortools_and_ntsc_passFeedback, colortools_and_ntsc_pass,
-                                                      vTexCoord, DELTA_RENDER_CHECK_AREA);
+                                                      vTexCoord, delta_render_get_check_area() );
 
      }
    }
@@ -128,7 +130,7 @@ void main() {
    //Warped Glow Y
    //The result will be stored in the alpha channel to be consumed by final pass.
    float warpedglow_y = eps; //see down note: (**)
-   if (SKIP_WARPEDGLOW_Y == 0.0) {
+   #ifndef SKIP_WARPEDGLOW_Y
       if (DO_IN_GLOW == 1.0) {
          float max_inLum = max( 1.0, DO_CCORRECTION * apply_contrast_brightness(1.0, CONTRAST, BRIGHTNESS));
          vec3 gy = texture(Source, vTexCoord + vWarpedglow_offsets).rgb
@@ -140,12 +142,12 @@ void main() {
                                  
          warpedglow_y = pow( abs(warpedglow_y), IN_GLOW_WARPSHARP_GAMMA) * sign(warpedglow_y);
          
-         warpedglow_y = warpedglow_y *  vWarpedglow + (eps * DELTA_RENDER); 
+         warpedglow_y = warpedglow_y *  vWarpedglow + (eps * delta_render_enabled()); 
                                  
          // (**) This eps is needed because we multiplex deltarender and warpedglow and we NEED to have dr = 0.0 (and not a positive number)
          //To reuse old pixels, only that way (using 0.0 to reuse pixels) multiplexing is possible.
       }
-   }
+   #endif
 
 
    float warpedglow_or_DR = warpedglow_y;

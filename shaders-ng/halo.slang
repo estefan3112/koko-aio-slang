@@ -99,6 +99,9 @@ vec3 get_mask_helper() {
 
 void main() {
     
+   if (fps_halver_is_skipped_frame())
+      return;
+    
     if (DO_HALO == 0.0 ) return;
     
     vec3 mask_helper = vec3(0.0);

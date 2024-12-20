@@ -45,6 +45,9 @@ layout(set = 0, binding = 2) uniform sampler2D monitor_body_curved;
 
 void main() {
 	
+	if (fps_halver_is_skipped_frame())
+		return;
+    
 	bool smp_range_1  = is_first_inside_rect(vTexCoord, SMP_RANGE1 );
 	
 	FragColor = vec4(0.0);

@@ -144,7 +144,7 @@
     #define DOT_C		global.DOT_C
 #endif
 
-#ifndef DOT_C_YIQ
+#ifndef DOT_C_YUV
     #define DOT_C_YUV		global.DOT_C_YUV
 #endif
 
@@ -897,14 +897,6 @@
 
 #ifndef PIXELGRID_GAMMA_W
     #define PIXELGRID_GAMMA_W	global.PIXELGRID_GAMMA_W
-#endif
-
-#ifndef DELTA_RENDER_FORCE_REFRESH
-    #define DELTA_RENDER_FORCE_REFRESH global.DELTA_RENDER_FORCE_REFRESH
-#endif
-
-#ifndef DELTA_RENDER_CHECK_AREA
-    #define DELTA_RENDER_CHECK_AREA    global.DELTA_RENDER_CHECK_AREA
 #endif
 
 #ifndef DO_PPERSISTENCE

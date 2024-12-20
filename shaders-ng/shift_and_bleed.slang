@@ -55,7 +55,9 @@ void main()
       dot_c_steps = 22-( abs(DOT_C_SPEED) *2)+0.0001;
       vDotCrawlShift =((pi*2)/dot_c_steps) * mod(params.FrameCount, dot_c_steps);
    
-      vDotCrawlCoords_and_period = vec4(vTexCoord, params.OriginalSize.xy);
+      float dotc_w_adapted = 1.0; //320.0/params.OriginalSize.x;
+      
+      vDotCrawlCoords_and_period = vec4(vTexCoord, params.OriginalSize.xy * vec2( dotc_w_adapted, 1.0) );
    
       // switch to vertical movement
       if (DOT_C_SPEED < 0.0)
@@ -266,6 +268,10 @@ vec4 pixel_bleed(vec4 pixel_in, vec2 co, sampler2D in_texture, float sourcesize_
 }
 
 void main() {
+   
+   if (fps_halver_is_skipped_frame())
+      return;
+   
    vec4 pixel_out;
 
    pixel_out = texture(upscale_pass, vTexCoord);

@@ -125,7 +125,9 @@ TODO:
 	[v] Find a way to smooth borders without cropping the image
 		Done, via repeated lines
 	[v] bloom should bleed over when forcing geometry aspect
-
+	[v] Halve border update + Deltarender leads to jagged inner frame, why?
+	    Don't really know, but solved by gut feeling by using if ((params.FrameCount % 2) != 0.0)
+	    instead ov if ((params.FrameCount % 2) != 1.0)
 	[ ] reflection blurriness should not depend on input resolution
 	[ ] dedicated subtractive sharpness in glow section
 	[ ] erode/dilate setting in glow section
@@ -151,3 +153,10 @@ TODO:
 	    put DELTA_RENDER_FORCE_REFRESH = 1.0 in config-user.txt
 	[ ] Support for upcoming optional include pragma
 	[ ] Support for upcoming OriginalAspect/Rot
+	[ ] Check if is possible to turn halo's float framebuffers to 10bit unorm and if it provides a performance boost.
+	    If it's ok, check for other possible passes application.
+	[ ] co_bezel is used to create the ambi mask.
+		problem is: co_bezel is defined way before its use (used twice in the code)
+		and that often leads to performance degradation (registers are precious)
+		would it be possible to pre-compute ambi mask in the ambilight pass?
+	[ ] fn_border can be superseeded by fuzzy_rect;  is it faster?

@@ -196,8 +196,8 @@
 // #define DOT_M_G_TRESH  1.1     //            . Paint on bright (<0 on black)
 // #define DOT_M_G_BRT  0.0       //            . Grid brightness
 // #define DOT_M_G_SHARP  0.0     //            . Grid sharpness (0.0 for auto)
-// #define DOT_M_MBLUR_STR  0.45  //         Refresh inertia
-// #define DOT_M_MBLUR_MODE  0.0  //            . Inertia on: both,white,black
+// #define DOT_M_MBLUR_STR  0.45  //         Ghosting
+// #define DOT_M_MBLUR_MODE  0.0  //            . Apply on: both,white,black
 // #define DOT_M_SHADOW_STR  0.0  //         Shadow strength (disables deconvergence)
 // #define DOT_M_SHADOW_OFF  0.0  //            . Shadow offset
 
@@ -256,7 +256,7 @@
 // #define GLOBAL_ZOOM  2.0     //         Zoom
 
 // #define DO_BG_IMAGE  0.0           // ★ Back/Foreground image enable?
-// #define BG_IMAGE_OVER  0.0         //       Image over content (alpha channel driven)?
+// #define BG_IMAGE_OVER  0.0         //       Image over game (alpha channel driven)?
 // #define BG_IMAGE_OFFX  0.0         //       Shift Image over X axis
 // #define BG_IMAGE_OFFY  0.0         //       Shift Image over Y axis
 // #define BG_IMAGE_ZOOM  1.0         //       Zoom Image
@@ -316,7 +316,7 @@
 // #define AUTOCROP_STEADINESS 0.01    //         Scene change treshold (0 = continuous cropping) 
 // #define AUTOCROP_SAMPLES 0.02       //        Transition speed 
 
-// #define DO_GAME_GEOM_OVERRIDE  0.0     // ★ Override content geometry enable?
+// #define DO_GAME_GEOM_OVERRIDE  0.0     // ★ Override game geometry enable?
 // #define GAME_GEOM_INT_SCALE  0.0       //         Integer scale 2=No keep aspect
 // #define GAME_GEOM_INT_SCALE_MAX  10.0  //         .    Maximum integer scale
 // #define GAME_GEOM_INT_SCALE_OVR 1.0    //         .    Permit integer overscale by
@@ -334,47 +334,60 @@
 
 ////////////////////////////////////////////////////////////////////////////
 //
-// STATIC VALUES FOR PERFORMANCE SETTINGS
+// STATIC VALUES SETTINGS
 // The following are not Runtime configurable parameters
 // But they are here because they are meant to push performance as well.
 // They were previously defined in config-static.inc file.
 //
 ////////////////////////////////////////////////////////////////////////////
 
-// Renders only changed parts of screen; uncomment (remove leading //) to lower power consumption / mitigate throttling:
-// #define DELTA_RENDER 1.0
+// Renders only changed parts of screen; uncomment (remove leading //).
+// to lower power consumption / mitigate throttling, uncomment this:
+// #define DELTA_RENDER
 
-// #define DELTA_RENDER_FORCE_REFRESH  4.0  //  Delta render force refresh interval
-// #define DELTA_RENDER_CHECK_AREA  1.0     //  Delta render area size
-
+// #define DELTA_RENDER_FORCE_REFRESH   // Delta render force refresh interval.
+                                        // Defaults to 4.0 if commented 
+                                        
+// #define DELTA_RENDER_CHECK_AREA      // Delta render area size.
+                                        // Defaults to 1.0 if commented 
 
 // Use higher quality deconvergence flattering rgb scanlines when deconvergence is high
 // and by syncing them to the deconvergence settings
 // To enable high quality deconvergence, remove leading "//"
 // #define HQ_DECON
 
+// FXAA tuning: select an FXAA preset here.
+// 1.0 is a dumb and fast preset, 2.0 is still fast, but rounder (the default)
+// Higher numbers are useful to antialias high resolution content.
+// Allowed values from 1.0 to 5.0.
+// #define FXAA_PRESET 2.0
 
-// Allow texture wrapping as a shader parameter, set to 0.0 to gain some performance.
+// Enable lcd antighosting by using values > 0.0 (try around 0.25)
+// #define LCD_ANTIGHOSTING 0.25
+
+// Disallow texture wrapping as a shader parameter, comment to gain some performance.
 // But in that case the wrap mode has to be defined in the preset file.
-#define ALLOW_BG_IMAGE_TEXTURE_WRAP_IN_SHADER 1.0
+// #define DISALLOW_BG_IMAGE_TEXTURE_WRAP_IN_SHADER
 
-//Halve rendering refresh on bezel and ambilight set to 1.0 to spare gpu cycles:
-#define HALVE_BORDER_UPDATE 0.0
+// Halve rendering refresh on bezel and ambilight, uncomment to gain performance:
+// #define HALVE_BORDER_UPDATE
 
-//Skip random() function used for noise/debanding/bezel roughness, 
-//set to 1.0 to spare gpu cycles:
-#define SKIP_RANDOM 0.0
+// Skip random() function used for noise, debanding, bezel roughness.
+// uncomment to gain some performance, expect some banding on ambilight and
+// possibly heavier banding when using the spot feature.
+// #define SKIP_RANDOM
 
+// Uncommenting this is the only way to statically disable Warped Glow (X) and
+// spare a lookup in the final pass;
+// When the screen is rotated, skipping SKIP_WARPEDGLOW_X means skipping SKIP_WARPEDGLOW_Y
+// #define SKIP_WARPEDGLOW_X
 
-//Set this to 1.0 is the only way to statically disable Warped Glow (X) and
-//spare a lookup in the final pass;
-//When the screen is rotated, skipping SKIP_WARPEDGLOW_X means skipping SKIP_WARPEDGLOW_Y
-#define SKIP_WARPEDGLOW_X 0.0
+// Uncomment this is the only way to statically disable Warped Glow (Y)
+// When the screen is rotated, skipping SKIP_WARPEDGLOW_Y means skipping SKIP_WARPEDGLOW_X
+// #define SKIP_WARPEDGLOW_Y
 
-//Set this to 1.0 is the only way to statically disable Warped Glow (X) and
-//spare a lookup in the final pass.
-//When the screen is rotated, skipping SKIP_WARPEDGLOW_Y means skipping SKIP_WARPEDGLOW_X
-#define SKIP_WARPEDGLOW_Y 0.0
+// Enable Conditional FPS Halver (60->30, 30->30, 50->25, 25->25)
+// #define FPS_HALVER
 
 // Developer reminder: bash script to partially convert a shader preset 
 // edit: obsolete and incomplete since it does not recur references.
