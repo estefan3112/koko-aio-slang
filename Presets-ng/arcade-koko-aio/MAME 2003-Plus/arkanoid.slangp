@@ -15,3 +15,8 @@ AMBI_STRETCH = "0.400000"
 GAME_GEOM_ZOOM = "1.010000"
 bg_under = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/arkanoid.png"
 bg_over = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/arkanoid.png"
+
+// Credits
+// shader by kokoko3k - https://github.com/kokoko3k/koko-aio-slang
+// artwork by John Merrit
+// preset and artwork adjustments by estefan3112 - https://github.com/estefan3112/koko-aio-slang
