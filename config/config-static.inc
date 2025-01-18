@@ -9,11 +9,6 @@
 
 // STATIC FEATURES ENABLE/DISABLE
 
-// D3D/XBOX users should enable Direct3D workarounds to avoid glitches or crashes
-// by removing the leading "//" from the following line:
-
-// #define D3D_WORKAROUND
-
 // In case you're running an old pRetrtoarch version (pre 1.16), please comment this (prepend: // )
 #define _HAS_ROTATION_UNIFORM
 
@@ -97,7 +92,6 @@
 	// try between (1/avglum_divider) and (1/avglum_divider)/3
 //#define AMBI_FAST_STEP 0.125
 #define AMBI_FAST_STEP 0.25
-
 
 
 
