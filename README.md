@@ -75,7 +75,8 @@ Since Release 0.3, backdrop support landed in koko-aio as a dynamic option. A se
 (Update November 2023) This fork will remain as closely as possible in line with the main repository, as I frequently update from Upstream. Here is a list of deviations from Upstream:
 - koko-aio-ng.slangp - line 43:  bg_under_wrap_mode = "clamp_to_border" (instead of previously "clamp_to_edge") 
 - koko-aio-ng.slangp - line 48:  bg_over_wrap_mode = "clamp_to_border" (instead of previously "clamp_to_edge")
-- koko-aio-ng.slangp - line 53:  backdrop_wrap_mode = "clamp_to_border"
+- koko-aio-ng.slangp - line 53:  backdrop_wrap_mode = "clamp_to_border"<br>
+
 In koko-aio.slangp, I used "clamp_to_border", but the new, stronger ambilight then shines beyond the artwork. Workaround: apply a 1px black frame to the artwork and set "clamp_to_edge", this lets the black frame repeat black, and thereby the ambilight no longer shines through.
 
 These changes are beneficial for this repository, as a mirrored repeat looks very strange for realistic cabinet backgrounds/foregrounds.
