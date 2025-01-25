@@ -155,14 +155,9 @@ However nice effects may be obtained (eg: with vector games). <br>
         This will show only the part of the image that contains artifacts.
         Use it to for a better visual feedback of the following parameters.
         Please, enable "glow" to s
-
-    1* Under treshold: Cancel blur (Glow)
-        How much the glow/blur function will skip blurring "unartifacted" areas.
-    2* Under treshold: Cancel Bandwidth limited chroma
-        How much the Bandwidth limited chroma function will skip blurring 
-        "unartifacted" areas.
-    3* Under treshold: Cancel artifacts
-        How much the artifacts under the treshold will be completely removed.
+    Cancel artifacts under the treshold
+        How much of the artifacts under the treshold will be completely removed.
+        
     
 **CVBS: Bandwidth limited chroma:**<br>
     Will cause an horizontal chroma bleed which cheaply mimics the effect of<br>
@@ -209,6 +204,13 @@ However nice effects may be obtained (eg: with vector games). <br>
     Uniform noise: Balanced noise that ranges from -x to +x.
     Snow noise: Sparkling/Rarefied noise 
         
+**Megadrive fake transparencies:**<br>
+    Detect patterns used in some Megadrive/Genesis games to
+    fake transparent colors and blends them.
+    
+    Overridden X-sharpness: The lower, the blurrier.
+    Detection threshold: Catch more or less patterns
+
         
 **Glow/Blur:**<br>
     Emulate the CRT glowing "feature", so that the brighter areas of<br>
@@ -869,12 +871,9 @@ To enable them, you have to edit the shader itself, save it, and reload.*
     By inducing larger color transitions, it prompts the LCD cells <br>
     to adjust their states more rapidly, thereby reducing ghosting.<br><br>
     To use it, in file config-user.txt, turn the line: <br>
-    ```// #define LCD_ANTIGHOSTING 0.25```
+    ```// #define LCD_ANTIGHOSTING 0.5```
     <br>into: <br>
-    ```#define LCD_ANTIGHOSTING 0.25```<br><br>
-    You can also try different values, but keep in mind <br>
-    that highering the value too much will be counterproductive.<br>
-    
+    ```#define LCD_ANTIGHOSTING 0.5```<br><br>
 
 **Conditional FPS Halver**<br>
     *[Warning:] Only on retroarch > 1.19.1*<br>
