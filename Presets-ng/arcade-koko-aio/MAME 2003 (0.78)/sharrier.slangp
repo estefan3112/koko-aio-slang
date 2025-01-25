@@ -1,0 +1,20 @@
+#reference "../../shaders/shaders_slang/bezel/koko-aio/Presets-ng/Monitor-Ambilight-immersive.slangp"
+GAMMA_OUT = "0.520000"
+IN_GLOW_POWER = "1.600000"
+LUMINANCE = "0.050000"
+HALO_POWER = "0.330000"
+GEOM_CORNER_SIZE = "0.020000"
+BEZEL_R = "-0.220000"
+BEZEL_G = "-0.220000"
+BEZEL_B = "-0.220000"
+GLOBAL_OFFY = "0.046500"
+GLOBAL_ZOOM = "0.653493"
+BG_IMAGE_ZOOM = "1.052496"
+BG_IMAGE_NIGHTIFY = "0.400000"
+bg_under = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/sharrier.png"
+bg_over = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/sharrier.png"
+
+// Credits
+// shader by kokoko3k - https://github.com/kokoko3k/koko-aio-slang
+// artwork by John Merrit
+// preset and artwork adjustments by estefan3112 - https://github.com/estefan3112/koko-aio-slang
