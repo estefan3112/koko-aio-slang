@@ -48,16 +48,14 @@ Step 2: Move all .slangp-presets to the respective core configuration directory,
 <br>
 Note: The FinalBurn Neo.cfg/MAME.cfg/Mame 2003 (0.78).cfg/MAME 2003-plus.cfg files contain just one line that secures that the Aspect Ratio is set to 'Full'. Without this option, the background will not appear.<br>
 
-# Dedicated install of only the additional Arcade Artwork
-(actually not needed, as I am fully in line with koko-aio upstream - but just mentioning this for completeness)
+# Partial install of only additional presets<br>
+(e.g. you want to update latest presets before a new release)<br>
+Of course there are several ways to do this, but again the easiest is the following:<br><br>
+Step 1: Clone the entire repository, e.g. by downloading the repo into a zip file (green button Code -> Download zip). Will take some time.<br>
+Step 2: Choose the new textures from the directory /textures/arcade_textures and copy them locally to /shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures <br>
+Step 3: Locate the corresponding presets ending with .slangp in /presets-ng/arcade-koko-aio/FinalBurnNeo and copy them locally to /config/FinalBurn Neo/ - repeat this step for the presets of other cores you use, e.g. MAME, or the MAME2003 variants.
 
-But if you want to stay with koko-aio for some other reason and do a partial install:
-Step 1: Take the entire folder /textures/arcade_textures and move it locally to /shaders/shaders_slang/bezel/koko-aio/textures.<br>
-Step 2: Move the content of the directory koko-aio/presets/arcade-koko-aio to /config/FinalBurn Neo/ etc...as above -> by this, the game launches the right shader configuration automatically.<br>
-<br>
-Please also refer to the instructions contained in the ReadMe.md of these folders.<br>
-
-# Manual installation from the Github repository
+# Full manual installation from the Github repository
 
 Update November 2023: In the new ng shader environment, it will be sufficient to move the koko-aio folder structure as is into the local RetroArch shader environment. So you can download the repository as well, but be sure to delete the hidden .git files that contain massive data.
 <br>
