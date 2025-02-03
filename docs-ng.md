@@ -129,7 +129,7 @@ However nice effects may be obtained (eg: with vector games). <br>
 
 ** Dedither:**<br>
     Try to smooth dithering patterns.<br>
-    Enabling dedithering automatically disables  NTSC color artifacts:** generation.
+    Dedithering does not work as long as NTSC color artifacts are enabled.
     
     Sensitivity: Avoid to dedither "legit" zones by lowering this.
     Basic search strength: Blends basic dedithering and original image.
@@ -147,8 +147,9 @@ However nice effects may be obtained (eg: with vector games). <br>
     the image will be blurred in a way or another.<br>
     You can selectively keep the part of the image which does not contain<br>
     artifacts sharp by using the followin controls.<br>
-    This allow to selectively blend artifacts.
-
+    This allow to selectively blend artifacts.<br>
+    <br>Enabling this features automatically disabled dedithering feature.
+    
     Consider artifacts above this treshold:
         Tune this to select more or less artifacts, depending on their strength.
     Show selected artifacts mask (need glow/blur enabled)
@@ -208,8 +209,8 @@ However nice effects may be obtained (eg: with vector games). <br>
     Detect patterns used in some Megadrive/Genesis games to
     fake transparent colors and blends them.
     
-    Overridden X-sharpness: The lower, the blurrier.
-    Detection threshold: Catch more or less patterns
+    Overridden X(Y)-sharpness: The lower, the blurrier.
+
 
         
 **Glow/Blur:**<br>
@@ -719,6 +720,11 @@ However nice effects may be obtained (eg: with vector games). <br>
     With Mame 2003 plus and fbneo cores, koko-aio detects if the<br>
     game is rotated or not without any user intervention.<br>
     
+    -7 and -8 will take the value as set by the core itself and
+    requires at least retroarch 1.20.
+    -7 will ignore aspect set by the core and returns 1.333
+    if a background or foreground image is used.
+    
     Aspect Ratio Numerator:
         Setting non positive value here will switch to a predefined
         aspect ratio from the following list:
@@ -729,7 +735,8 @@ However nice effects may be obtained (eg: with vector games). <br>
         -4 = 10/7 Megadrive 
         -5 = Uncorrected
         -6 = 0.75 MAME rotated 1.33 games in TATE mode
-        -7 = Use Core provided Aspect Ratio (requires RetroArch > 1.19.1)
+        -7 = Use Core provided Aspect Ratio auto-off
+        -8 = Use Core provided Aspect Ratio always on
     Aspect Ratio Denominator:
         As long as Aspect Ratio Numerator is positive, this will
         be used as the denominator of the fraction.

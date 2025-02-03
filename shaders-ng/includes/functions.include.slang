@@ -1,3 +1,59 @@
+#define _prec 32.0
+#define mul_low (pow(_prec,0.0))
+#define mul_mid (pow(_prec,2.0))
+#define mul_hi  (pow(_prec,3.0))
+
+#define color_quant (2.0/_prec)
+
+float pack_21(vec2 color) {
+    color = clamp(color,0.0,1.0-color_quant);
+    color = floor(color*_prec)/_prec;
+    return (color.g * mul_mid) + (color.r * mul_hi) ;
+}
+
+vec2 unpack_21(float result, float compensation) {
+    float hi =  floor(result/mul_mid)*mul_mid;
+    float mid = floor((result - hi)/mul_low)*mul_low;
+    vec2 o = vec2( hi/mul_hi, mid/mul_mid ) * compensation;
+	return clamp(o,0.0,1.0);
+}
+
+
+
+#define pack_floats_precision 31.0
+#define pack_floats_clamp 1-(1/pack_floats_precision)
+float _pack_21(vec2 in_float){
+	//Clamp and round to 1/255 needed:
+	in_float = clamp(in_float, 0.0 , pack_floats_clamp);
+	in_float = floor(in_float*pack_floats_precision)/pack_floats_precision;
+	return in_float.x*pack_floats_precision + in_float.y;
+}
+
+
+vec2 _unpack_21(float f){
+	float fr = fract(f);
+	float fg = floor(f)/pack_floats_precision;
+	return vec2(fg,fr);
+}
+	
+
+/*
+#define _scale float(floor(SERVICE1*10000))
+float pack_21(vec2 ab) {
+  const float scale = _scale;
+  const float bias = 0.5 / scale;
+  return fract(ab.x * scale) + floor(ab.y * scale) / scale + bias;
+}
+
+
+vec2 unpack_21(float packed) {
+  const float scale = _scale;
+  float a = fract(packed * scale);
+  float b = floor(packed * scale) / scale;  // Calcolo di 'b'
+  return vec2(a, b);
+}
+*/
+
 float max3(vec3 v){
 	return max((v.x,v.y),v.z);
 }
@@ -691,19 +747,34 @@ vec2 Warp_koko(vec2 co, vec2 w, float protrusion) {
 }
 	
 float get_in_aspect() {	
-	if (ASPECT_X ==  0) return 1.3333333333333; //all mame games, not rotated
+	if (ASPECT_X ==  0) return 1.333333; //all mame games, not rotated
 	if (ASPECT_X == -1) return 1.5;   // ntsc
 	if (ASPECT_X == -2) return 1.25;  // pal
 	if (ASPECT_X == -3) return 1.143; // 8/7 snes
 	if (ASPECT_X == -4) return 1.428; // 10/7 megadrive
 	if (ASPECT_X == -5) return params.OriginalSize.x/params.OriginalSize.y; //uncorrected
 	if (ASPECT_X == -6) return 0.75;  // 3/4, pre-rotated (TATE) 1.33 games.
-	if (ASPECT_X == -7) {
+	
+	//Handle cases when core aspect cannot be retrived and just return 4/3.
+		bool HasOriginalAspectUniform = false;
 		#ifdef _HAS_ORIGINALASPECT_UNIFORMS
-			return global.OriginalAspectRotated;
+			HasOriginalAspectUniform = true;
 		#endif
-			return 1.333333; //fallback to 4:3 when uniform is not available.
+		if (ASPECT_X == -7 || ASPECT_X == -8 ){
+			if (!HasOriginalAspectUniform){
+				return 1.33333;
+			}
+		}
+	
+	if (ASPECT_X == -7) {
+		if (DO_BG_IMAGE==0.0)
+			return global.OriginalAspectRotated;
+		else
+			return 1.333333; //fallback to 4:3 when using background or foreground images.
 	}
+	
+	if (ASPECT_X == -8)
+			return global.OriginalAspectRotated;
 	
 	return ASPECT_X / ASPECT_Y ;
 }
