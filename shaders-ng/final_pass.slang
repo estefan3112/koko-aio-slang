@@ -666,12 +666,12 @@ vec4 fn_pixel_grid(vec2 in_coords, vec4 pixel_in, float min_inLum, float max_inL
                 vec3 decon_stagger = vec3( PIXELGRID_DECON_R_H, PIXELGRID_DECON_G_H, PIXELGRID_DECON_B_H);
                 
             #ifdef HQ_DECON
-                float dist_from_edge = distance_from_edge_linear(in_coords, EDGE_DEFOCUS_AREA_INV)*(DO_SHIFT_RGB);
-                float offset_multiplier = mix(EDGE_DEFOCUS, 1.0, dist_from_edge) * NEW_SCALEMOD_Y;
-                decon_stagger = vec3(DECON_RY,DECON_GY,DECON_BY)*pi/2.0;
-                decon_stagger *= offset_multiplier;
+                //Sync decon stagger to deconvergence set in shift_and_bleed pass.
+                float dist_from_edge = distance_from_edge_linear(in_coords, EDGE_DEFOCUS_AREA_INV);
+                float offset_multiplier = mix(EDGE_DEFOCUS, 0.0, dist_from_edge) * (DO_SHIFT_RGB * OFFSET_STRENGTH);
+                decon_stagger = vec3(DECON_RY,DECON_GY,DECON_BY)*pi/2.0 * (offset_multiplier * NEW_SCALEMOD_Y) ;
             #endif
-            
+          
             vec3 rgb_h_sin = vec3(1.0);
             
             if (PIXELGRID_H_ANTIMOIRE > 0.0) {
@@ -690,10 +690,7 @@ vec4 fn_pixel_grid(vec2 in_coords, vec4 pixel_in, float min_inLum, float max_inL
                 //dedot_mix = vec3(  PIXELGRID_H_DEDOT - PIXELGRID_H_DEDOT * rgb_h_sin.x);
                 dedot_mix = vec3( fma( -PIXELGRID_H_DEDOT, rgb_h_sin.x, PIXELGRID_H_DEDOT)); //ASM PROOF: SAME
                 dedot_mix = dedot_mix *(pixel_in.rgb/max_inLum);
-                
-            // Phosphor height computation has been moved
-            // outside the branch to help parallelism a bit
-
+                                
             //Finally get 3 sines out of the previous one by applying height modifiers
                 rgb_h = morph_shape(rgb_h_sin, phosphor_height, PIXELGRID_NO_INTERBLEED_H, PIXELGRID_GAMMA_H);
 
@@ -702,7 +699,15 @@ vec4 fn_pixel_grid(vec2 in_coords, vec4 pixel_in, float min_inLum, float max_inL
                 rgb_h = clamp(rgb_h, 0.0,1.0);
                 
                 #ifdef HQ_DECON
-                    rgb_h = mix(rgb_h, pixel_in.rgb, (1-dist_from_edge) * (DO_SHIFT_RGB * EDGE_DEFOCUS_DO_BLUR) );
+                    // Y Defocusing causes scanlines gaps to blend, so mix the scanlines mask with the original color
+                    // since the original color will be multiplied again for rgb_h later on, pow it to 0.9 to avoid excessive gamma increase.
+                    
+                        float mixing_factor =         // the mixing factor will depend on:
+                              (DO_SHIFT_RGB           // the fact that we are doing defocusing
+                            * EDGE_DEFOCUS_DO_BLUR) 
+                            * ((1-dist_from_edge)     // the distance from the center
+                            * DO_PIXELGRID_H) ;       //the scanline strength
+                    rgb_h = mix( rgb_h,  mix(vec3(1.0), pixel_in.rgb, 0.9), mixing_factor);
                 #endif
         }
 
@@ -1005,6 +1010,25 @@ float create_ambi_colorize_shade(vec2 co) {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
+vec3 antighost(vec3 c) {
+    #ifndef D3D_WORKAROUND
+        #ifdef LCD_ANTIGHOSTING
+            #ifndef LCD_ANTIGHOSTING_CEIL
+                #define LCD_ANTIGHOSTING_CEIL 1.0
+            #endif
+            if (LCD_ANTIGHOSTING > 0.0) {
+                if (frame_is_even()) {
+                    vec3 feedback = texture(final_passFeedback, vOutputCoord).rgb;
+                    vec3 diff=(feedback - c)*LCD_ANTIGHOSTING;
+                    diff = sign(diff) * min( abs(diff), vec3(LCD_ANTIGHOSTING_CEIL));
+                    c = mix(c, c-diff, 0.5);
+                }
+            }
+        #endif
+    #endif
+    return c;
+}
+
 
 vec4 fn_pixel_fgbg_image(sampler2D smp) {
     vec2 tex_size = textureSize(smp, 0); // * BG_ZOOM;
@@ -1292,17 +1316,8 @@ vec2 quasirandom(vec2 n) {
     //return abs(sin(n));
 }
 
-
-
 void main() {
-   #ifndef RENDER_BOGUS_FRAMES
-        //Some cores set first frame size to 1x1 which may cause glitches
-        if (params.OriginalSize.x < 4) {
-            FragColor.rgb = vec3(0.0); //float(params.FrameCount > 1.0);
-            return;
-        }
-    #endif
-    
+
     // If fps halver is active, stop processing asap
     if (fps_halver_is_skipped_frame()) {
         FragColor.rgb = texture(final_passFeedback, vOutputCoord).rgb ;
@@ -1376,21 +1391,6 @@ void main() {
     if (canvas_busy > 0.5) {
         
         pixel_out = fn_pixel_content(co_content);
-        #ifndef D3D_WORKAROUND
-            #ifdef LCD_ANTIGHOSTING
-                #ifndef LCD_ANTIGHOSTING_CEIL
-                    #define LCD_ANTIGHOSTING_CEIL 1.0
-                #endif
-                if (LCD_ANTIGHOSTING > 0.0) {
-                    if (frame_is_even()) {
-                        vec3 feedback = texture(final_passFeedback, vOutputCoord).rgb;
-                        vec3 diff=(feedback - pixel_out)*LCD_ANTIGHOSTING;
-                        diff = sign(diff) * min( abs(diff), vec3(LCD_ANTIGHOSTING_CEIL));
-                        pixel_out = mix(pixel_out, pixel_out-diff, 0.5);
-                    }
-                }
-            #endif
-        #endif
 
     } else {
 
@@ -1479,6 +1479,8 @@ void main() {
             pixel_out = pixel_out * vignette_spot.x;
             pixel_out = mix(pixel_out+perlin, vec3(canvas_bezel_screen), vec3(vignette_spot.y) );
         }
+        
+            pixel_out = antighost(pixel_out);
     }
     
     
@@ -1538,48 +1540,58 @@ void main() {
         }
     }
 
+    #ifndef RENDER_BOGUS_FRAMES
+        // Some cores set first frame size to 1x1 which may cause glitches.
+        // This has less performance impact if kept here, at the end of the shader.
+        if (params.OriginalSize.x < 4) {
+            FragColor.rgb = vec3(0.0); //float(params.FrameCount > 1.0);
+            return;
+        }
+    #endif
 
     // Debug functions:
-    #ifdef DEBUG_QUAD_SPLIT
-        if ( vOutputCoord.x < 0.5  && vOutputCoord.y > 0.5 || vOutputCoord.x > 0.5  && vOutputCoord.y < 0.5 )
-        pixel_out = texture(DEBUG_TEXTURE,vOutputCoord).rgb;
-    #endif
+        #ifdef DEBUG_QUAD_SPLIT
+            if ( vOutputCoord.x < 0.5  && vOutputCoord.y > 0.5 || vOutputCoord.x > 0.5  && vOutputCoord.y < 0.5 )
+            pixel_out = texture(DEBUG_TEXTURE,vOutputCoord).rgb;
+        #endif
 
-    #ifdef DEBUG_DUAL_SPLIT_Y
-        if (vTexCoord.y < 0.5) pixel_out = texture(DEBUG_TEXTURE,vTexCoord).rgb;
-    #endif
+        #ifdef DEBUG_DUAL_SPLIT_Y
+            if (vTexCoord.y < 0.5) pixel_out = texture(DEBUG_TEXTURE,vTexCoord).rgb;
+        #endif
 
-    #ifdef DEBUG_DUAL_SPLIT_Y_GAMMA
-        if (vTexCoord.y < 0.5) pixel_out = pow(texture(DEBUG_TEXTURE,vTexCoord).rgb, vec3(1.08));
-    #endif
+        #ifdef DEBUG_DUAL_SPLIT_Y_GAMMA
+            if (vTexCoord.y < 0.5) pixel_out = pow(texture(DEBUG_TEXTURE,vTexCoord).rgb, vec3(1.08));
+        #endif
 
-    #ifdef DEBUG_DUAL_SPLIT_X
-        if (vTexCoord.x > 0.5) pixel_out = texture(DEBUG_TEXTURE,vTexCoord).rgb;
-    #endif
+        #ifdef DEBUG_DUAL_SPLIT_X
+            if (vTexCoord.x > 0.5) pixel_out = texture(DEBUG_TEXTURE,vTexCoord).rgb;
+        #endif
 
-    #ifdef DEBUG_DUAL_SPLIT_MIRROR_X
-        if (vTexCoord.x > 0.5) pixel_out = texture(DEBUG_TEXTURE,vec2(1-vTexCoord.x, vTexCoord.y) ).rgb;
-    #endif
+        #ifdef DEBUG_DUAL_SPLIT_MIRROR_X
+            if (vTexCoord.x > 0.5) pixel_out = texture(DEBUG_TEXTURE,vec2(1-vTexCoord.x, vTexCoord.y) ).rgb;
+        #endif
 
-    #ifdef DEBUG_DUAL_SPLIT_MIRROR_X_GAMMA
-        if (vTexCoord.x > 0.5) pixel_out = pow(texture(DEBUG_TEXTURE,vec2(1-vTexCoord.x, vTexCoord.y) ).rgb, vec3(1.11));
-    #endif
+        #ifdef DEBUG_DUAL_SPLIT_MIRROR_X_GAMMA
+            if (vTexCoord.x > 0.5) pixel_out = pow(texture(DEBUG_TEXTURE,vec2(1-vTexCoord.x, vTexCoord.y) ).rgb, vec3(1.11));
+        #endif
 
-    #ifdef DEBUG_PRINT_VALUE
-        float maxdigits = 10.0;
-        float decimalplaces = 2.0;
-        float fvalue = vfprintvalue;
-        vec2 vFragCoord = vec2( floor(vOutputCoord.x * params.OutputSize.x),
-                            floor(vOutputCoord.y * params.OutputSize.y));
-        pixel_out += PrintValueVec3( vTexCoord, vFragCoord, fvalue, maxdigits, decimalplaces );
-    #endif
+        #ifdef DEBUG_PRINT_VALUE
+            float maxdigits = 10.0;
+            float decimalplaces = 2.0;
+            float fvalue = vfprintvalue;
+            vec2 vFragCoord = vec2( floor(vOutputCoord.x * params.OutputSize.x),
+                                floor(vOutputCoord.y * params.OutputSize.y));
+            pixel_out += PrintValueVec3( vTexCoord, vFragCoord, fvalue, maxdigits, decimalplaces );
+        #endif
 
-    #ifdef DEBUG_SHOW_CLIP
-        float clip = max(max(pixel_out.r, pixel_out.g), pixel_out.b) ;
-        if (clip  > 1.0)
-            pixel_out = 1-pixel_out;//;-clip;
-    #endif
-   
+        #ifdef DEBUG_SHOW_CLIP
+            float clip = max(max(pixel_out.r, pixel_out.g), pixel_out.b) ;
+            if (clip  > 1.0)
+                pixel_out = 1-pixel_out;//;-clip;
+        #endif
+
+
+    
     FragColor.rgb = pixel_out;
 
 }

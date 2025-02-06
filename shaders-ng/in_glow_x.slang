@@ -1,9 +1,6 @@
 #version 450
 #include "config.inc"
 
-//Dumbify glow under this treshold.
-#define GLOW_SHARP_MAX_ALTERNATE -2.0 
-
 #include "includes/functions.include.slang" 
 
 #pragma stage vertex
@@ -16,22 +13,24 @@ layout(location = 4) out float vDo_wtfl;
 layout(location = 12) out float vWarpedglow_scale_tated;
 layout(location = 13) out vec2 vWarpedglow_offsets;
 layout(location = 14) out float vIn_glow_edge_sharpness;
-layout(location = 15) out float vIn_glow_edge_defocus_normalized;
+layout(location = 15) out float vIn_glow_edge_defocus_strength;
 
 void main() {
    gl_Position = global.MVP * Position;
    vTexCoord = TexCoord ;  
    
    bool bDo_wtfl = (DO_WTFL > 0.9 && WTFL_SHARPNESS_X < 3.0);
+   bool bDo_defocus = (DO_SHIFT_RGB > 0.5 && EDGE_DEFOCUS_DO_BLUR > 0.0);
+   
    vDo_wtfl = float(bDo_wtfl);
    
    //The following conditions are used to skip blur-x code.
    bool bGlow_w_inside_interval = true;
-   if (IN_GLOW_W > GLOW_SHARP_MAX) bGlow_w_inside_interval = false;             // radius falls in the allowed interval
-   if (IN_GLOW_W < GLOW_SHARP_MAX_ALTERNATE) bGlow_w_inside_interval = false;   // radius falls in the allowed interval
+   if (IN_GLOW_W >= GLOW_SHARP_MAX) bGlow_w_inside_interval = false;             // radius falls in the allowed interval
    if (DO_IN_GLOW < 0.5) bGlow_w_inside_interval = false;                       // Disabled if not user enabled
-   if (bDo_wtfl) bGlow_w_inside_interval = true; //always active if need to blur the waterfalls.
-
+   if (bDo_wtfl) bGlow_w_inside_interval = true;    //always active if need to blur the waterfalls.
+   if (bDo_defocus) bGlow_w_inside_interval = true; //always active if need to do defocusing.
+   
    glow_w_inside_interval = float( bGlow_w_inside_interval);
 
 
@@ -58,11 +57,11 @@ void main() {
    vWarpedglow_scale_tated = vWarpedglow_scale_tated * 0.6 / 1400.0 * 3.0;
 
    if (EDGE_DEFOCUS_DO_BLUR*DO_SHIFT_RGB > 0.001) {
-      vIn_glow_edge_defocus_normalized = EDGE_DEFOCUS_DO_BLUR;
+      vIn_glow_edge_defocus_strength = EDGE_DEFOCUS_DO_BLUR;
    } else {
-      vIn_glow_edge_defocus_normalized = 0.0;
+      vIn_glow_edge_defocus_strength = 0.0;
    }
-   vIn_glow_edge_sharpness = mix(abs(in_glow_w), 0.3, vIn_glow_edge_defocus_normalized);
+   vIn_glow_edge_sharpness = mix(abs(in_glow_w), 0.3, vIn_glow_edge_defocus_strength);
    //vIn_glow_edge_sharpness = max(vIn_glow_edge_sharpness, MIN_IN_GLOW_SHARP);
 }
 
@@ -76,7 +75,7 @@ layout(location = 4) in float vDo_wtfl;
 layout(location = 12) in float vWarpedglow_scale_tated;
 layout(location = 13) in vec2 vWarpedglow_offsets;
 layout(location = 14) in float vIn_glow_edge_sharpness;
-layout(location = 15) in float vIn_glow_edge_defocus_normalized;
+layout(location = 15) in float vIn_glow_edge_defocus_strength;
 
 layout(location = 0) out vec4 FragColor;
 layout(set = 0, binding = 5) uniform sampler2D colortools_and_ntsc_pass;
@@ -125,47 +124,49 @@ void main() {
          return;
       }
       
-      float in_glow_w_adapted = IN_GLOW_W;
-      
-      //Override Megadrive fake transparencies (like Sonic waterfalls)
-         if (vDo_wtfl == 1.0) {
-            float waterfall = texture(colortools_and_ntsc_pass, vTexCoord).a;//, params.OriginalSize, 0.0).a; //somehow there is no need to use texture_nearest here.
-            waterfall = unpack_21(waterfall, 1.2).x;
-               
-            //FragColor = vec4(vec3(waterfall),0.0);return;
-            
-            if (DO_IN_GLOW == 0.0)
-               in_glow_w_adapted = 7.0;
-            
-            in_glow_w_adapted = mix(in_glow_w_adapted, WTFL_SHARPNESS_X, waterfall);
-
-         }
-      
-      //Scale it for box
-         if (IN_GLOW_W < 0.0)
-            in_glow_w_adapted = in_glow_w_adapted/1.2;
-      
-      // Edge defocus:
-         float dist_from_edge = 1.0;
-         if (vIn_glow_edge_defocus_normalized > 0.0) {
-            dist_from_edge = distance_from_edge_linear(vTexCoord, EDGE_DEFOCUS_AREA_INV);
-            in_glow_w_adapted = mix(vIn_glow_edge_sharpness, in_glow_w_adapted,  dist_from_edge );
-            //FragColor = vec4(vec3(dist_from_edge), 0.0); return;
-            
-         }
-      //Make it resolution independent.
-         in_glow_w_adapted = in_glow_w_adapted / NEW_SCALEMOD_X;
-         
-
-      //Also, a little hacky adaption for when upscale_pass does not scale to 2X
-         if (params.OutputSize.xy == params.OriginalSize.xy)
-            in_glow_w_adapted*=1.5;
-         
-
-         //sharp_sub goes to 1.0 (no unsharp mask) as the picture gets unfocused near edges
-            float sharp_sub = mix(vSharp_sub, 1.0, (1-dist_from_edge)*vIn_glow_edge_defocus_normalized );
-         FragColor = vec4(blur_select_wrap(shift_and_bleed_pass, vTexCoord, global.upscale_passSize, in_glow_w_adapted, sharp_sub, (IN_GLOW_W >= 0.0)), warpedglow_x);
-
+   float in_glow_w_adapted = abs(IN_GLOW_W);
+   float sharp_sub_adapted = vSharp_sub;
    
+   float waterfall = 0.0;
+   //Override Megadrive fake transparencies (like Sonic waterfalls)
+      if (vDo_wtfl == 1.0) {
+         waterfall = texture(colortools_and_ntsc_pass, vTexCoord).a; //somehow there is no need to use texture_nearest here.
+         waterfall = unpack_21(waterfall, 1.2).x; //FragColor = vec4(vec3(waterfall),0.0);return;
+      
+         if (DO_IN_GLOW == 0.0)
+            in_glow_w_adapted = 7.0;
+         in_glow_w_adapted = mix(in_glow_w_adapted, WTFL_SHARPNESS_X, waterfall);
+         //cancel sharp sub when doing fake transparencies blur.
+         sharp_sub_adapted = mix(sharp_sub_adapted, 1.0, waterfall );
+      }
+   
+   //Scale it for box
+      if (IN_GLOW_W < 0.0)
+         in_glow_w_adapted = in_glow_w_adapted/1.2;
+      
+   // Edge defocus:
+      float dist_from_edge = 1.0;
+      if (vIn_glow_edge_defocus_strength > 0.0) {
+         dist_from_edge = distance_from_edge_linear(vTexCoord, EDGE_DEFOCUS_AREA_INV);
+         
+         //never decrease blur:
+            float new_in_glow_w_adapted = mix(vIn_glow_edge_sharpness, in_glow_w_adapted,  dist_from_edge );
+            in_glow_w_adapted = min(new_in_glow_w_adapted, in_glow_w_adapted);
+
+         //cancel sharp sub when doing defocus blur
+         sharp_sub_adapted = mix(sharp_sub_adapted, 1.0, (1-dist_from_edge)*vIn_glow_edge_defocus_strength);
+         //FragColor = vec4(vec3(dist_from_edge), 0.0); return;
+      }
+   //Make it resolution independent.
+      in_glow_w_adapted = in_glow_w_adapted / NEW_SCALEMOD_X;
+      
+
+   //Also, a little hacky adaption for when upscale_pass does not scale to 2X
+      if (params.OutputSize.xy == params.OriginalSize.xy)
+         in_glow_w_adapted*=1.5;
+         
+   
+   FragColor = vec4(blur_select_wrap(shift_and_bleed_pass, vTexCoord, global.upscale_passSize, in_glow_w_adapted, sharp_sub_adapted, (IN_GLOW_W >= 0.0)), warpedglow_x);
+
 }
 
