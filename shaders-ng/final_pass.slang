@@ -92,7 +92,7 @@ vec2 get_bg_image_coords(vec2 in_vOutputCoord) {
         
         //180
         if (Rotation == 2) {
-            bg_img_coords.y = 1 - bg_img_coords.y;
+            bg_img_coords = 1 - bg_img_coords;
         } else
         
         //270
@@ -1364,7 +1364,11 @@ void main() {
     // If delta render is active, return the pass feedback when color didn't changed.
     #ifndef D3D_WORKAROUND
         if (delta_render_enabled() == 1.0) {
-            bool reuse_old =  bool( float( texture(in_glow_pass, co_content).a == 0.0) * canvas_busy * vDeltaRenderOk ) ;
+            bool reuse_old = false;
+            if (vDeltaRenderOk > 0.0 && canvas_busy > 1.0 - eps ){
+                reuse_old = (vDeltaRenderOk > 0.0) && (texture(in_glow_pass, co_content).a == 0.0); 
+            }
+
             if (reuse_old) {
                 FragColor.rgb = texture(final_passFeedback, vOutputCoord).rgb;
                 return;
