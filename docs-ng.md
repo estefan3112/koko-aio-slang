@@ -13,10 +13,7 @@
 **RETROARCH OUTPUT DRIVERS** <br>
     koko-aio does not work by default on d3d12 and d3d11.<br>
     If you absolutely need it (Xbox?), you can edit the file <br>
-    config\config-static.inc <br>
-    and turn the line: <br>
-    // #define D3D_WORKAROUND <br>
-    into:<br>
+    config\config-user-optional.txt by writing in it:<br>
     #define D3D_WORKAROUND <br>
     <br>
     Vulkan ang Glcore have no problems, you can test both to see<br>
@@ -295,7 +292,7 @@ However nice effects may be obtained (eg: with vector games). <br>
     
     Overmask (1.0 = neutral):
         Values > 1.0 give a gritty/gariny look to the whole mask.
-          It may cause moiree if combined with curvature, dedot, or sparkling look punch.
+          It may cause moire if combined with curvature, dedot, or sparkling look punch.
         Values < 1.0 tend to nullify the whole mask effect.
         
         
@@ -332,20 +329,22 @@ However nice effects may be obtained (eg: with vector games). <br>
             I observed that a value of 0.17 does a good job for low-res games rendered at 1080p height.
             Any value > 0.0 disables the, following functions: Slotmask(fake) and Deconvergence Y
         Slotmask(fake) offset(*):
-            This will cause every cell to be vertically shifted by the configured amount to
-            emulate a slotmask phosphors layout.
+            This will cause every triad to be vertically shifted by the configured amount to
+            fake a slotmask phosphors layout.
             It is true that for accurate reproduction of them, slotmasks are commonly emulated
-            at screen size, but this causes, on low resolution displays, weird artifacts,
-            primarily when using curvature and when you try to draw scanlines -and- slotmasks.
+            at screen size, but on low resolution displays this may cause weird artifacts.
             Here there is an added value given by the fact that the shift itself
-            can be relative to not only to the screen pixel height, but to game pixel height. (**)
+            can be made relative to game pixel height. (**)
             By selecting Y resolution=0 (so core coordinates**) and enabling this slotmask offset,
             you will have a staggered scanline.
             This allows you to not drawing a scanline -and- a slotmask, but to draw a "slotmasked"
             scanline.
-            While this does not exist at all in crt technology, it greatly mitigates the artifacts
-            just explained while producing a fairly convincing effect, very similar to a screen
-            with visible scanlines and visible slotmask.
+            While this does not exist at all in crt technology, it greatly mitigates the afromentioned
+            artifacts, and produces a fairly convincing scanlined+slotmasked effect.
+        Slotmask(fake) width override (0=no override)
+            The previous effect staggers scanlines at "triad width interval", but here you can alter
+            that interval.
+            Setting an interval of 1.0 can be used to hide moire patterns.
         Deconvergence Y: R,G,B phosphor" 
             This emulates Y deconvergence on phosphor level rather than on image level as seen in
             the previous deconvergence section.
@@ -737,6 +736,7 @@ However nice effects may be obtained (eg: with vector games). <br>
         -6 = 0.75 MAME rotated 1.33 games in TATE mode
         -7 = Use Core provided Aspect Ratio auto-off
         -8 = Use Core provided Aspect Ratio always on
+        -9 = Stretch to window
     Aspect Ratio Denominator:
         As long as Aspect Ratio Numerator is positive, this will
         be used as the denominator of the fraction.
@@ -864,13 +864,13 @@ To enable them, you have to edit the shader itself, save it, and reload.*
     
 **FXAA tuning:**<br>
     To change fxaa behaviour, in file config-user-optional.txt, turn the line: <br>
-    ```// #define FXAA_PRESET 2.0```
+    ```// #define FXAA_PRESET 2```
     <br>into: <br>
-    ```#define FXAA_PRESET 2.0```<br>
-    You can use values from 1.0 to 5.0, where:<br>
-    1.0 is the fastest one, limited effect.<br>
-    2.0 is the default one, still fast, good for low resolution content.<br>
-    3.0 to 5.0 smooth the image more and are good for high resolution games.<br>
+    ```#define FXAA_PRESET 2```<br>
+    You can use values from 1 to 5, where:<br>
+    1 is the fastest one, limited effect.<br>
+    2 is the default one, still fast, good for low resolution content.<br>
+    3 to 5 smooth the image more and are good for high resolution games.<br>
     
 **LCD antighosting:** (not compatible with delta render)<br>
     LCD displays often suffer from high pixel refresh times <br>
@@ -881,8 +881,6 @@ To enable them, you have to edit the shader itself, save it, and reload.*
     ```// #define LCD_ANTIGHOSTING 0.5```
     <br>into: <br>
     ```#define LCD_ANTIGHOSTING 0.5```<br><br>
-
-    
     
 **Conditional FPS Halver**<br>
     *[Warning:] Only on retroarch > 1.19.1*<br>

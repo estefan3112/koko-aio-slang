@@ -209,7 +209,6 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float PIXELGRID_OVERMASK;
 	float DO_PIXELGRID_W;
 	float DO_PIXELGRID_H;
-	float PIXELGRID_H_ANTIMOIRE;
 	float PIXELGRID_COREY_FAKE_SCAN;
 	float PIXELGRID_DOUBLESCAN;
 	float PIXELGRID_MIN_H;
@@ -224,6 +223,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float PIXELGRID_MUL_X;
 													
 	float PIXELGRID_OFFSET_CORE;
+	float PIXELGRID_OFFSET_CORE_W;
 	float PIXELGRID_NO_INTERBLEED_W;
 	float PIXELGRID_NO_INTERBLEED_H;
 	float PIXELGRID_H_DEDOT;
@@ -463,11 +463,11 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter PIXELGRID_MAX_H           "         . Phosphors height Max"           0.6 0.05 1.0 0.05
 
 #pragma parameter PIXELGRID_GAMMA_H         "         . Phosphors height min->max gamma:"	4.2 1.0 8.00 0.1
-#pragma parameter PIXELGRID_NO_INTERBLEED_H	"         . Inter line extra steepness (1.0 to disable)"	1.0 1.0 11.0 0.1
-#pragma parameter PIXELGRID_H_ANTIMOIRE     "         . Anti-moire sweet spot (disables Y deconvergence)"  0.0 0.0 1.0 0.01
-#pragma parameter PIXELGRID_OFFSET_CORE     "         . Slotmask(fake) offset (not with anti-moire) " 0.0 0.0 1.0 0.01
-#pragma parameter PIXELGRID_DECON_R_H       "         . Deconvergence Y: R phosphor" 0.0 -1.6 1.6 0.1
-#pragma parameter PIXELGRID_DECON_G_H       "         . Deconvergence Y: G phosphor" 0.0 -1.6 1.6 0.1
+#pragma parameter PIXELGRID_NO_INTERBLEED_H	  "         . Inter line extra steepness (1.0 to disable)"	1.0 1.0 11.0 0.1
+#pragma parameter PIXELGRID_OFFSET_CORE       "         . Slotmask(fake) offset" 0.0 0.0 1.0 0.01
+#pragma parameter PIXELGRID_OFFSET_CORE_W     "           . Slotmask(fake) width override (0=no override)"  0.0 0.0 4.0 1.0
+#pragma parameter PIXELGRID_DECON_R_H         "         . Deconvergence Y: R phosphor" 0.0 -1.6 1.6 0.1
+#pragma parameter PIXELGRID_DECON_G_H         "         . Deconvergence Y: G phosphor" 0.0 -1.6 1.6 0.1
 #pragma parameter PIXELGRID_DECON_B_H       "         . Deconvergence Y: B phosphor" 0.0   -1.6 1.6 0.1
 #pragma parameter PIXELGRID_H_DEDOT			"         . Dedot mask between scanlines (use only if needed!)"	0.0 0.0 2.0 0.1
 
@@ -651,13 +651,14 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 //Aspect Ratio
 #pragma parameter label_ar	 "★ Aspect (applies to game and bezel) "							1.0  1.0  1.0     0.0
-#pragma parameter ASPECT_X   "       Aspect Ratio Numerator (<=0 for a preset)"   		0.0  -8.0 256. 1.0
+#pragma parameter ASPECT_X   "       Aspect Ratio Numerator (<=0 for a preset)"   		0.0  -9.0 256. 1.0
 #pragma parameter ASPECT_Y   "       Aspect Ratio Denominator"	  				3.0   0.0 256. 1.0
 //#pragma parameter LABEL0042 " " 0.0 0.0 0.0 1.0 
 #pragma parameter LABEL0043  "       Presets:" 0.0 0.0 0.0 1.0
 #pragma parameter LABEL0044  "       -0=Mame:4/3 -1=NTSC:1.5 -2=PAL:1.25 -3=SNES:8/7" 0.0 0.0 0.0 1.0
 #pragma parameter LABEL0045  "       -4=Megadrive:10/7 -5=Uncorrected -6=Mame Rotated:3/4" 0.0 0.0 0.0 1.0
 #pragma parameter LABEL0047  "       -7=Core provided (auto off) -8=Core provided (always on)" 0.0 0.0 0.0 1.0
+#pragma parameter LABEL0048  "       -9=Stretch to window" 0.0 0.0 0.0 1.0
 #pragma parameter LABEL0051 " " 0.0 0.0 0.0 1.0
 
 //Modulate the image zooming depending on the image luminosity.
@@ -693,11 +694,16 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma inject_preset_code DEFINES_FROM_PRESET
 
 // User parameters goes here, they overrides almost everything:
-// Deprecated on Jan, 25, 2025 in favour of config-user-optional.txt
-#pragma include_optional "../config/config-user.txt"
-
 // Retroarch releases past October 2024 (v1.17) support this:
 #pragma include_optional "../config/config-user-optional.txt"
+
+// Deprecated on Jan, 25, 2025 in favour of config-user-optional.txt
+// We still support config-user.txt in old retroarch versions.
+// We test for non include_optional support by querying _HAS_FRAMETIME_UNIFORMS that was merged
+// a month after  include_optional support (Oct 21, 2024 |-> Nov 13, 2024)
+#ifndef _HAS_FRAMETIME_UNIFORMS
+#include "../config/config-user.txt" //Don't indent this!
+#endif
 
 // The following translates global.PARAMETER to PARAMETER
 #include "config.globals.inc"
