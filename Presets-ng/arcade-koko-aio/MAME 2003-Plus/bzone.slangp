@@ -1,0 +1,30 @@
+#reference "../../shaders/shaders_slang/bezel/koko-aio/Presets-ng/VectorGFX/Vector_std_4_mame2003plus_defaults.slangp"
+IN_GLOW_POWER = "1.000000"
+IN_GLOW_SPREAD = "1.050000"
+BLOOM_SIZE = "4.000000"
+BLOOM_GAMMA = "1.000000"
+BLOOM_GAMMA_OUT = "0.900000"
+BLOOM_POWER = "3.799998"
+BEZEL_FRAME_ZOOM = "0.132000"
+BEZEL_R = "-0.270000"
+BEZEL_G = "-0.275000"
+BEZEL_B = "-0.270000"
+BEZEL_CON = "1.410000"
+GLOBAL_OFFX = "-0.001000"
+GLOBAL_OFFY = "0.052000"
+GLOBAL_ZOOM = "0.848494"
+DO_BG_IMAGE = "1.000000"
+BG_IMAGE_OVER = "1.000000"
+BG_IMAGE_OFFY = "0.002500"
+BG_IMAGE_NIGHTIFY = "0.300000"
+ASPECT_X = "-8.000000"
+GAME_GEOM_INT_SCALE_OVR = "1.000000"
+GAME_GEOM_HSHIFT = "0.090000"
+GAME_GEOM_ZOOM = "0.990000"
+bg_under = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/bzone.png"
+bg_over = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/bzone.png"
+
+// Credits
+// shader by kokoko3k - https://github.com/kokoko3k/koko-aio-slang
+// artwork by John Merrit
+// preset and artwork adjustments by estefan3112 - https://github.com/estefan3112/koko-aio-slang
