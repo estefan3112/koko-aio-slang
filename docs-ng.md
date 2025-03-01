@@ -425,6 +425,9 @@ However nice effects may be obtained (eg: with vector games). <br>
             You can draw slotmasks at screen coordinates to emulate real crts or choose to paint
             them at core coordinates to have a more defined slotmask
             ...if you like slotmasks so much :-)
+        Clears "hives" patterns (slotmask)
+            When using steep/high visible slotmasks alongside visible scanlines, there could be
+            weird hive-like patterns on screen. Use this function to hide them.
         Vertical shift (neg = auto):
             This parameter allows you to move the whole vertical mask along the Y axis.
             * When used with core resolution(*1) and integer divider/multiplier(*2), it is useful to mitigate
@@ -711,7 +714,17 @@ However nice effects may be obtained (eg: with vector games). <br>
     
 **Spot:**<br>
     Simulates external light reflected by the monitor glass.<br>
-            
+      
+**Tilt:**<br>
+    Put the bezel and the game into perspective.<br>
+    
+    Tilt along X axis:
+        Rotate the image in space
+    Fov: Modulates the field of view
+    Bezel multiplier:
+        Can be used to adjust the bezel rotation
+        in relation to the game tilt amount
+      
 **Aspect (applies to virtual screen and bezel):**<br>
     Manually forces an aspect for the virtual output screen.
     
@@ -803,19 +816,6 @@ However nice effects may be obtained (eg: with vector games). <br>
         Change the size
     
 
-**Tilt:**<br>
-    Put the bezel and the game into perspective.<br>
-    The implementation is basic, you can expect correct<br>
-    results when tilting alongside a single axis or when<br>
-    using both, but with small values.<br>
-    
-    Tilt along X axis:
-        Rotate the image in space
-    Fov: Modulates the field of view
-    Bezel multiplier:
-        Can be used to adjust the bezel rotation
-        in relation to the game tilt amount
-
 ---------------------------
         
         
@@ -823,7 +823,8 @@ However nice effects may be obtained (eg: with vector games). <br>
 ---------------------------
 
 *The following shader functionalities are disabled by default and cannot be enabled by using runtime shader parameters.<br>
-To enable them, you have to edit the shader itself, save it, and reload.*
+To enable them, you have to edit the file config-user-optional.txt (use config-user-optional-template).txt as a guide.<br>
+Changes are applied after a shader reload.*<br>
 
 ---------------------------
      
@@ -832,9 +833,7 @@ To enable them, you have to edit the shader itself, save it, and reload.*
     leading to a measurable power consumption reduction and mitigate throttling
     on mobile devices and laptops.<br>
     This feature can, however, produce artifacts in some cases.<br><br>
-    To use it, in file config-user-optional.txt, turn the line: <br>
-    ```// #define DELTA_RENDER```
-    <br>into: <br>
+    To use it, in file config-user-optional.txt, write:<br>
     ```#define DELTA_RENDER```
     
 **Delta Render configuration:**<br>
@@ -851,35 +850,33 @@ To enable them, you have to edit the shader itself, save it, and reload.*
         into account.
         Power comsumption benefits will be lower.
         
-        
 **Higher quality defocus:**<br>
     Use higher quality deconvergence by flattering rgb scanlines when <br>
     deconvergence is high and by syncing them to the deconvergence settings.<br>
     This has a measurable performance impact on lower spec GPUs.<br><br>
-    To use it, in file config-user-optional.txt, turn the line: <br>
-    ```// #define HQ_DECON```
-    <br>into: <br>
+    To use it, in file config-user-optional.txt, write:
     ```#define HQ_DECON```<br>
-
     
 **FXAA tuning:**<br>
-    To change fxaa behaviour, in file config-user-optional.txt, turn the line: <br>
-    ```// #define FXAA_PRESET 2```
-    <br>into: <br>
+    To change fxaa behaviour, in file config-user-optional.txt, write: <br>
     ```#define FXAA_PRESET 2```<br>
     You can use values from 1 to 5, where:<br>
     1 is the fastest one, limited effect.<br>
     2 is the default one, still fast, good for low resolution content.<br>
     3 to 5 smooth the image more and are good for high resolution games.<br>
-    
+
+**Halve border update:**<br>
+    You can halve the frequency at which the shader updates everything around the<br>
+    content area (eg: ambient lights, reflections) to gain some fps.<br>
+    To activate that ffeature, in config-user-optional.txt, write:<br>
+    ```#define HALVE_BORDER_UPDATE```<br>
+  
 **LCD antighosting:** (not compatible with delta render)<br>
     LCD displays often suffer from high pixel refresh times <br>
     which produces ghosting when game changes on screen.<br>
     By inducing larger color transitions, it prompts the LCD cells <br>
     to adjust their states more rapidly, thereby reducing ghosting.<br><br>
-    To use it, in file config-user-optional.txt, turn the line: <br>
-    ```// #define LCD_ANTIGHOSTING 0.5```
-    <br>into: <br>
+    To use it, in file config-user-optional.txt, write:<br>
     ```#define LCD_ANTIGHOSTING 0.5```<br><br>
     
 **Conditional FPS Halver**<br>
@@ -892,9 +889,6 @@ To enable them, you have to edit the shader itself, save it, and reload.*
     that may struggle to render shader at full speed. <br>
     Furthermore, the shader frame rate will remain capped at 30 (/25) FPS <br>
     if the core frame rate alternates between 60 (/50) and 30 (/25) FPS.<br><br>
-    To use it, in file config-user-optional.txt, turn the line: <br>
-    ```// #define FPS_HALVER```
-    <br>into: <br>
+    To use it, in file config-user-optional.txt, write:<br>
     ```#define FPS_HALVER```<br><br>
-    
     
