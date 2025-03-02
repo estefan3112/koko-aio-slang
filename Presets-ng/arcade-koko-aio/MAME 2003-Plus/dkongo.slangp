@@ -12,3 +12,8 @@ DO_TILT = "1.000000"
 TILT_X = "0.170000"
 bg_under = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/dkong-tilted.png"
 bg_over = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/dkong-tilted.png"
+
+// Credits
+// shader by kokoko3k - https://github.com/kokoko3k/koko-aio-slang
+// artwork by cnterr - https://emumovies.com/files/file/4939-donkey-kong-realistic-bezel-with-tilted-screen-for-mame/?tab=comments
+// preset and artwork adjustments by estefan3112 - https://github.com/estefan3112/koko-aio-slang
