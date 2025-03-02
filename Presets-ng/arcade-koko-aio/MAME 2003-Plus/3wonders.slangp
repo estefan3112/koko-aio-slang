@@ -2,13 +2,14 @@
 BEZEL_R = "-0.250000"
 BEZEL_G = "-0.255000"
 BEZEL_B = "-0.255000"
-GLOBAL_ZOOM = "0.928006"
-BG_IMAGE_ZOOM = "1.000000"
+GLOBAL_OFFY = "-0.031000"
+GLOBAL_ZOOM = "0.630992"
+BG_IMAGE_ZOOM = "1.051496"
 BG_IMAGE_NIGHTIFY = "0.500000"
 bg_under = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/3wonders.png"
 bg_over = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/3wonders.png"
 
 // Credits
 // shader by kokoko3k - https://github.com/kokoko3k/koko-aio-slang
-// artwork by AlexDC22
+// artwork by Orions Angel - https://emumovies.com/profile/84492-orionsangel/
 // preset and artwork adjustments by estefan3112 - https://github.com/estefan3112/koko-aio-slang
