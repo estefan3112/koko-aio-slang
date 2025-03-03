@@ -12,6 +12,12 @@ Requirements: RetroArch 1.19.0 upwards, you need Vulkan support. Version 1.20.0 
 
 # Screenshots
 
+Screenshots from release 0.7ng:
+
+![1942-Tate Off](https://github.com/user-attachments/assets/2eba9de7-23e5-42cd-8735-38c7a0bd4ef4)
+![dkongbp1-250302-193400](https://github.com/user-attachments/assets/087475ba-af74-4048-a085-62f60398b465)
+![mhavoc-241122-223547](https://github.com/user-attachments/assets/8670931f-4517-421e-9ed8-e29d625a939d)
+
 Screenshots from release 0.4:
 
 <img width="669" alt="Bildschirmfoto 2023-11-01 um 22 08 41" src="https://github.com/estefan3112/koko-aio-slang/assets/24915559/3b171d0f-009f-4c66-a0bd-83944513a7b6">
