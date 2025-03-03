@@ -1,13 +1,13 @@
 # Koko-aio fork for arcade Artwork 
 (RetroArch FinalBurnNeo, MAME (current) and MAME 2003/2003plus)
 
-Repository for game-specific Arcade Artwork by using the Koko-aio slang shader. Successfully tested under MacOS, Windows and iPadOS. Currently the Koko-aio shader provides superior performance on all reasonably powered desktops (including Macs), while providing enhanced shader functions, including bezel reflections, immersive ambient lights, halo/glow effects and many more. Configuration options are endless. It embeds game-specific artwork seamlessly and scales according to resolution. The koko-aio shader is currently under steady development, thus it is a clear aim to stay in line with the Upstream changes.<br>
+Repository for game-specific Arcade Artwork by using the highly powerful and performant Koko-aio slang shader. Successfully tested under MacOS, Windows and iPadOS. Currently the Koko-aio shader provides superior performance on all reasonably powered desktops (including Macs), while providing enhanced shader functions, including bezel reflections, immersive ambient lights, halo/glow effects and many more. Configuration options are endless. It embeds game-specific artwork seamlessly and scales according to resolution. The koko-aio shader is currently under steady development, thus it is a clear aim to stay in line with the Upstream changes.<br>
 <br>
-Main source of this artwork comes from John Merrit, who set a benchmark for realistic arcade artwork. I still very much like them, and after AI-upscaling to 4K, they shine even more in combination with Koko-aio. My selection of the artwork is arbitrary, but I try to publish eye candys earlier :-). Version 0.2 and following releases see the inclusion of some breathtaking 4K artwork provided by Ars Invictus. Each shader preset contains the credits (warning: If you overwrite the preset in RetroArch, credits get lost).<br>
+Main source of this artwork comes from John Merrit, who set a benchmark for realistic arcade artwork. I still very much like them, and after AI-upscaling to 4K, they shine even more in combination with Koko-aio. My selection of the artwork is arbitrary, but I try to publish eye candys earlier :-). Version 0.2 and following releases see the inclusion of some breathtaking 4K artwork provided by Ars Invictus. Each shader preset contains the credits (warning: If you overwrite the preset in RetroArch, credits get lost) - and I now also include copyright notices into the graphics metadata.<br>
 <br>
 Focus on highest possible quality and diversity over mass production. Also improvements of existing artwork to have a best possible experience.<br>
 <br>
-Requirements: RetroArch 1.6.0 upwards, you need Vulkan supoprt.<br>
+Requirements: RetroArch 1.19.0 upwards, you need Vulkan support. Version 1.20.0 or Nightly Build is recommended<br>
 <br>
 
 # Screenshots
