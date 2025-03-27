@@ -5,9 +5,13 @@
  * Does masks, spot, bezel, vignette, background image (anything else?)
  */
 
-                                #define DEBUG_TEXTURE Original
+                                //#define DEBUG_TEXTURE Original
                                 //#define DEBUG_TEXTURE colortools_and_ntsc_pass
+                                #define DEBUG_TEXTURE halo_pre_gamma_pass
 //#define DEBUG_PRINT_VALUE
+//#define PRINTED_VALUE texture(DEBUG_TEXTURE, vec2(0.5)).a
+//#define PRINTED_VALUE global.OriginalFPS
+    
 //#define DEBUG_QUAD_SPLIT
 //#define DEBUG_DUAL_SPLIT_X
 //#define DEBUG_DUAL_SPLIT_Y
@@ -225,9 +229,10 @@ void main() {
             if (scanlines_will_alternate(bIs_Interlaced))  {
                 //Halve the scanline period, since they will interlace:
                 vScanlinePeriod = 0.5;
+                vInterlace_offset = PI_15*0.5;
                 //Alternate scanlines on even/odd frames
                 if (frame_is_even())
-                    vInterlace_offset = PI_15;
+                    vInterlace_offset += PI_15;
             }
 
 
@@ -314,9 +319,6 @@ void main() {
             float zooms_modifier  = get_zooms_modifier(vDo_Tate, bNeed_NO_integer_scale, bIsRotated).y;
             float dotmat_insize  = global.upscale_passSize.y;
             float dotmat_outsize = global.FinalViewportSize.y  * zooms_modifier;
-            #ifdef DEBUG_PRINT_VALUE
-                vfprintvalue = dotmat_outsize / dotmat_insize;
-            #endif
             vDotMat_Grid_Sharpness = (dotmat_outsize / dotmat_insize);
             vDotMat_Grid_Sharpness = vDotMat_Grid_Sharpness * 3.6 - 3.1;
             vDotMat_Grid_Sharpness = clamp(vDotMat_Grid_Sharpness, 0.1, 20.0);
@@ -345,7 +347,8 @@ void main() {
                 ori_size.xyzw = ori_size.yxwz;
                 zoom_modifier.xy = zoom_modifier.yx;
             }
-            if (need_doublescan()) ori_size.yw*=vec2(2.0, 1/2.0);
+            if (need_doublescan()) ori_size.yw*=vec2(2.0, 1/2.0); //double period?
+            ori_size.y*=vScanlinePeriod; //helve period?
             float OutputHeightZoomed = out_size.y*zoom_modifier.y;
             float screen_core_ratio = OutputHeightZoomed / ori_size.y;
             if (screen_core_ratio < MIN_SCREEN_CORE_RATIO)
@@ -405,6 +408,7 @@ void main() {
     
     //Fragment shader will use that just one time that way. => precalc.
     vPG_offsets_and_size.a = pi/vPG_offsets_and_size.a;
+
 }
 
 
@@ -617,6 +621,7 @@ vec4 fn_pixel_grid(vec2 in_coords, vec4 pixel_in, float min_inLum, float max_inL
     //Switch frequency between core and screen and apply asked multipliers
         vec2 freq_base = freq_base_core * vec2(vPG_period_multiplier_x, 1.0) ;
         vec2 freq_base_unfloored = freq_base_core;
+        //vec2 freq_base_unfloored = freq_base_core * vec2(vPG_period_multiplier_x, 1.0) ; <--- core can be multiplied too, why not?
         if (PIXELGRID_SIZE_W == 1.0) {
             freq_base.x = freq_base_screen.x * vPG_period_multiplier_x;
             freq_base_unfloored.x = vPG_freq_base_screen_unfloored.x * vPG_period_multiplier_x;
@@ -1559,7 +1564,11 @@ void main() {
         #ifdef DEBUG_PRINT_VALUE
             float maxdigits = 10.0;
             float decimalplaces = 2.0;
-            float fvalue = vfprintvalue;
+            #ifdef PRINTED_VALUE
+                float fvalue = PRINTED_VALUE;
+            #else
+                float fvalue = vfprintvalue;
+            #endif
             vec2 vFragCoord = vec2( floor(vOutputCoord.x * params.OutputSize.x),
                                 floor(vOutputCoord.y * params.OutputSize.y));
             pixel_out += PrintValueVec3( vTexCoord, vFragCoord, fvalue, maxdigits, decimalplaces );

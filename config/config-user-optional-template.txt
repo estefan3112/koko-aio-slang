@@ -138,6 +138,11 @@
 // and avoid performance hits.
 // #define RENDER_BOGUS_FRAMES
 
+// Cores may or not update OriginalFps uniform. So you may trust it or not.
+// In case you don't, it is derived by averaging frametimes.
+// The latter is less reliable depending on the video driver behaviour, and slower.
+// #define ORIGINAL_FPS_TRUSTED
+
 ////////////////////////////////////////////////////////////////////////////
 //
 // RUNTIME PARAMETERS OVERRIDES:
@@ -247,10 +252,11 @@
 
 
 // #define MIN_LINES_INTERLACED  380.0     //     . Consider Hi-Resolution above # lines (0=never):
+// #define PIXELGRID_INTR_PAST_FIELD  0.0   //    . Real interlace (display previous field)"    0.0 0.0 1.0 0.1
 // #define PIXELGRID_INTR_DISABLE_Y  -1.0  //     . Hi-Res scanlines type (read docs):
-// #define PIXELGRID_INTR_GAMMA_ADJ 0.9    //     . Interlaced brighness push (less is more, not for OLEDs)
+// #define PIXELGRID_INTR_GAMMA_ADJ  0.9    //    . Interlaced brighness push (less is more, not for OLEDs)
 // #define PIXELGRID_INTR_FLICK_MODE  2.0  //     . Scanlines flicker (0=off,1=on,2=if Hi-Res)
-// #define PIXELGRID_INTR_FLICK_POWR  0.25 //         . Flicker power
+// #define PIXELGRID_INTR_FLICK_POWR  0.20 //        . Flicker power
 
 
 // #define DO_PIXELGRID  1.0           // ★  Low level Phosphor grid enable?
