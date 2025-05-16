@@ -59,6 +59,8 @@ void main() {
    
    vWarpedglow_scale_tated = vWarpedglow_scale_tated * 0.6 / 1400.0 * 3.0;
 
+   vWarpedglow_scale_tated /= get_in_aspect() ; //correct aspect
+   
    if (EDGE_DEFOCUS_DO_BLUR*DO_SHIFT_RGB > 0.001) {
       vIn_glow_edge_defocus_strength = EDGE_DEFOCUS_DO_BLUR;
    } else {
@@ -101,7 +103,7 @@ vec3 blur_select_wrap(sampler2D texture_in, vec2 co, vec4 sourcesize, float shar
 void main() { 
    
    #ifndef D3D_WORKAROUND
-      if (fps_halver_is_skipped_frame())
+      if (is_skipped_frame())
          return;
    #endif
    

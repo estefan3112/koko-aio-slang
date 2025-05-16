@@ -40,13 +40,29 @@ layout(location = 0) out vec4 FragColor;
 layout(set = 0, binding = 2) uniform sampler2D monitor_body_curved;
 
 
+float screen_uniformity() {
 
+	#define _USPOTSIZE 100
+	#define _USPOTSIZE_INV 100/_USPOTSIZE
+	#define _USPEED 0.005
+	
+    vec4  subscale=vec4(5,3,7,4);
+    vec2 co = vTexCoord * _USPOTSIZE_INV;
+	float t = params.FrameCount*_USPEED;
+    float uniformity = sin(co.x * subscale.x + t) * cos(co.y * subscale.y - t);
+    uniformity += sin(co.y * subscale.z * sin(t * 0.5)) * cos(co.x * subscale.w + t);
+	uniformity *= uniformity;
+
+	
+    uniformity = map_range(uniformity, -1, 1, UNIFORMITY,  (1-UNIFORMITY)/2.5 +1 );
+	return uniformity;
+}
 
 
 void main() {
 	
    #ifndef D3D_WORKAROUND
-      if (fps_halver_is_skipped_frame())
+      if (is_skipped_frame())
          return;
    #endif
     
@@ -74,8 +90,9 @@ void main() {
 		
 		if (DO_VIGNETTE == 1.0) {
 			vec2 sinco = cos((vTexCoord-0.5) / V_SIZE) ;
-			FragColor.z = V_POWER * (sinco.y * sinco.x);
+			FragColor.z = (sinco.y * sinco.x) * screen_uniformity();
 		}
+		
 		//Spot:
 		if (DO_SPOT == 1.0) {
 			float dist = length( vec2(  (vTexCoord_rotated_maybe.x-0.5) * vIn_aspect, vTexCoord_rotated_maybe.y-0.5) +

@@ -465,8 +465,8 @@
     #define V_SIZE		global.V_SIZE
 #endif
 
-#ifndef V_POWER
-    #define V_POWER		global.V_POWER
+#ifndef UNIFORMITY
+    #define UNIFORMITY		global.UNIFORMITY
 #endif
 
 #ifndef DO_BG_IMAGE
@@ -503,6 +503,10 @@
 
 #ifndef DO_BACKDROP
     #define DO_BACKDROP		global.DO_BACKDROP
+#endif
+
+#ifndef BACKDROP_JUST_TUBE
+    #define BACKDROP_JUST_TUBE		global.BACKDROP_JUST_TUBE
 #endif
 
 #ifndef BACKDROP_OFFX
@@ -795,6 +799,10 @@
     #define PIXELGRID_MUL_X 	global.PIXELGRID_MUL_X
 #endif
 
+#ifndef PIXELGRID_TVL_X
+    #define PIXELGRID_TVL_X 	global.PIXELGRID_TVL_X
+#endif
+
 #ifndef PIXELGRID_NO_INTERBLEED_H
     #define PIXELGRID_NO_INTERBLEED_H global.PIXELGRID_NO_INTERBLEED_H
 #endif
@@ -927,6 +935,30 @@
 	#define PPERSISTENCE_END	global.PPERSISTENCE_END
 #endif
 
+#ifndef LCD_ANTIGHOSTING
+    #define LCD_ANTIGHOSTING global.LCD_ANTIGHOSTING
+#endif
+
+#ifndef LCD_ANTIGHOSTING_CEIL
+    #define LCD_ANTIGHOSTING_CEIL global.LCD_ANTIGHOSTING_CEIL
+#endif
+
+#ifndef LCD_ANTIGHOSTING_FLIP_MASK
+    #define LCD_ANTIGHOSTING_FLIP_MASK global.LCD_ANTIGHOSTING_FLIP_MASK
+#endif
+
+#ifndef ADPT_STROBE_STR
+    #define ADPT_STROBE_STR global.ADPT_STROBE_STR
+#endif
+
+#ifndef ADPT_STROBE_GAIN_ADJ
+    #define ADPT_STROBE_GAIN_ADJ global.ADPT_STROBE_GAIN_ADJ
+#endif
+
+#ifndef ADPT_STROBE_GAMMA_ADJ
+    #define ADPT_STROBE_GAMMA_ADJ global.ADPT_STROBE_GAMMA_ADJ
+#endif
+
 #ifndef SERVICE1
     #define SERVICE1 global.SERVICE1
 #endif
@@ -934,4 +966,3 @@
 #ifndef SERVICE2
     #define SERVICE2 global.SERVICE2
 #endif
-

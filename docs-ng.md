@@ -34,15 +34,6 @@
 ---------------------------
     
 **USEFUL LOCATIONS/FILES:**
-
-    config/config-static.inc:
-        Some shader parameters can't be changed within retroarch,
-        use this file instead.
-        Notable one is lcd antighosting feature.
-        
-    config/config-user.txt:
-        This file has been deprecated, since it could be overwritten by
-        a shader update, so use config/config-user-opional.txt
         
     config/config-user-optional.txt:    
         Shader parameters that can be changed within Retroarch.
@@ -50,7 +41,7 @@
         PRO: The shader will be faster
         CON: The parameters can no longer be modified within Retroarch. 
         Please read config-user-optional-template.txt for instructions.
-        
+               
     textures/background_under.png
         This is the image that shown by default under the game and the bezel.
         Read further for details. 
@@ -70,6 +61,9 @@
         you can edit this file to alter the shades.
         The more a primary color is saturated, the more the shade will turn to dark.
         
+    config/config-static.inc:
+        Some obscure shader parameters can't be changed within retroarch,
+        use this file instead.
         
 Texture "sources", including the main gimp project file for the <br>
 default curved and straight monitor frame are on the following repo: <br>
@@ -366,13 +360,24 @@ However nice effects may be obtained (eg: with vector games). <br>
             0: Phosphors width will be relative to the pixel width of the core (game).
             1: Phosphors width will be relative to the pixel width of the screen.
         Cell size multiplier x (neg=divider):
-            Multiply (or divide if the parameter is < 0) the mask (cell) size by a factor.
-            As stated(**), the size may be relative to screen or core, this allow you to
-            "zoom" the cell horizontally and can be useful if you have an HiDPI screen.
-            For example, you may choose to use screen sized masks and zoom them by a factor
-            of 2 or 3 to make room for phosphors and see them visually grow in width.
-            Likewise, you can use core/game(**) sized masks and divide them by a factor
-            if they appear too big.
+            Multiplies (or divide if the parameter is < 0) the phosphors width by a factor.
+            As stated(**), the width may be relative to screen or core.
+            For example, you may choose to use screen relative width and enlarge phosphors
+            by 2 or 3 to allow them to visually grow in width as signel gets stronger/brighter.
+            Likewise, you can use core/game(**) sized masks to emulate LCD screens as seen in
+            handhelds consoles.
+        TVL: core resolution only. >0 overrrides previous
+            If you use core resolution and this parameter is not 0.0,
+            the phosphor width will be computed so that the screen will
+            contain the specified rgb triads amount.
+            Using core resolution means that the triads will follow the
+            screen curvature, hence possibly exposing moire artifacts at higher TVLs.
+            To mitigate that, it is advised to set a proper
+            "Phosphor width min" value.
+            Tests shows that on a 1080p screen you can easilly target a typical of mid-range consumer TVs
+            with a TVL of 410, provided that you set minimum phosphor width of at least 30
+            and a phosphor width min->max less than 5.0.
+
         Mask type preset:
             You can have the shader generate a preconfigured mask for you:
             1:gm 2:gmx 3:rgb 4:rgbx 5:rbg 6:rbgx 7:wx 8:rgxb 9:wwx
@@ -614,13 +619,33 @@ However nice effects may be obtained (eg: with vector games). <br>
     
 **Global shift/zoom:**<br>
     Zoom and shift everything on screen, but background pictures.<br>
+
     
+**Mid Overlay image (backdrop, scratches):**<br>
+    Display an image over the content.<br>
+    The image used by default, picked from the "textures" shader subdirectory,<br>
+    is named: backdrop.jpg<br>
+    Of course you can use other path/names, but then you have to edit the preset <br>
+    by modifying the "backdrop =" line.<br>
+    <br>
+    You can choose to emulate a "backdrop", as seen in some old arcades which 
+    used a mirror trick to overlay the game over an high definition printed image.<br>
+    Or you can use some image representing tube glass reflections, scratches and so on.
+    
+        Shift(Zoom) Backdrop over X(Y) axis:
+            move or zoom the whole background image.
+        Display only on content (no shift/zoom)
+            Choose to display the image just over the content
+            ...that way it will be tied to the content geometry 
+            and no zoom/shift will be allowed
+    
+        
 **Backgound image:**<br>
     Draws an image on screen picked from the "textures" shader subdirectory,<br>
     named by default background_over.png and background_under.png<br>
     <br>
     Of course you can use other path/names, but then you have to edit the preset by modifying<br>
-    bg_over and/or bg_under.
+    "bg_over=" and/or "bg_under=" lines.
     <br>
     **-> It is needed that you set retroarch aspect to "Full" <-**<br>
     ( Settings, Video, Scaling, Aspect Ratio = Full )<br>
@@ -649,16 +674,6 @@ However nice effects may be obtained (eg: with vector games). <br>
         2  Clamp to edge and means that it repeats the edge color.
         3  Plain repeat without mirroring.
 
-        
-**Backdrop support:**<br>
-    Some old arcades used a mirror trick to overlay the<br>
-    game over an high definition printed image.<br>
-    The image used by default, picked from the "textures" shader subdirectory,<br>
-    is named: boothill.jpg<br>
-    
-        Shift(Zoom) Backdrop over X(Y) axis:
-            move or zoom the whole background image.
-    
         
 **Ambient light leds:**<br>
     Emulates the presence of led strips behind the monitor that lights the<br>
@@ -716,6 +731,11 @@ However nice effects may be obtained (eg: with vector games). <br>
     Will cause uneven brightness of the image, more at the center,<br>
     less at the edges.<br>
     
+    Vignette size:
+        Modulates the size of the circular shade.
+    Screen brightness uniformity:
+        Modulates the strength of random uneven brightness across the screen.
+        
 **Spot:**<br>
     Simulates external light reflected by the monitor glass.<br>
       
@@ -758,11 +778,11 @@ However nice effects may be obtained (eg: with vector games). <br>
         As long as Aspect Ratio Numerator is positive, this will
         be used as the denominator of the fraction.
 
-**Luminosity tied zoom:**<br>
+**Breathing (Luminosity tied zoom):**<br>
     On older CRT monitors, the picture gets bigger when the image was brighter.<br>
-    Please TURN THIS OFF if you want to use integer scaling, since this obstructs it.
     The higher, the more prominent the effect.
-
+    This is ignored if integer scaling is selected.
+    
 **Autocrop**: 
     Clears solid bars around the frame.
     
@@ -875,14 +895,43 @@ Changes are applied after a shader reload.*<br>
     To activate that ffeature, in config-user-optional.txt, write:<br>
     ```#define HALVE_BORDER_UPDATE```<br>
   
-**LCD antighosting:** (not compatible with delta render)<br>
+**LCD antighosting:** (not compatible with delta render and Direct3D)<br>
     LCD displays often suffer from high pixel refresh times <br>
     which produces ghosting when game changes on screen.<br>
     By inducing larger color transitions, it prompts the LCD cells <br>
     to adjust their states more rapidly, thereby reducing ghosting.<br><br>
     To use it, in file config-user-optional.txt, write:<br>
-    ```#define LCD_ANTIGHOSTING 0.5```<br><br>
+    ```#define DO_LCD_ANTIGHOSTING```<br><br>
+    Once you do that, the following parameters can be changed runtime:
     
+    Strength:
+        The effect strength; it has to be tuned depending on your LCD response time.
+    Ceil:
+        The effect is proportional to the color difference over time,
+        however you can set an hard maximum here.
+    Flip Mask:
+        Enabling this will cause the horizontal mask to be flipped at every frame.
+        It is an experimental measure to mitigate ghosting that could work or not,
+        depending on your display.
+    
+** Adaptive strobe (not compatible with LCD_ANTIGHOSTING):**
+    Similar to black frame insertion, this works by alternating the image 
+    brightness across frames and subframes (enabling the latter is recommended).
+    Doing so, will reduce the motion induced blur and image clarity, hopefully
+    approaching CRT behaviour.
+    To use it, in file config-user-optional.txt, write:<br>
+    ```#define DO_ADPT_STROBE```<br><br>
+    Once you do that, the following parameters can be changed runtime:
+    
+    Strength:
+        This modulates the clarity and the perceived flickering.
+    Gain adjustment:
+        Since the perceived image depends on the display pixel refresh speed,
+        it may be needed to adjust this.
+    Gamma adjustment:
+        Since the perceived image depends on the display pixel refresh speed,
+        it may be needed to adjust this.    
+        
 **Conditional FPS Halver**<br>
     *[Warning:] Only on retroarch > 1.19.1*<br>
     *[Warning:] This feature is not compatible with HALVE_BORDER_UPDATE* <br>
@@ -895,4 +944,11 @@ Changes are applied after a shader reload.*<br>
     if the core frame rate alternates between 60 (/50) and 30 (/25) FPS.<br><br>
     To use it, in file config-user-optional.txt, write:<br>
     ```#define FPS_HALVER```<br><br>
+    
+**Subframes rendering optimizations**<br>
+    By enabling this options, shader will take steps to speed-up subframes processing.
+    It could  display the previous rendered frame if possible or just part of it.
+    Enable it only if using subframes, as it has a performance cost itself.
+    To use it, in file config-user-optional.txt, write:<br>
+    ```#define SUBFRAMES_OPTIMIZATIONS```<br><br>
     
