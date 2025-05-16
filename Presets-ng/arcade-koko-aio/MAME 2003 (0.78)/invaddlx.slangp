@@ -14,8 +14,15 @@ GLOBAL_ZOOM = "0.802000"
 BG_IMAGE_ZOOM = "1.000000"
 BG_IMAGE_NIGHTIFY = "0.400000"
 DO_BACKDROP = "1.000000"
+BACKDROP_JUST_TUBE = "1.000000"
 BACKDROP_ZOOM = "1.118991"
 DO_SPOT = "0.000000"
 ASPECT_X = "-5.000000"
 bg_over = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/invaddlx.png"
 backdrop = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/invaddlx_backdrop.png"
+
+// Credits
+// shader by kokoko3k - https://github.com/kokoko3k/koko-aio-slang
+// artwork by John Merrit
+// backdrop by Mr. Do's Arcade - https://mrdo.mameworld.info/index.php 
+// preset and artwork adjustments by estefan3112 - https://github.com/estefan3112/koko-aio-slang
