@@ -108,8 +108,12 @@ bool frame_is_even() {
 	return ((int(params.FrameCount) & 1) == 0);
 }
 
+uint frame_subframe() {
+  return params.FrameCount * global.TotalSubFrames + global.CurrentSubFrame;
+}
+
 bool frame_subframe_is_even() {
-    return ((params.FrameCount * global.TotalSubFrames + global.CurrentSubFrame) & 1) == 0;
+  return (frame_subframe() & 1) == 0;
 }
 
 bool is_subframe() {
@@ -1261,6 +1265,14 @@ float delta_render_enabled(){
     #endif
 }
 
+bool bdelta_render_enabled(){
+    #ifdef DELTA_RENDER
+        return true;
+    #else
+        return false;
+    #endif
+}
+
 float delta_render_get_force_refresh() {
 	#ifdef DELTA_RENDER_FORCE_REFRESH
 		return DELTA_RENDER_FORCE_REFRESH;
@@ -1555,6 +1567,7 @@ vec4 PG_get_hmask_preset() {
 	return c;
 }
 
+
 vec3 strobe( vec3 c) {
     #define STRENGTH_1 0.075 //effect strength
 
@@ -1566,36 +1579,28 @@ vec3 strobe( vec3 c) {
 }
 
 
-vec3 adaptive_strobe(vec3 c) {
+vec3 adaptive_strobe(vec3 c, float osc) {
 
 	#ifndef DO_ADPT_STROBE
 		return c;
 	#endif
 
-	// Test:
-	// if (mod(params.FrameCount, 100) > 50)
-	//   return c;
+	c = clamp(c, vec3(0.0), vec3(1.0));
 
-	vec3 c2 = clamp(c, vec3(0.0), vec3(1.0));
+	float gain_adj =  mix(1.0, ADPT_STROBE_GAIN_ADJ,  ADPT_STROBE_STR);
 
-	float gain_adj =   ADPT_STROBE_GAIN_ADJ ; 
-	float gamma_adj =  ADPT_STROBE_GAMMA_ADJ;
-	
-	gain_adj =  mix(1.0, gain_adj, ADPT_STROBE_STR * 2.0);
-	gamma_adj = mix(1.0, gamma_adj, ADPT_STROBE_STR * 2.0);
-
-    vec3 room = (0.5 - abs(0.5-c2));
-	room = min(room, vec3(ADPT_STROBE_STR));
-
-	if ( frame_subframe_is_even() ) {
-		c= c +  room;
-	} else {
-		c= c -  room;
+	vec3 osc3 = vec3(osc);
+	if (osc > 0.0) {		
+		osc3 = mix( osc3*gain_adj, osc3 * gain_adj * c, ADPT_STROBE_GAIN_ADJ_NODARK) ;
 	}
 
-	c*=gain_adj;
-	return pow(c, vec3(gamma_adj));
-	return clamp(c, vec3(0.0), vec3(1.0));
+	vec3 room = (0.5 - abs(0.5-c));
+	c += room * osc3 * ADPT_STROBE_STR ;
+
+	float gamma_adj = mix(1.0, ADPT_STROBE_GAMMA_ADJ, ADPT_STROBE_STR);
+	c = pow(c, vec3(gamma_adj));
+
+	return c;
 }
 
 vec3 adaptive_strobe_old( vec3 c) {
@@ -1673,10 +1678,26 @@ float lodmax(vec2 texsize) {
 	//lod needed to average all texture points.
     return log2(max(texsize.x, texsize.y));
 }
+
+bool deltarender_frame_is_forced_refresh() {
+	 // - We are in a frame that is forced for full refresh
+	return params.FrameCount % int(delta_render_get_force_refresh()) == 0.0 ;
+}
+
+bool deltarender_frame_is_not_forced_refresh() {
+	 // - We are in a frame that is forced for full refresh
+	return params.FrameCount % int(delta_render_get_force_refresh()) != 0.0 ;
+}
+
+bool deltarender_preconditions_met(bool is_interlaced) {
+	return ( (! is_interlaced) || PIXELGRID_INTR_DISABLE_Y >= 1.0 || DO_PIXELGRID_H == 0.0);
+}
+
+
 float is_deltarender_allowed(bool is_interlaced) {
 	// Delta render, mandatory conditions:
-    return float( ( params.FrameCount % int(delta_render_get_force_refresh()) != 0.0 ) &&              // - We are in a frame that is not forced for full refresh
-    ( (! is_interlaced) || PIXELGRID_INTR_DISABLE_Y >= 1.0 || DO_PIXELGRID_H == 0.0)); // - screen is not interlaced or we disabled scanlines on interlaced content
+    return float(deltarender_frame_is_not_forced_refresh() &&   // - We are in a frame that is not forced for full refresh
+           deltarender_preconditions_met(is_interlaced)); // - screen is not interlaced or we disabled scanlines on interlaced content
 }
 
 float delta_render_changed(sampler2D smp_past, sampler2D smp_now, vec2 co, float lod) {
