@@ -1,0 +1,20 @@
+#reference "../../shaders/shaders_slang/bezel/koko-aio/Presets-ng/Monitor-Ambilight-immersive.slangp"
+TATE = "0.000000"
+BEZEL_R = "-0.250000"
+BEZEL_G = "-0.250000"
+BEZEL_B = "-0.250000"
+BEZEL_CON = "1.300000"
+GLOBAL_OFFX = "0.029000"
+GLOBAL_OFFY = "-0.011000"
+GLOBAL_ZOOM = "0.892004"
+BG_IMAGE_ZOOM = "1.000000"
+BG_IMAGE_NIGHTIFY = "0.300000"
+ASPECT_X = "-2.000000"
+ASPECT_Y = "0.000000"
+bg_under = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/mrdo.png"
+bg_over = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/mrdo.png"
+
+// Credits
+// shader by kokoko3k - https://github.com/kokoko3k/koko-aio-slang
+// artwork by Orions Angel - https://forums.launchbox-app.com/profile/74235-orionsangel/ 
+// preset and artwork adjustments by estefan3112 - https://github.com/estefan3112/koko-aio-slang
