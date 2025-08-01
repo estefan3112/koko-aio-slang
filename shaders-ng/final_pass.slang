@@ -641,6 +641,27 @@ vec3 downsample_x( sampler2D tex, vec2 uv, vec4 sourcesize, float sharpness_add 
 }
 
 
+float antiburn_flip_even(float toflip){
+    #ifdef ANTIBURN_Y
+        bool flip = sin(params.FrameCount*pi*ANTIBURN_Y/2000.0) >= 0.0;
+        if (flip) return 1-toflip;
+    #endif
+    return toflip;
+}
+
+vec2 antiburn(vec2 coords) {
+    #ifdef ANTIBURN_Y
+        coords.y += sin(params.FrameCount*pi*ANTIBURN_Y/1000.0)*params.OriginalSize.w*0.5;
+    #endif
+        
+    #ifdef ANTIBURN_X
+        coords.x += cos(params.FrameCount*pi*ANTIBURN_X/100.0)*global.FinalViewportSize.z*0.5;
+    #endif
+        
+    return coords;
+}
+
+
 vec4 fn_pixel_grid(vec2 in_coords, vec4 pixel_in, float min_inLum, float max_inLum) {
     //^ 15fps ^
 
@@ -802,7 +823,7 @@ vec4 fn_pixel_grid(vec2 in_coords, vec4 pixel_in, float min_inLum, float max_inL
                 
             //Use abs(cos) (later 1-abs(cos) to get horizontal gaps, use pow to make them steep.
             //Stagger them by PH_MASH_OFFSET on even triads
-                float mask_shape = abs(cos(  vPG_y_shift  + ph_mask_height  + (PH_MASH_OFFSET * is_even)) ) ;
+                float mask_shape = abs(cos(  vPG_y_shift  + ph_mask_height  + (PH_MASH_OFFSET * antiburn_flip_even(is_even))) ) ;
                 mask_shape = pow(mask_shape, PIXELGRID_Y_MASK_STEEP);
 
 
@@ -1136,8 +1157,10 @@ float gaussian_coefficient(float x, float sigma) {
 }
 
 
-
 vec3 fn_pixel_content(vec2 coords) { 
+    
+    coords = antiburn(coords);
+        
     vec2 warpedglow = vec2(0.0);
     
     #ifndef SKIP_WARPEDGLOW_Y
@@ -1414,10 +1437,26 @@ void main() {
         
         if (DO_BACKDROP * BACKDROP_JUST_TUBE > 0.0) {
             vec3 backdrop = pixel_backdrop_image().rgb;
-            //pixel_out = mix(pixel_out, pixel_out + backdrop,  (1 - dot(pixel_out,vec3(1/3.0)), 0,1) * DO_BACKDROP   );
-            pixel_out = max(pixel_out, backdrop*DO_BACKDROP);
+
+            pixel_out.rgb += (DO_BACKDROP*backdrop) * (1-pixel_out.rgb);
+            //pixel_out = max(pixel_out, backdrop*DO_BACKDROP);
         }
 
+        if ( DO_SPOT + DO_VIGNETTE > 0.0 ) {
+            float perlin = (random_fast(vTexCoord)-0.5) * (1/255.0);
+            vec2 vignette_spot = texture(helper_pass, vTexCoord).zw;
+            pixel_out = pixel_out * vignette_spot.x;
+            pixel_out = mix(pixel_out+perlin, vec3(content_mask), vec3(vignette_spot.y) );
+        }
+        
+        #ifdef DO_ADPT_STROBE
+            pixel_out = adaptive_strobe(pixel_out, vAdaptive_strobe_oscillator);
+        #else
+            #ifdef DO_LCD_ANTIGHOSTING
+                pixel_out = antighost(pixel_out);
+            #endif
+        #endif
+        
 
     } else {
 
@@ -1495,35 +1534,10 @@ void main() {
             // on the tube and we don't want to paint anything there, so use a dumb rect and add it to content_mask:
             float rect_bezel = float(is_first_inside_rect(co_bezel, vec4(BEZEL_FRAME_SURROUND_MARGIN, BEZEL_FRAME_SURROUND_MARGIN, 1.0 - BEZEL_FRAME_SURROUND_MARGIN, 1.0 - BEZEL_FRAME_SURROUND_MARGIN)));
             content_and_bezel_mask = max(pixel_bezel.a, rect_bezel);
-
-            // Intersect rect_bezel and bezel alpha to get the inner tube alpha
-            content_mask = (1 - pixel_bezel.a) * rect_bezel;
-            //content_mask = rect_bezel - rect_bezel* pixel_bezel.a; //ASM PROOF: SLOWER
-         
         }
-        //FragColor = vec4(content_mask); return; // <- uncomment to debug BEZEL_FRAME_SURROUND_MARGIN
+        //FragColor = vec4(content_and_bezel_mask); return; // <- uncomment to debug BEZEL_FRAME_SURROUND_MARGIN
     }
 
-
-    // Draw spot and vignette
-    if (content_mask > 0.5) {
-        if ( DO_SPOT + DO_VIGNETTE > 0.0 ) {
-            float perlin = (random_fast(vTexCoord)-0.5) * (1/255.0);
-            vec2 vignette_spot = texture(helper_pass, vTexCoord).zw;
-            pixel_out = pixel_out * vignette_spot.x;
-            pixel_out = mix(pixel_out+perlin, vec3(content_mask), vec3(vignette_spot.y) );
-        }
-        
-        #ifdef DO_ADPT_STROBE
-            pixel_out = adaptive_strobe(pixel_out, vAdaptive_strobe_oscillator);
-        #else
-            #ifdef DO_LCD_ANTIGHOSTING
-                pixel_out = antighost(pixel_out);
-            #endif
-        #endif
-    }
-    
-    
     // Background image have no need to paint if not in the outer border:
     if ( (DO_BG_IMAGE == 1.0 && BG_IMAGE_OVER == 0.0) && (content_and_bezel_mask < 1.0) ) {
         vec4 pixel_bg_image = fn_pixel_fgbg_image(bg_under);
@@ -1540,8 +1554,6 @@ void main() {
 
     // Blend content and border:
     pixel_out = mix (pixel_under_content, pixel_out, content_and_bezel_mask);
-
-
 
     //Foreground image
     if (DO_BG_IMAGE + BG_IMAGE_OVER == 2.0) {

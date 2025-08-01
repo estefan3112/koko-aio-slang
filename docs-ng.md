@@ -43,11 +43,11 @@
         Please read config-user-optional-template.txt for instructions.
                
     textures/background_under.png
-        This is the image that shown by default under the game and the bezel.
+        This is the image shown by default under the game and the bezel.
         Read further for details. 
         
     textures/background_over.png
-        This is the image that shown by default over the game and the bezel.
+        This is the image shown by default over the game and the bezel.
         Read further for details.
         
     textures/monitor_body_curved.png, textures/monitor_body_straight.png
@@ -55,12 +55,10 @@
         Read further in the bezel section of this document for details.
         
     textures/side_shade-helper.png
-        Bezel frame inner area, the reflective part, is shaded by default so that
-        upper area is less bright and lower area is a bit brighter.
-        While the shader does not expose controls to change that, if you want,
-        you can edit this file to alter the shades.
-        The more a primary color is saturated, the more the shade will turn to dark.
-        
+        This file helps the shader to cast different shadows on different sides of the reflective part of the bezel (so, the inner area).
+        Green color represents the side, while blue and red represents upper and lower side.
+        Color blue<->green<->red color transitions are smoothed to produce smoothed shadows, you can tweak that to alter the shadows look.
+        The file is also useful to overcome a bug in Retroarch, where some 3D accelerated cores like flycast, if coupled with GLCore video driver, flips the bezel upside down. In those cases, you should/could flip the image itself.
     config/config-static.inc:
         Some obscure shader parameters can't be changed within retroarch,
         use this file instead.
@@ -72,7 +70,10 @@ https://github.com/kokoko3k/koko-aio-slang-misc/tree/main
 
 ---------------------------
 
-**PARAMETERS:**
+**PARAMETERS:**<br>
+*koko-aio as tons of configurable parameters, and for this reason it comes with a lot of pre-configured presets.<br>
+My advice is to start with a preset you like, and then tweak it by following this documentation, rather than starting from scratch.*
+
 
 **Gamma in:**<br>
 Input Gamma: set it around 2.2 to linearize values.
@@ -111,51 +112,58 @@ However nice effects may be obtained (eg: with vector games). <br>
             . Then report them in the shader with the formula hue1/360 and hue2/360.
         Hue bright-dark bias:
             Controls the distribution of dark and bright hues.
-    
+
+
 **Antialiasing enable:**<br>
     Apply an edge smoothing/antialiasing algotithm.<br>
     Use it if you don't want to blur the image and you still don't like<br>
     jagged or too much pixelated images.<br>
 
 
-** Dedither:**<br>
-    Try to smooth dithering patterns.<br>
+**Dedither:**<br>
+	Try to smooth dithering patterns.<br>
     Dedithering does not work as long as NTSC color artifacts are enabled.
     
     Sensitivity: Avoid to dedither "legit" zones by lowering this.
     Basic search strength: Blends basic dedithering and original image.
     Extensive search strength: Blends extensive dedithering and original image .
                                may produce posterization effects.
-    
-    
+
+
 **CVBS: NTSC color artifacts:**<br>
-    Tries to emulate typical NTSC color artifacting without emulating<br>
-    full NTSC coding/decoding pipeline.<br>
-    While it improves the look of NTSC content, don't expect it to be<br>
-    an accurate emulation (yet?)<br>
-    As today, it is enough to emulate rainbowing effects on genesis.<br>
-    If you enable Glow/Blur functions or Bandwidth limited chroma,<br>
-    the image will be blurred in a way or another.<br>
-    You can selectively keep the part of the image which does not contain<br>
-    artifacts sharp by using the followin controls.<br>
-    This allow to selectively blend artifacts.<br>
-    <br>Enabling this features automatically disabled dedithering feature.
+    Emulate typical NTSC color artifacting<br>
+    It is able to emulate straight rainbowing effects as seen on Megadrive<br>
+    or oblique as seen on NES, and specific color generation from repeating
+    B/W patterns as seen on CGA or Apple II composite systems.
     
-    Consider artifacts above this treshold:
+	Strength: 
+	    Self explanatory.
+	Filter Width, Subcarrier Frequency mul, Frequency cutoff
+	    Completely alters artifacts rendering, please see already cooked presets for interesting values.
+	Phase shift
+		Set to 0.0 to emulate straight rainbowing (Megadrive), or 1.0 to have 45 degree rainbowing.
+    Artifacts upper threshold:
         Tune this to select more or less artifacts, depending on their strength.
-    Show selected artifacts mask (need glow/blur enabled)
+    Cancel artifacts under the threshold
+        How much of the artifacts under the threshold will be completely removed.
+    Show selected artifacts mask.
         This will show only the part of the image that contains artifacts.
         Use it to for a better visual feedback of the following parameters.
-        Please, enable "glow" to s
-    Cancel artifacts under the treshold
-        How much of the artifacts under the treshold will be completely removed.
+        "glow/blur shader parameter" needs to be enabled for this to work.
         
     
 **CVBS: Bandwidth limited chroma:**<br>
-    Will cause an horizontal chroma bleed which cheaply mimics the effect of<br>
-    poor composite video signals.<br>
-    It can be used with RGB shifting and image blurring to give the picture<br>
-    an ntsc look without dealing with specific encoding/decoding stuffs. <br>
+    Will cause an horizontal chroma bleed typical of band constrained composite signals.
+    
+	Colorspace (NTSC, PAL)
+		Switch bandwidths to match different standards.
+	Strength
+		Self explanatory.
+	Size
+		Maximum bleed size.
+	Falloff
+		The bleed falloff speed.
+
 
 **CVBS: Dot crawl**<br>
     Emulates rolling chroma->luma crosstalks observed in composite signals.<br>
@@ -186,7 +194,7 @@ However nice effects may be obtained (eg: with vector games). <br>
         The area of the screen that will be in focus (affects previous 2 settings)
 
         
-** RF Noise:**<br>
+**RF Noise:**<br>
     Emulates radio frequency noise with a given strength<br>
     1 produce noise before the Glow/Blur pass, while -1 will move it after.
     Suggestions:
@@ -205,9 +213,7 @@ However nice effects may be obtained (eg: with vector games). <br>
 
         
 **Glow/Blur:**<br>
-    Emulate the CRT glowing "feature", so that the brighter areas of<br>
-    the image will light their surroundings,<br>
-    with options to switch to classic blur.<br>
+	Blur the image and/or embolds bright pixels.
 
     Glow to blur bias:
         Higher negative values -> more glow : brighter colors expands over darker ones.
@@ -226,7 +232,7 @@ However nice effects may be obtained (eg: with vector games). <br>
           add visual sharpness to image when approaching lower values.
 
     Warped glow (X,Y):
-        Embolden bright pixels near dark ones using a warpsharp like algorithm.
+        Embolds bright pixels near dark ones using a warpsharp like algorithm.
         This is a cheap way to emulate phosphor glowing.
         The Y parameter will also allow scanlines to be higher.
         It will also help (if coupled with) antialiasing to stay sharp.
@@ -237,7 +243,11 @@ However nice effects may be obtained (eg: with vector games). <br>
 
 
 **Tate mode:**<br>
-    Rotates mask and scanlines by 90°<br>
+    Rotates (or not) mask and scanlines by 90°<br>
+    
+    0: Never rotate.
+    1: Rotate only for rotated content (typical 3:4 aspect arcade games)
+    2: Always rotate/Force rotation.
         
 **Glitch if vertical resolution changes:**<br>
     Emulates the crt circuits syncing to the new signal timing.<br>
@@ -282,9 +292,7 @@ However nice effects may be obtained (eg: with vector games). <br>
         
         
 **Low level phosphor grid:**<br>
-    This is a way to produce horizontal masks, scanlines and aperturegrille/slotmasks.<br>
-    Parameters are tricky to setup, but possibilities are mny more quality is good at 1080p<br>
-    and hopefully great at higher resolutions.<br>
+    This section contains parameters to emulate scanlines and phosphors layouts such as, but not limited to: aperturegrille,slotmasks,shadowmasks. <br>
     By reading the following explanaitions, you will realize that this section can also be used to emulate<br>
     handhelds screens, where pixels you see on screen have to be sized proportionally to the game one.<br>
     
@@ -733,6 +741,9 @@ However nice effects may be obtained (eg: with vector games). <br>
     
     Vignette size:
         Modulates the size of the circular shade.
+        Pillow/Tube
+           * Add a pillow shape to vignette with values near 0.0.
+           * Negative values will Render the vignette with a tube shape.
     Screen brightness uniformity:
         Modulates the strength of random uneven brightness across the screen.
         
@@ -847,7 +858,7 @@ However nice effects may be obtained (eg: with vector games). <br>
 ---------------------------
 
 *The following shader functionalities are disabled by default and cannot be enabled by using runtime shader parameters.<br>
-To enable them, you have to edit the file config-user-optional.txt (use config-user-optional-template).txt as a guide.<br>
+To enable them, you have to edit the file config/config-user-optional.txt (use config-user-optional-template).txt as a guide.<br>
 Changes are applied after a shader reload.*<br>
 
 ---------------------------
@@ -856,24 +867,29 @@ Changes are applied after a shader reload.*<br>
     Koko-aio can render only the part of the screen that has been changed,<br>
     leading to a measurable power consumption reduction and mitigate throttling
     on mobile devices and laptops.<br>
-    This feature can, however, produce artifacts in some cases.<br><br>
+    This feature can, however, produce artifacts in some cases.<br>
+    Also, please be aware that enabling delta render disables some effects like rf noise,
+    interlace flickering screen breathing, possibly more.
     To use it, in file config-user-optional.txt, write:<br>
     ```#define DELTA_RENDER```
     
 **Delta Render configuration:**<br>
-    To configure delta render, uncomment DELTA_RENDER_FORCE_REFRESH and/or DELTA_RENDER_CHECK_AREA.
+    To configure delta render, write/uncomment DELTA_RENDER_FORCE_REFRESH and/or DELTA_RENDER_CHECK_AREA.
 
-    #define DELTA_RENDER_FORCE_REFRESH #number
-        Forces a full screen refresh every #number of frames;
+    #define DELTA_RENDER_FORCE_REFRESH 10.0
+        Forces a full screen refresh every 10.0 frames;
         if there was artifacts on the screen, they will be cleared.
-        Power comsumption benefits will be lower.
-    #define DELTA_RENDER_CHECK_AREA #number
-        If you see artifacts, try to make #number higher.
+        The higher the number, the less the power consumption.
+        
+        
+    #define DELTA_RENDER_CHECK_AREA 3.0
+        If you see artifacts, try to make 3.0 higher.
         Artifacts come basically from bloom.
         By highering this value, Delta render can take higher blur radiouses
         into account.
-        Power comsumption benefits will be lower.
+        The higher the number the more the power consumption.
         
+
 **Higher quality defocus:**<br>
     Use higher quality deconvergence by flattering rgb scanlines when <br>
     deconvergence is high and by syncing them to the deconvergence settings.<br>
@@ -937,8 +953,6 @@ Changes are applied after a shader reload.*<br>
         It is an experimental measure to mitigate ghosting that could work or not,
         depending on your display.
     
-
-        
 **Conditional FPS Halver**<br>
     *[Warning:] Only on retroarch > 1.19.1*<br>
     *[Warning:] This feature is not compatible with HALVE_BORDER_UPDATE* <br>
@@ -959,3 +973,10 @@ Changes are applied after a shader reload.*<br>
     To use it, in file config-user-optional.txt, write:<br>
     ```#define SUBFRAMES_OPTIMIZATIONS```<br><br>
     
+**Antiburn protection**<br>
+    By enabling this options, shader will slowly shake the content over Y/X axis to
+    prevent image retention on affected screens like OLEDs.<br>
+    To use it, in file config-user-optional.txt, write one or both:<br>
+    ```#define ANTIBURN_Y 1.0```<br>
+    ```#define ANTIBURN_X 1.0```<br><br>
+    (1.0 is the effect speed).<br>

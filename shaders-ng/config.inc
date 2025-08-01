@@ -330,6 +330,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float ADPT_STROBE_GAIN_ADJ_NODARK;
 	
 	float UNIFORMITY;
+	float V_SHAPE;
 	
 } global;
 
@@ -384,8 +385,8 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter NTSC_FILTER_SCF   "        Subcarrier Frequency mul"		4.57	1.0 10.0 0.01
 #pragma parameter NTSC_FILTER_FC    "        Frequency cutoff"			2.5	0.0 10.0 0.1
 #pragma parameter NTSC_PHASE_SHIFT  "        Phase shift"			0.0	0.0 1.0  1.0
-#pragma parameter NTSC_ARTF_TRSH      "      Artifacts upper treshold"			0.1	0.0 1.0 0.01
-#pragma parameter NTSC_ARTF_ZAP       "      . Cancel artifacts under the treshold"		0.0	0.0 1.0 0.01
+#pragma parameter NTSC_ARTF_TRSH      "      Artifacts upper threshold"			0.1	0.0 1.0 0.01
+#pragma parameter NTSC_ARTF_ZAP       "      . Cancel artifacts under the threshold"		0.0	0.0 1.0 0.01
 #pragma parameter NTSC_SHOW_ARTF_MASK "      . Show selected artifacts mask (need glow/blur enabled)"				0.0	0.0 1.0 1.0
 
 #pragma parameter LABEL0007 " " 0 0 0 1
@@ -581,7 +582,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter GEOM_WARP_X        "        Warp X"				0.28   0.0 6.0 0.01
 #pragma parameter GEOM_WARP_Y        "        Warp Y"				0.32   0.0 6.0 0.01
 #pragma parameter GEOM_CORNER_SIZE   "        Corners radius"			0.008 0.002 0.1 0.001
-#pragma parameter GEOM_CORNER_SMOOTH "        Edges sharpness"			200.0 50.0 1000.0 10.0
+#pragma parameter GEOM_CORNER_SMOOTH "        Edges sharpness"			190.0 50.0 1000.0 10.0
 #pragma parameter LABEL0023 " " 0 0 0 1
 
 
@@ -655,7 +656,10 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 //Vignette and spot
 #pragma parameter DO_VIGNETTE	"★ Vignette enable? (vi) ==>"	0.0  0.0  1.0  1.0
-#pragma parameter V_SIZE	 "        Size"					0.7  0.3  5.0  0.02
+#pragma parameter LABEL0064     "    !! Parameters application delayed when using DeltaRender"	0 0 0 1
+//V_SIZE has to be greater than 1/pi (0.318)
+#pragma parameter V_SIZE	 "        Size"					0.7  0.32  5.0  0.01 
+#pragma parameter V_SHAPE	 "        Pillow/Tube (<0.0: tube, near 0.0: pillow)"	1.0  -1.0  1.0  0.01
 #pragma parameter UNIFORMITY "     Screen brightness uniformity"	0.95  0.80  1.0  0.01
 
 #pragma parameter DO_SPOT	"★ Spot enable? (sp) ==>"		0.0   0.0   1.0 1.0
@@ -692,7 +696,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter AUTOCROP_MIN	            "        Number of mandatory lines to crop"   1.0   0.0   10.0  1.0
 #pragma parameter AUTOCROP_SAMPLES          "        Samples per frame (faster response, higher gpu use)"     20.0   0.0   300.0 1.0
 #pragma parameter AUTOCROP_SAMPLE_SIZE      "        Sample size (big speedup, less accurate)" 2.0 0.0 5.0 1.0  
-#pragma parameter AUTOCROP_STEADINESS       "        Scene change treshold (0 = continuous cropping)"     0.2   0.0   0.5 0.01
+#pragma parameter AUTOCROP_STEADINESS       "        Scene change threshold (0 = continuous cropping)"     0.2   0.0   0.5 0.01
 #pragma parameter AUTOCROP_TRANSITION_SPEED "        Transition speed"    		 0.1   0.05   1.0 0.05
 #pragma parameter LABEL0033 " " 0 0 0 1
 
