@@ -242,13 +242,14 @@ However nice effects may be obtained (eg: with vector games). <br>
         nearby pixels, thereby altering their "Warped" shape.
 
 
-**Tate mode:**<br>
+**Tate mode (use horizontal scanlines):**<br>
     Rotates (or not) mask and scanlines by 90°<br>
     
-    0: Never rotate.
-    1: Rotate only for rotated content (typical 3:4 aspect arcade games)
-    2: Always rotate/Force rotation.
-        
+    1: Use horizontal scanlines and vertical mask only for rotated content (typical 3:4 aspect arcade games)
+    2: Always.
+    0: Never.
+    
+    
 **Glitch if vertical resolution changes:**<br>
     Emulates the crt circuits syncing to the new signal timing.<br>
     Will shake the screen for a while when the resolution changes.<br>
@@ -545,24 +546,24 @@ However nice effects may be obtained (eg: with vector games). <br>
         cost of some graphical artifacts visible on high contrasted areas.
         The same apply for the grid emulated via dot matrix emulation feature.
  
-**Bloom:**<br>
+**Bloom/Halation:**<br>
     Acts like Halo, but affects a much wider area and is more configurable.<br>
     By using this effect and playing with its parameters, you can achieve funny<br>
     or even artistic results.<br>
     
-    Final mix:
+    Bloom strength:
         Modulates between the original images and the bloomed one.
-    Radius:
+    Bloom Radius:
         Controls how much the bloom has to be wide.
-    Quality:
+    Bloom Quality:
         How much the shape of the bloomed picture will reflect the original one.
-    Input Gamma (threshold):
+    Bloom Input Gamma (threshold):
         Use this as a threshold to control how much a pixel has to be bright
         to produce a bloom effect.
-    Output Gamma (contour smoothness):
+    Bloom Output Gamma (contour smoothness):
         Lowering it will make the bloom contour more pronunced.
         Handy to simulate well defined "Aura" effects.
-    Power multiplier:
+    Bloom Power multiplier:
         Just apply a gain to the final bloom.
     Modulate: Local exposure eye adaption strength
         Simulate the process through which the pupil adapt itself to different
@@ -571,8 +572,10 @@ However nice effects may be obtained (eg: with vector games). <br>
         Since the light produced by the bloom effect is added to the underlying
         image, it can produce clipping effects on the already bright areas.
         This is actually an hack that will avoid to bloom them.
+    Halation strength:
+        Emulates a very wide halo from light scattering in CRT glass.
     Bypass/Solo:
-        See how the bloomed image looks alone.
+        See how the bloom and halation image look without the main content.
         Use 1.0 to see naked bloom without any modulation applied
         Use 2.0 to see naked bloom with modulation applied 
 

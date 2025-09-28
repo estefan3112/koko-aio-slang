@@ -67,6 +67,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float BLOOM_GAMMA;
 	float BLOOM_BYPASS;
 	float BLOOM_POWER;
+	float BLOOM_HALATION_MIX;
 	float BLOOM_OVER_WHITE;
   	float BLOOM_GAMMA_OUT;
 	
@@ -349,7 +350,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 // Color correction 
 #pragma parameter DO_CCORRECTION "★ Color corrections enable? (co) ==>" 		0.0 	0.0 1.0 1.0
-#pragma parameter IN_GLOW_POWER  "       Input signal gain"					1.0 	0.0 5.0 0.05
+#pragma parameter IN_GLOW_POWER  "       Input signal gain"					1.0 	0.0 6.0 0.05
 #pragma parameter LUMINANCE      "       Luminance push (>1.0=clip)"		0.0	 0.0 1.5 0.05
 #pragma parameter BRIGHTNESS     "       Brightness in   (0.0=off)"		0.0	-1.0 1.0 0.01
 #pragma parameter CONTRAST       "       Contrast in     (0.0=off)"		0.0	-1.0 1.0 0.01
@@ -452,7 +453,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter LABEL0011 " " 0 0 0 1
 
 
-#pragma parameter TATE                     "★ Tate mode (0:disabled 1:auto 2:forced)"		1.0 	0.0 2.0 1.0
+#pragma parameter TATE                     "★ Tate, use horizontal scanlines (0:disabled 1:auto 2:forced)"		1.0 	0.0 2.0 1.0
 #pragma parameter LABEL0012 " " 0 0 0 1
 
 #pragma parameter RESSWITCH_GLITCH_SIZE		"★ Glitch amount if vertical resolution changes"		0.1		0.0 0.5 0.05
@@ -476,7 +477,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter PIXELGRID_OVERMASK "      Overmask (1.0 = neutral)"	1.0 0.0 2.0 0.02
 #pragma parameter LABEL0015 " " 0 0 0 1
 
-#pragma parameter DO_PIXELGRID_H            "      ★ Scanlines (0 to disable)"    	1.0 0.0 1.25 0.05
+#pragma parameter DO_PIXELGRID_H            "      ★ Scanlines (===) (0 to disable)"    	1.0 0.0 1.25 0.05
 #pragma parameter PIXELGRID_DOUBLESCAN      "         . Double-scan low input resolutions"  0.0 0.0 1.0 1.0
 #pragma parameter PIXELGRID_COREY_FAKE_SCAN "         . Fake integer scanlines (-1=auto)"  -1.0 -1.0 1.0 1.0
 #pragma parameter PIXELGRID_MIN_H	        "         . Phosphors height Min"           0.2 0.00 1.0 0.05
@@ -494,7 +495,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter LABEL0016 " " 0 0 0 1
 
 
-#pragma parameter DO_PIXELGRID_W     "    ★ Horizontal mask (0 to disable)"    	1.0 0.0 1.0 0.01
+#pragma parameter DO_PIXELGRID_W     "    ★ Horizontal mask (|||) (0 to disable)"    	1.0 0.0 1.0 0.01
 #pragma parameter PIXELGRID_SIZE_W   "       . Resolution: (core or screen)"	1.0 0.0 1.0 1.0
 #pragma parameter PIXELGRID_MUL_X    "       . Cell size multiplier x (neg=divider):"	1.0 -8.0 8.0 0.125
 #pragma parameter PIXELGRID_TVL_X    "       . TVL: core resolution only. >0 overrrides previous."	0.0 0.0 2048.0 5.0
@@ -510,11 +511,11 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter PIXELGRID_BASAL_GRID  "      . Black level of the unexcided phosphor grid"	0.0 0.0 10.0 0.01
 #pragma parameter LABEL0017 " " 0 0 0 1
 
-#pragma parameter PIXELGRID_Y_MASK               "      ★ Vertical cell Mask (aperturegrille/slotmask)"	0.5 0.0 1.0 0.05
+#pragma parameter PIXELGRID_Y_MASK               "      ★ Vertical mask and slotmask (==/_-_-)"	0.5 0.0 1.0 0.05
 #pragma parameter PIXELGRID_Y_MASK_COORDS        "           . Resolution: (core or screen)"	1.0 0.0 1.0 1.0
 #pragma parameter PIXELGRID_Y_MASK_HEIGHT        "           . Height divider (neg = multiplier):"	0.5 -8.0 8.0 0.125
 #pragma parameter PIXELGRID_Y_MASK_OFFSET        "           . Even/odd Y offset (slotmask)"	1.0 0.0 1.0 1.0
-#pragma parameter PIXELGRID_Y_MASK_OFFSET_DEHIVE "           . Clears ''hives'' patterns (slotmask)"	0.00 0.00 4.0 0.1
+#pragma parameter PIXELGRID_Y_MASK_OFFSET_DEHIVE "           . Clears ''hives'' patterns (slotmask)"	0.00 0.00 1.0 0.01
 #pragma parameter PIXELGRID_Y_MASK_SHIFT         "           . Vertical shift (neg = auto)"	-0.01 -0.01 1.0 0.01
 #pragma parameter PIXELGRID_Y_MASK_STEEP         "           . Steepness"	2.0 1.0 30.0 1.0
 #pragma parameter PIXELGRID_Y_MASK_ON_WHITE      "           . Fadeout under light"	0.5 0.0 2.0 0.01
@@ -522,7 +523,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 #pragma parameter LABEL0018 " " 0 0 0 1
 
-#pragma parameter PIXELGRID_DO_SHADOWMASK    "      ★ Shadowmask "	0.0 0.0 1.0 1.0
+#pragma parameter PIXELGRID_DO_SHADOWMASK    "      ★ Shadowmask (:.:.)"	0.0 0.0 1.0 1.0
 #pragma parameter label_shadowmask           "       !! Please, ensure that horizontal mask" 0 0 0 1
 #pragma parameter label_shadowmask2          "       !! phosphor width is not too low." 0 0 0 1
 #pragma parameter PIXELGRID_SHADOWMASK_SHIFT "           . X staggering    "	1.0 0.5 4.0 0.5
@@ -562,16 +563,17 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 
 // Bloom
-#pragma parameter DO_BLOOM           "★ Bloom enable? (bl) ==>" 						0.0  0.0  1.0  1.0
-#pragma parameter BLOOM_MIX          "        Final mix, (0.0=off)"					0.45 0.0 1.0  0.01
-#pragma parameter BLOOM_SIZE         "        Radius"							4.0  0.25 30.0 0.25
-#pragma parameter BLOOM_QUALITY      "        Quality: more is better but slower"			1.0  1.0 8.0 1.0
-#pragma parameter BLOOM_GAMMA        "        Gamma in (threshold)"					8.0  1.0 10.0 0.5
-#pragma parameter BLOOM_GAMMA_OUT    "        Gamma out (contour smoothness)"				1.0  0.1 10.0 0.1
-#pragma parameter BLOOM_POWER        "        Power multiplier"						1.5  0.5 20.0 0.05  
-#pragma parameter BLOOM_EYE_ADPT_SRT "        Modulate: Local exposure eye adaption strength"		0.45   0.0 10.0 0.05
-#pragma parameter BLOOM_EYE_INERTIA  "        Modulate: Time before eye adaption starts"		1500  10.0 10000 50.0
-#pragma parameter BLOOM_OVER_WHITE   "        Modulate: Strength on bright areas (0 = aura)"		0.5  0.0 1.0  0.05
+#pragma parameter DO_BLOOM           "★ Bloom/Halation enable? (bl) ==>" 						0.0  0.0  1.0  1.0
+#pragma parameter BLOOM_MIX          "        Bloom Strength"					0.45 0.0 1.0  0.01
+#pragma parameter BLOOM_SIZE         "           . Radius"							4.0  0.25 30.0 0.25
+#pragma parameter BLOOM_QUALITY      "           . Quality: more is better but slower"			1.0  1.0 8.0 1.0
+#pragma parameter BLOOM_GAMMA        "           . Gamma in (threshold)"					8.0  1.0 10.0 0.5
+#pragma parameter BLOOM_GAMMA_OUT    "           . Gamma out (contour smoothness)"				1.0  0.1 10.0 0.1
+#pragma parameter BLOOM_POWER        "           . Power/Vibrance multiplier"						1.5  0.5 20.0 0.05  
+#pragma parameter BLOOM_EYE_ADPT_SRT "           . Modulate: Local exposure eye adaption strength"		0.45   0.0 10.0 0.05
+#pragma parameter BLOOM_EYE_INERTIA  "           . Modulate: Time before eye adaption starts"		1500  10.0 10000 50.0
+#pragma parameter BLOOM_OVER_WHITE   "           . Modulate: Strength on bright areas (0 = aura)"		0.5  0.0 1.0  0.05
+#pragma parameter BLOOM_HALATION_MIX "        Halation strength" 						0.0  0.0 2.0 0.05
 #pragma parameter BLOOM_BYPASS       "        Bypass/Solo (1=Unmodulated, 2=Modulated)"			0.0  0.0 2.0  1.0
 #pragma parameter LABEL0022 " " 0 0 0 1
 
@@ -596,7 +598,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter BEZEL_CON           "        Contrast"				1.3   0.0  10.0 0.01
 #pragma parameter BEZEL_RFL_ZOOM      "        Reflections zoom"			0.05   -1.5 0.5 0.01
 #pragma parameter BEZEL_REFL_STRENGTH "        Reflections strength"			0.5    0.0 2.0 0.01
-#pragma parameter BEZEL_CORNER_DARK   "        Less reflections in corners"		0.8    0.0 1.0 0.05
+#pragma parameter BEZEL_CORNER_DARK   "        Less reflections in corners"		0.75    0.0 1.0 0.05
 #pragma parameter BEZEL_RFL_BLR_SHD   "        Reflections sharpness"			-0.2  -1.5 0.8 0.01
 #pragma parameter BEZEL_ROUGHNESS     "            Inner surface roughness"			1.0    0.0 5.0 0.1
 #pragma parameter BEZEL_RFL_CONTRAST  "            Inner shadows contrast"			 	1.0    -1.0 2.0 0.1
@@ -659,7 +661,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter LABEL0064     "    !! Parameters application delayed when using DeltaRender"	0 0 0 1
 //V_SIZE has to be greater than 1/pi (0.318)
 #pragma parameter V_SIZE	 "        Size"					0.7  0.32  5.0  0.01 
-#pragma parameter V_SHAPE	 "        Pillow/Tube (<0.0: tube, near 0.0: pillow)"	1.0  -1.0  1.0  0.01
+#pragma parameter V_SHAPE	 "        Pillow/Tube: <0.0=tube, near 0.0=pillow (bad with TILT)"	1.0  -1.0  1.0  0.01
 #pragma parameter UNIFORMITY "     Screen brightness uniformity"	0.95  0.80  1.0  0.01
 
 #pragma parameter DO_SPOT	"★ Spot enable? (sp) ==>"		0.0   0.0   1.0 1.0
