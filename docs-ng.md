@@ -130,6 +130,14 @@ However nice effects may be obtained (eg: with vector games). <br>
                                may produce posterization effects.
 
 
+** Fake Transparencies blending:**<br>
+    Detect vertical patterns used in some games to
+    fake transparent colors and blends them.
+    (eg Sonic waterfalls or Kirby's dreamland 3 water)
+    
+    Overridden X(Y)-sharpness: The lower, the blurrier.
+    
+    
 **CVBS: NTSC color artifacts:**<br>
     Emulate typical NTSC color artifacting<br>
     It is able to emulate straight rainbowing effects as seen on Megadrive<br>
@@ -159,16 +167,15 @@ However nice effects may be obtained (eg: with vector games). <br>
 		Switch bandwidths to match different standards.
 	Strength
 		Self explanatory.
-	Size
-		Maximum bleed size.
-	Falloff
+	Size/Quality
+		Maximum bleed size (the higher, the slower).
+	Shrpness
 		The bleed falloff speed.
 
 
 **CVBS: Dot crawl**<br>
     Emulates rolling chroma->luma crosstalks observed in composite signals.<br>
     
-    Colorspace: You can switch between pal and ntsc behaviour.
     Speed:
         Lower absolute values gives a more visible effect.
         A negative value will switch to verically crawling artifacts.
@@ -204,13 +211,6 @@ However nice effects may be obtained (eg: with vector games). <br>
     Uniform noise: Balanced noise that ranges from -x to +x.
     Snow noise: Sparkling/Rarefied noise 
         
-**Megadrive fake transparencies:**<br>
-    Detect patterns used in some Megadrive/Genesis games to
-    fake transparent colors and blends them.
-    
-    Overridden X(Y)-sharpness: The lower, the blurrier.
-
-
         
 **Glow/Blur:**<br>
 	Blur the image and/or embolds bright pixels.
@@ -219,6 +219,7 @@ However nice effects may be obtained (eg: with vector games). <br>
         Higher negative values -> more glow : brighter colors expands over darker ones.
         Higher positive values -> means blur: all the colors are blurred.
         0.0 means no blur, no glow.
+        Please note that this always reverts to full blur (1.0) when using "Fake transparencies/blending" feature
     Glow spread amount:
         The higher, the more the bright colors will smoothly expand.
         It emulates the natural antialiasing you see on CRTs on bright areas.
@@ -240,6 +241,7 @@ However nice effects may be obtained (eg: with vector games). <br>
     Warped Dynamics:
         Change the amount of warpsharp applied based on the contrast between 
         nearby pixels, thereby altering their "Warped" shape.
+
 
 
 **Tate mode (use horizontal scanlines):**<br>
@@ -505,39 +507,22 @@ However nice effects may be obtained (eg: with vector games). <br>
     So you can use this to restore the brightness and color saturation<br>
     loss when using features like scanlines, darklines or RGB masks.<br>
     
-    (Halo): Pre-attenuate input signal gain to 1x:
+    Pre-attenuate input signal gain to 1x:
         Nullifies the input gain applied in the color correction section.
         This way the halo effect will be consistent and will not depend on 
         it, avoiding hard to manage cascading effects.
-    (Halo): Strength (negative = 10x precision)
+    Strength (negative = 10x precision)
         The effect strength.
         Negative values are interpreted as positive ones, divided by 10,
         when fine tuning is needed.
-    (Halo): Sharpness
+    Sharpness
         The lower, the wider the halo.
-    (Halo): Gamma in
+    Gamma in
         Act like a soft treshold; the higher, the less the darker colors
         will be "haloed"
-    (Halo): Gamma out
+    Gamma out
         Post-gamma correction applied to the halo.
-    Mask Helper: Additional brighness if horizontal mask clips
-        This function will add more color to the subpixel mask (eg: RGB, RBGX...)
-        when it is unable to reach the enough brightness.
-        This will allow to fully exploit subpixel mask capacity while retaining
-        the desidered brightness.
-        Please note that a well calibrated monitor is needed.
-        
-        How to Use Mask Helper:
-        -----------------------
-            Adjust "Input signal gain" based on mask size:
-               ~2.0..3.0 for 2-sized (gm, wx)
-               ~3.0..4.0 for 3-sized (gmx, rgb,rbg)
-               ~4.0..5.0 for 4-sized (rgbx, rbgx)
-                
-            Activate the "Horizontal mask" parameter.
-               Set "Phosphors width Min, Max" to the minimum.
-               Set "Phosphors width min->max gamma" to the maximum.
-               
+    
     Light up scanline gaps and dot grid gaps too:
         Theoretically Halo has to be applied
         "over" everything, because that is the way it works in nature.
@@ -551,33 +536,35 @@ However nice effects may be obtained (eg: with vector games). <br>
     By using this effect and playing with its parameters, you can achieve funny<br>
     or even artistic results.<br>
     
-    Bloom strength:
+    Strength:
         Modulates between the original images and the bloomed one.
-    Bloom Radius:
+    Radius:
         Controls how much the bloom has to be wide.
-    Bloom Quality:
+    Quality:
         How much the shape of the bloomed picture will reflect the original one.
-    Bloom Input Gamma (threshold):
+    Input Gamma (threshold):
         Use this as a threshold to control how much a pixel has to be bright
         to produce a bloom effect.
-    Bloom Output Gamma (contour smoothness):
+    Output Gamma (contour smoothness):
         Lowering it will make the bloom contour more pronunced.
         Handy to simulate well defined "Aura" effects.
-    Bloom Power multiplier:
-        Just apply a gain to the final bloom.
-    Modulate: Local exposure eye adaption strength
-        Simulate the process through which the pupil adapt itself to different
-        light conditions.
-    Modulate: Strength on bright areas (0 = aura)
+    Power/Vibrance multiplier:
+        Push bloom vibrance/saturation and gain.
+    Target strength over narrow bright areas
         Since the light produced by the bloom effect is added to the underlying
         image, it can produce clipping effects on the already bright areas.
         This is actually an hack that will avoid to bloom them.
+    Reduce bloom strength over wide bright areas
+        Lower bloom strength on wide bright areas.
+    Push dark/mid bloom shades visibility (safe range: 0-1)
+        By using a a soft Roll-off curve, this causes the darker to mid bloom shades 
+        to be more visible and pronounced, while rolling off the intensity of the brightest areas.
+        Use with caution for values > 1.0, because mid bloom tones will becomes brighter than bright ones.
     Halation strength:
         Emulates a very wide halo from light scattering in CRT glass.
-    Bypass/Solo:
+        Since the implementation targets a good looking image, it is heavily tweaked and so not accurate.
+    Solo:
         See how the bloom and halation image look without the main content.
-        Use 1.0 to see naked bloom without any modulation applied
-        Use 2.0 to see naked bloom with modulation applied 
 
 **Curvature:**<br>
     Emulates a curved CRT display.<br>

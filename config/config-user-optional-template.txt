@@ -201,6 +201,11 @@
 // #define DEDITHER_STRENGTH2  0.0      //         Extensive search strength
 
 
+// #define DO_WTFL 0.0                  // ★ Megadrive fake transparencies enable?
+// #define WTFL_SHARPNESS 0.6           //         Overridden X-sharpness
+// #define WTFL_THRESHOLD 1.0           //         Detection threshold
+
+
 // #define DO_NTSC_ARTIFACTS  0.0       // ★ CVBS: NTSC color artifacts enable? 
 // #define NTSC_MIX  0.5                //         Strength
 // #define NTSC_FILTER_WIDTH  17.0      //         Filter width
@@ -214,11 +219,10 @@
 // #define DO_SAT_BLEED  0.0            // ★ CVBS: Bandwidth limited chroma enable?
 // #define SAT_BLEED_PAL  0.0           //         Colorspace (NTSC, PAL)
 // #define SAT_BLEED_STRENGTH  1.0      //         Strength
-// #define SAT_BLEED_SIZE  5.0          //         Size (capped to 5.0 in d3d)
-// #define SAT_BLEED_FALLOFF  1.7       //         Falloff
+// #define SAT_BLEED_SIZE  5.0          //         Size/Quality (capped to 5.0 in d3d)
+// #define SAT_BLEED_FALLOFF  1.7       //         Sharpness
 
 // #define DOT_C 0.0                    // ★ CVBS: Dot crawl
-// #define DOT_C_YUV 0.0                //         Colorspace (NTSC, PAL)
 // #define DOT_C_SPEED 8.0				//         Speed
 
 // #define DO_PPERSISTENCE  0.0         // ★ Persistence of phosphors enable?
@@ -228,6 +232,7 @@
 
 // #define DO_SHIFT_RGB  1.0           // ★ Deconvergence enable?
 // #define OFFSET_STRENGTH  0.3        //         Strength
+
 
 // #define DECON_RX 0.0                   // Red x offset
 // #define DECON_RY -1.0                  // Red y offset
@@ -239,13 +244,11 @@
 // #define EDGE_DEFOCUS_DO_BLUR 0.0       // Blur screen edges
 // #define EDGE_DEFOCUS_AREA_INV 0.4      // Focused Area
 
+
 // #define SHIFT_R  -20.0              //         Red offset
 // #define SHIFT_G  0.0                //         Green offset
 // #define SHIFT_B  20.0               //         Blue offset
 
-// #define DO_WTFL 0.0                  // ★ Megadrive fake transparencies enable?
-// #define WTFL_SHARPNESS 0.6           //         Overridden X-sharpness
-// #define WTFL_THRESHOLD 1.0           //         Detection threshold
 
 // #define DO_IN_GLOW  1.0             // ★ Glow/Blur enable?
 // #define IN_GLOW_BIAS  1.0           //         Glow to blur bias
@@ -329,14 +332,13 @@
 // #define DOT_M_SHADOW_OFF  0.0  //            . Shadow offset
 
 
-// #define DO_HALO  1.0            // ★ Halo or mask helper enable?
-// #define HALO_NO_PREGAIN  1.0    //         Halo: Pre-attenuate input signal gain to 1x
-// #define HALO_POWER  0.5         //         Halo: Strength (negative = 10x precision)
-// #define HALO_SHARPNESS  6.5     //         Halo: Sharpness
-// #define HALO_GAMMA  2.0         //         Halo: Gamma in: Higher -> less halo on dark colors
-// #define HALO_GAMMA_OUT  1.0     //         Halo: Gamma out
-// #define HALO_DO_MASK_HELPER 0.0 //         Additional brighness if horizontal mask clips
-// #define HALO_VS_SCAN  0.7       //         Light up scanline gaps and dot grid gaps too
+// #define DO_HALO  1.0            // ★ Halo enable?
+// #define HALO_NO_PREGAIN  1.0    //        Pre-attenuate input signal gain to 1x
+// #define HALO_POWER  0.5         //        Strength (negative = 10x precision)
+// #define HALO_SHARPNESS  6.5     //        Sharpness
+// #define HALO_GAMMA  2.0         //        Gamma in: Higher -> less halo on dark colors
+// #define HALO_GAMMA_OUT  1.0     //        Gamma out
+// #define HALO_VS_SCAN  0.7       //        Light up scanline gaps and dot grid gaps too
 
 
 // #define DO_BLOOM  1.0             // ★ Bloom enable?
@@ -346,12 +348,12 @@
 // #define BLOOM_GAMMA  8.0          //         Gamma in (threshold)
 // #define BLOOM_GAMMA_OUT  1.2      //         Gamma out (contour smoothness)
 // #define BLOOM_POWER  1.20         //         Power multiplier
-// #define BLOOM_HALATION_MIX        //         Halation strength
-// #define BLOOM_EYE_ADPT_SRT  0.6   //         Modulate: Local exposure eye adaption strength
-// #define BLOOM_EYE_INERTIA  750    //         Modulate: Time before eye adaption starts
-// #define BLOOM_OVER_WHITE  0.5     //         Modulate: Strength on bright areas (0 = aura)
+// #define BLOOM_HALATION_MIX 0.4    //         Halation strength
+// #define BLOOM_OVER_WHITE  0.5     //         Target strength over narrow bright areas
+// #define BLOOM_EYE_ADPT_SRT  0.6   //         Reduce bloom strength over wide bright areas
+// #DEFINE BLOOM_SOFT_LIMITER  0.0   //         Use a soft Roll-off curve (safe range: 0-1)
 // #define BLOOM_HALATION_MIX "      //         Halation strength 	
-// #define BLOOM_BYPASS  0.0         //         Bypass/Solo (1=Unmodulated, 2=Modulated)
+// #define BLOOM_BYPASS  0.0         //         Solo
 
 
 // #define DO_CURVATURE  1.0          // ★ Curvature/Corners/Edges enable?

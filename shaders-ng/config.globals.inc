@@ -152,10 +152,6 @@
     #define DOT_C		global.DOT_C
 #endif
 
-#ifndef DOT_C_YUV
-    #define DOT_C_YUV		global.DOT_C_YUV
-#endif
-
 #ifndef DOT_C_SPEED
     #define DOT_C_SPEED		global.DOT_C_SPEED
 #endif
@@ -281,10 +277,6 @@
     #define DO_HALO		global.DO_HALO
 #endif
 
-#ifndef HALO_DO_MASK_HELPER
-    #define HALO_DO_MASK_HELPER		params.HALO_DO_MASK_HELPER
-#endif
-
 #ifndef HALO_SHARPNESS
     #define HALO_SHARPNESS	params.HALO_SHARPNESS
 #endif
@@ -325,8 +317,8 @@
     #define BLOOM_EYE_ADPT_SRT	global.BLOOM_EYE_ADPT_SRT
 #endif
 
-#ifndef BLOOM_EYE_INERTIA
-    #define BLOOM_EYE_INERTIA	global.BLOOM_EYE_INERTIA
+#ifndef BLOOM_SOFT_LIMITER
+    #define BLOOM_SOFT_LIMITER	global.BLOOM_SOFT_LIMITER
 #endif
 
 #ifndef BLOOM_QUALITY

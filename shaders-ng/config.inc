@@ -18,7 +18,6 @@ layout(push_constant) uniform Push {
 	float HALO_GAMMA ;
 	float HALO_GAMMA_OUT;
 	float HALO_VS_SCAN ;
-	float HALO_DO_MASK_HELPER;
 	
 	float DO_BLOOM ; //4
  	float BLOOM_QUALITY ; //1
@@ -62,7 +61,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	
 	float BLOOM_MIX;
 	float BLOOM_EYE_ADPT_SRT;
-	float BLOOM_EYE_INERTIA;
+	float BLOOM_SOFT_LIMITER;
  	float BLOOM_SIZE;
 	float BLOOM_GAMMA;
 	float BLOOM_BYPASS;
@@ -301,7 +300,6 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float RF_NOISE_SPARK;
 	
 	float DOT_C;
-	float DOT_C_YUV;
 	float DOT_C_SPEED;
 	
 	float OriginalAspectRotated;
@@ -376,8 +374,16 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter DEDITHER_TRESHMAX   "        Sensitivity"				1.2	0.0 3.0  0.1
 #pragma parameter DEDITHER_STRENGTH   "        Basic search strength"				0.8	0.0 1.0  0.1
 #pragma parameter DEDITHER_STRENGTH2  "        Extensive search strength"			0.0	0.0 1.0  0.1
-
 #pragma parameter LABEL0006 " " 0 0 0 1
+
+
+// Fake transparency handling
+#pragma parameter DO_WTFL             "★ Fake transparencies blending enable (eg: sonic waterfall)?"    0.0 0.0 1.0 1.0
+#pragma parameter WTFL_SHARPNESS_X      "        Overridden X-sharpness"             0.6 0.35 3.0 0.05
+#pragma parameter WTFL_SHARPNESS_Y      "        Overridden Y-sharpness"             0.6 0.35 3.0 0.05
+//#pragma parameter WTFL_THRESHOLD      "        Detection threshold"                1.0 0.0 2.0 0.01
+#pragma parameter LABEL0057 " " 0 0 0 1
+
 
 // NTSC color artifacting
 #pragma parameter DO_NTSC_ARTIFACTS "★ CVBS: NTSC color artifacts enable? (nt) ==>"	0.0 	0.0 1.0 1.0
@@ -397,12 +403,11 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter DO_SAT_BLEED "★ CVBS: Bandwidth limited chroma enable? (cv) ==>"	0.0 	0.0 1.0 1.0
 #pragma parameter SAT_BLEED_PAL           "        Colorspace (NTSC, PAL)"	0.0 	 0.0 1.0 1.0
 #pragma parameter SAT_BLEED_STRENGTH      "        Strength"						1.0	 0.0 5.0  0.01
-#pragma parameter SAT_BLEED_SIZE          "        Size (capped to 5.0 in d3d)"		5.0  1.0 20.0  1.0
-#pragma parameter SAT_BLEED_FALLOFF  	  "        Falloff"				1.7 	 1.0 2.0 0.01        
+#pragma parameter SAT_BLEED_SIZE          "        Size/quality (capped to 5.0 in d3d)"		5.0  1.0 20.0  1.0
+#pragma parameter SAT_BLEED_FALLOFF  	  "        Sharpness"				1.7 	 1.0 2.0 0.01        
 #pragma parameter LABEL0008 " " 0 0 0 1
 
-#pragma parameter DOT_C      "★ CVBS: Dot crawl ==>"		0.0 	 0.0 2.0 0.01
-#pragma parameter DOT_C_YUV  "        Colorspace (NTSC, PAL)"		0.0 	 0.0 1.0 1.0
+#pragma parameter DOT_C      "★ CVBS: Dot crawl ==>"		0.0 	 0.0 3.0 0.02
 #pragma parameter DOT_C_SPEED "        Speed (<0.0 = vertical)"		10.0 	  -10.0 10.0 0.5 
 #pragma parameter LABEL0056 " " 0 0 0 1
 
@@ -433,18 +438,12 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter RF_NOISE_SPARK    "        Snow noise"				0.07		0.0 1.0 0.01
 #pragma parameter LABEL0005 " " 0 0 0 1
 
-// Megadrive Fake transparency handling
-#pragma parameter DO_WTFL             "★ Megadrive fake transparencies enable?"    0.0 0.0 1.0 1.0
-#pragma parameter WTFL_SHARPNESS_X      "        Overridden X-sharpness"             0.6 0.35 3.0 0.05
-#pragma parameter WTFL_SHARPNESS_Y      "        Overridden Y-sharpness"             0.6 0.35 3.0 0.05
-//#pragma parameter WTFL_THRESHOLD      "        Detection threshold"                1.0 0.0 2.0 0.01
-#pragma parameter LABEL0057 " " 0 0 0 1
 
 // Input Blur / light glowing
 #pragma parameter DO_IN_GLOW               "★ Glow/Blur enable? (gl) ==>"	 					0.0	0.0 1.0 1.0
-#pragma parameter IN_GLOW_BIAS             "        Glow to blur bias"							1.0     0.0 1.0 0.1
-#pragma parameter IN_GLOW_SPREAD           "        Glow light gain"		0.6 	0.0 4.0 0.05
-#pragma parameter IN_GLOW_SPREAD_SHARPNESS "        Glow light sharpness"	2.0 	0.01 2.0 0.01
+#pragma parameter IN_GLOW_BIAS             "        Glow to blur bias (Ignored with Fake transparencie)"	1.0     0.0 1.0 0.1
+#pragma parameter IN_GLOW_SPREAD           "        .  Glow light gain"		0.6 	0.0 4.0 0.05
+#pragma parameter IN_GLOW_SPREAD_SHARPNESS "        .  Glow light sharpness"	2.0 	0.01 2.0 0.01
 #pragma parameter IN_GLOW_W                "        Sharp X (neg=use BOX unsharp)"		2.5	-2.0 7.0 0.05
 #pragma parameter IN_GLOW_H                "        Sharp Y (neg=use BOX unsharp)"		2.5	-2.0 7.0 0.05
 #pragma parameter IN_GLOW_WARPSHARP_X      "        Warped glow (X)"               0.4  0.0 2.0 0.01
@@ -549,32 +548,30 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 
 // Halo
-#pragma parameter DO_HALO             "★ Halo or Mask helper enable? (ha) ==>" 						0.0	0.0 1.0 1.0
-#pragma parameter HALO_NO_PREGAIN     "     Halo: Pre-attenuate input signal gain to 1x"	0.0		0.0	1.0	1.0
-#pragma parameter HALO_POWER          "     Halo: Strength (negative = 10x precision)"	0.9 	-50.0  5.0 0.01
-#pragma parameter HALO_SHARPNESS      "     Halo: Sharpness"					3.00	0.05   7.0 0.05
-#pragma parameter HALO_GAMMA          "     Halo: Gamma in: Higher -> less halo on dark colors"	2.0 	1.0  10.0 0.05
-#pragma parameter HALO_GAMMA_OUT      "     Halo: Gamma out"	 1.0	0.25  4.0 0.05
-#pragma parameter HALO_DO_MASK_HELPER "     Mask helper: Additional brighness if horizontal mask clips" 	0.0	0.0 1.0 0.05 
-#pragma parameter LABEL_HALO_HELP     "         (Mask helper: read docs-ng.md for help)" 	0 0 0 1
-#pragma parameter HALO_VS_SCAN        "     Both: Light scanlines and dot grid gaps"				0.0	0.0  1.0  0.01
+#pragma parameter DO_HALO             "★ Halo enable? (ha) ==>" 						0.0	0.0 1.0 1.0
+#pragma parameter HALO_NO_PREGAIN     "     Pre-attenuate input signal gain to 1x"	0.0		0.0	1.0	1.0
+#pragma parameter HALO_POWER          "     Strength (negative = 10x precision)"	0.9 	-50.0  5.0 0.01
+#pragma parameter HALO_SHARPNESS      "     Sharpness"					3.00	0.05   7.0 0.05
+#pragma parameter HALO_GAMMA          "     Gamma in: Higher -> less halo on dark colors"	2.0 	1.0  10.0 0.05
+#pragma parameter HALO_GAMMA_OUT      "     Gamma out"	 1.0	0.25  4.0 0.05
+#pragma parameter HALO_VS_SCAN        "     Light scanlines and dot grid gaps"				0.0	0.0  1.0  0.01
 #pragma parameter LABEL0021 " " 0 0 0 1
 
 
 
 // Bloom
 #pragma parameter DO_BLOOM           "★ Bloom/Halation enable? (bl) ==>" 						0.0  0.0  1.0  1.0
-#pragma parameter BLOOM_MIX          "        Bloom Strength"					0.45 0.0 1.0  0.01
-#pragma parameter BLOOM_SIZE         "           . Radius"							4.0  0.25 30.0 0.25
-#pragma parameter BLOOM_QUALITY      "           . Quality: more is better but slower"			1.0  1.0 8.0 1.0
-#pragma parameter BLOOM_GAMMA        "           . Gamma in (threshold)"					8.0  1.0 10.0 0.5
-#pragma parameter BLOOM_GAMMA_OUT    "           . Gamma out (contour smoothness)"				1.0  0.1 10.0 0.1
-#pragma parameter BLOOM_POWER        "           . Power/Vibrance multiplier"						1.5  0.5 20.0 0.05  
-#pragma parameter BLOOM_EYE_ADPT_SRT "           . Modulate: Local exposure eye adaption strength"		0.45   0.0 10.0 0.05
-#pragma parameter BLOOM_EYE_INERTIA  "           . Modulate: Time before eye adaption starts"		1500  10.0 10000 50.0
-#pragma parameter BLOOM_OVER_WHITE   "           . Modulate: Strength on bright areas (0 = aura)"		0.5  0.0 1.0  0.05
-#pragma parameter BLOOM_HALATION_MIX "        Halation strength" 						0.0  0.0 2.0 0.05
-#pragma parameter BLOOM_BYPASS       "        Bypass/Solo (1=Unmodulated, 2=Modulated)"			0.0  0.0 2.0  1.0
+#pragma parameter BLOOM_MIX          "     Bloom Strength"					0.45 0.0 1.0  0.01
+#pragma parameter BLOOM_SIZE         "       . Radius"							4.0  0.25 30.0 0.25
+#pragma parameter BLOOM_QUALITY      "       . Quality: more is better but slower"			1.0  1.0 8.0 1.0
+#pragma parameter BLOOM_GAMMA        "       . Gamma in (threshold)"					8.0  1.0 10.0 0.5
+#pragma parameter BLOOM_GAMMA_OUT    "       . Gamma out (contour smoothness)"				1.0  0.1 10.0 0.1
+#pragma parameter BLOOM_POWER        "       . Power/Vibrance multiplier"						1.5  0.5 20.0 0.05  
+#pragma parameter BLOOM_OVER_WHITE   "       . Target strength on narrow bright areas"		0.5  0.0 1.0  0.05
+#pragma parameter BLOOM_EYE_ADPT_SRT "       . Reduce bloom strength on wide bright areas"		0.45   0.0 10.0 0.05
+#pragma parameter BLOOM_SOFT_LIMITER "       . Push dark/mid bloom shades (safe range: 0-1)"		0.0   0.0 10.0 0.1
+#pragma parameter BLOOM_HALATION_MIX "     Halation strength" 						0.3  0.0 2.0 0.05
+#pragma parameter BLOOM_BYPASS       "     Solo"			0.0  0.0 1.0  1.0
 #pragma parameter LABEL0022 " " 0 0 0 1
 
 
