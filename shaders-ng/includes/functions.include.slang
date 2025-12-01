@@ -512,7 +512,7 @@ vec2 apply_fuzzy_main_pass_stage_1() {
 	color_out = pow(color_out,IN_GLOW_GAMMA);
 	
 	if (DO_CCORRECTION == 1.0) {
-		color_out *= IN_GLOW_POWER;
+		color_out *= clamp(IN_GLOW_POWER, 0.0, 3.0);
 	}
 
 
@@ -559,7 +559,7 @@ vec2 apply_fuzzy_main_pass_stage_1_no_gamma_in() {
 	gamma_out = gamma_out * GAMMA_OUT;
 
 	if (DO_CCORRECTION == 1.0) {
-		color_out = color_out * IN_GLOW_POWER;
+		color_out = color_out * clamp(IN_GLOW_POWER, 0.0, 3.0);
 	}
 	
 	if (DO_PIXELGRID == 1.0) {
@@ -655,7 +655,7 @@ vec2 zoomout_coords(vec2 in_coords, float zoom_out) {
 
 bool need_doublescan() {
 	return (PIXELGRID_DOUBLESCAN == 1.0) && 
-	       (params.OriginalSize.y < MIN_LINES_INTERLACED) ;
+	       (params.OriginalSize.y < MIN_LINES_INTERLACED|| MIN_LINES_INTERLACED == 0.0);
 }
 
 bool is_interlaced() {
@@ -1493,24 +1493,6 @@ vec3 kelvin2rgb(float k) {
 	return pixel_out/255.0;
 }
 
-vec3 adaptive_black(vec3 c_in, float lum_in, float range) {
-	//the less the brightness, the less the gamma.
-	
-	float contrast = mix(range*0.5, 0.0, pow(lum_in*8, 0.25));
-	contrast = clamp(contrast,0.0,1.0);
-	return apply_contrast_brightness(c_in, -contrast , +contrast);
-	
-	
-	
-	
-	
-	/*
-	float luminance_adapt = mix( 1-range, 1+range, lum_in);
-	return c_in * luminance_adapt - luminance_adapt + 1;
-	return fma(c_in, vec3(luminance_adapt), vec3(-luminance_adapt + 1)); //ASM_PROOF: SAME
-	*/
-	
-}
 
 vec3 color_tools(vec3 pixel_out, vec3 Temperature_rgb) {
 	//Apply color corrections to input signal.
@@ -1843,4 +1825,68 @@ vec3 soft_limiter01_chroma_safe(vec3 in_color, float m, float knee) {
 	limited = clamp(limited, 0,1);
     float scale_factor = limited / c_max;
     return in_color * scale_factor;
+}
+
+vec3 adaptive_black(vec3 c, float lum_in, float range, bool dark_crush) {	
+	return scale_to_range_vec3(c, -lum_in*range,1.0);
+}
+
+vec2 get_zooms_modifier(float do_tate, bool bNeed_NO_integer_scale, bool isrotated, float in_aspect) {
+    // This function is meant to live in vertex shader; its purpose is to
+    // give the final scale factor by taking in consideration various zoom modifiers.
+    //It works by calculating the new 0.0 and 1.0 coords then measuring the new distance between them
+
+    // WARNING: This has to be in sync with the code, so everytime a scaling flow is modified, this needs to be updated. WARNING
+    // WARNING: This has to be in sync with the code, so everytime a scaling flow is modified, this needs to be updated. WARNING
+    // WARNING: This has to be in sync with the code, so everytime a scaling flow is modified, this needs to be updated. WARNING
+
+    vec2 co_scaled_min = vec2(0.0);
+    vec2 co_scaled_max = vec2(1.0);
+
+    if ( bNeed_NO_integer_scale ) {
+        co_scaled_min = get_scaled_coords_aspect(co_scaled_min, global.FinalViewportSize, in_aspect, isrotated);
+        co_scaled_max = get_scaled_coords_aspect(co_scaled_max, global.FinalViewportSize, in_aspect, isrotated);
+    } else {
+        co_scaled_min = integer_scale(co_scaled_min, in_aspect, isrotated, do_tate, GAME_GEOM_INT_SCALE-1.0 );
+        co_scaled_max = integer_scale(co_scaled_max, in_aspect, isrotated, do_tate, GAME_GEOM_INT_SCALE-1.0 );
+    }
+
+    //Other zoom modifiers allowed only without integer scaling.
+    if ( bNeed_NO_integer_scale ) {
+        co_scaled_min = (zoom(co_scaled_min + vec2(-GLOBAL_OFFX, -GLOBAL_OFFY), GLOBAL_ZOOM ) * DO_GLOBAL_SHZO) +
+                    (co_scaled_min * (1-DO_GLOBAL_SHZO) );
+        co_scaled_max = (zoom(co_scaled_max + vec2(-GLOBAL_OFFX, -GLOBAL_OFFY), GLOBAL_ZOOM ) * DO_GLOBAL_SHZO) +
+                    (co_scaled_max * (1-DO_GLOBAL_SHZO) );
+        if (DO_GAME_GEOM_OVERRIDE == 1.0) {
+            co_scaled_min = content_geom_override_zoom(co_scaled_min, GAME_GEOM_ASPECT, in_aspect, GAME_GEOM_VSHIFT, GAME_GEOM_HSHIFT, GAME_GEOM_ZOOM);
+            co_scaled_max = content_geom_override_zoom(co_scaled_max, GAME_GEOM_ASPECT, in_aspect, GAME_GEOM_VSHIFT, GAME_GEOM_HSHIFT, GAME_GEOM_ZOOM);
+        }
+    }
+    
+
+
+    //vfprintvalue = 1/(co_scaled_max.y - co_scaled_min.y);
+    return 1 / vec2(co_scaled_max.x - co_scaled_min.x,
+                co_scaled_max.y - co_scaled_min.y );
+
+}
+
+
+bool fn_very_lowres_y (vec2 out_size_xy, vec4 ori_size, float do_tate, bool bIsRotated, bool bInteger_scaled, float in_aspect, float scanline_period) {
+	bool very_lowres_y = false;
+	if ( !bInteger_scaled ) {
+	vec2 zoom_modifier = get_zooms_modifier(do_tate, bInteger_scaled, bIsRotated, in_aspect);
+	if (do_tate == 1.0) {
+		out_size_xy.xy = out_size_xy.yx;
+		ori_size.xyzw = ori_size.yxwz;
+		zoom_modifier.xy = zoom_modifier.yx;
+	}
+	if (need_doublescan()) ori_size.yw*=vec2(2.0, 1/2.0); //double period?
+	ori_size.y*=scanline_period; //helve period?
+	float OutputHeightZoomed = out_size_xy.y*zoom_modifier.y;
+	float screen_core_ratio = OutputHeightZoomed / ori_size.y;
+	if (screen_core_ratio < MIN_SCREEN_CORE_RATIO)
+		very_lowres_y = true;
+	}
+	return very_lowres_y;
 }

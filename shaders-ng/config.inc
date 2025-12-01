@@ -234,11 +234,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float PIXELGRID_INTR_FLICK_POWR;
 	float PIXELGRID_INTR_DISABLE_Y;
 	float PIXELGRID_INTR_PAST_FIELD;
-	
-	float PIXELGRID_DECON_R_H;
-	float PIXELGRID_DECON_G_H;
-	float PIXELGRID_DECON_B_H;
-	
+		
 	float PIXELGRID_Y_MASK;
 	float PIXELGRID_Y_MASK_ON_WHITE;
 	float PIXELGRID_Y_MASK_HEIGHT;
@@ -352,7 +348,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter LUMINANCE      "       Luminance push (>1.0=clip)"		0.0	 0.0 1.5 0.05
 #pragma parameter BRIGHTNESS     "       Brightness in   (0.0=off)"		0.0	-1.0 1.0 0.01
 #pragma parameter CONTRAST       "       Contrast in     (0.0=off)"		0.0	-1.0 1.0 0.01
-#pragma parameter ADAPTIVE_BLACK "       Adaptive black level range"	0.0 0.0  1.0 0.01
+#pragma parameter ADAPTIVE_BLACK "       CRT Black crush"	0.0 0.0  2.0 0.1
 #pragma parameter TEMPERATURE    "       Temperature in (6500=off)"		6500.0	3000 14000.0 50.0
 #pragma parameter COLOR_MONO_COLORIZE	"       Monochrome screen colorization"	0.0  0.0 1.0 0.1
 #pragma parameter COLOR_MONO_HUE1       "          . Hue bright"					0.25 0.0 1.0 0.01
@@ -420,12 +416,12 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 //Deconvergence
 #pragma parameter DO_SHIFT_RGB       "★ Deconvergence/Defocus enable? (de) ==>"	0.0	 0.0 1.0 1.0
 #pragma parameter OFFSET_STRENGTH  "        Strength"			0.6 	 0.0 1.0 0.05
-#pragma parameter DECON_RX         "        Red x offset"	    0.0 -50.0 50.0 0.25
-#pragma parameter DECON_RY         "        Red y offset"	   -1.0 -50.0 50.0 0.25
-#pragma parameter DECON_GX         "        Green x offset"		1.0 -50.0 50.0 0.25
-#pragma parameter DECON_GY         "        Green y offset"		0.0 -50.0 50.0 0.25
-#pragma parameter DECON_BX         "        Blue x offset"		0.0 -50.0 50.0 0.25
-#pragma parameter DECON_BY         "        Blue y offset"		1.0 -50.0 50.0 0.25
+#pragma parameter DECON_RX         "        Red x offset"	    0.0 -5.0 5.0 0.05
+#pragma parameter DECON_RY         "        Red y offset"	   -1.6 -5.0 5.0 0.05
+#pragma parameter DECON_GX         "        Green x offset"		1.0 -5.0 5.0 0.05
+#pragma parameter DECON_GY         "        Green y offset"		0.0 -5.0 5.0 0.05
+#pragma parameter DECON_BX         "        Blue x offset"		0.0 -5.0 5.0 0.05
+#pragma parameter DECON_BY         "        Blue y offset"		1.6 -5.0 5.0 0.05
 #pragma parameter EDGE_DEFOCUS              "         . Deconvergence increases near edges (1=no increase)" 2.0 1.0 10.0 0.1
 #pragma parameter EDGE_DEFOCUS_DO_BLUR      "         . Blur screen edges" 0.0 0.0 1.0 0.01
 #pragma parameter EDGE_DEFOCUS_AREA_INV     "         . Focused Area" 0.4 0.0 0.5 0.01
@@ -486,9 +482,6 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter PIXELGRID_NO_INTERBLEED_H	  "         . Inter line extra steepness (1.0 to disable)"	1.0 1.0 11.0 0.1
 #pragma parameter PIXELGRID_OFFSET_CORE       "         . Slotmask(fake) offset" 0.0 0.0 1.0 0.01
 #pragma parameter PIXELGRID_OFFSET_CORE_W     "           . Slotmask(fake) width override (0=no override)"  0.0 0.0 4.0 1.0
-#pragma parameter PIXELGRID_DECON_R_H         "         . Deconvergence Y: R phosphor" 0.0 -1.6 1.6 0.1
-#pragma parameter PIXELGRID_DECON_G_H         "         . Deconvergence Y: G phosphor" 0.0 -1.6 1.6 0.1
-#pragma parameter PIXELGRID_DECON_B_H       "         . Deconvergence Y: B phosphor" 0.0   -1.6 1.6 0.1
 #pragma parameter PIXELGRID_H_DEDOT			"         . Dedot mask between scanlines (use only if needed!)"	0.0 0.0 2.0 0.1
 
 #pragma parameter LABEL0016 " " 0 0 0 1
@@ -598,7 +591,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter BEZEL_CORNER_DARK   "        Less reflections in corners"		0.75    0.0 1.0 0.05
 #pragma parameter BEZEL_RFL_BLR_SHD   "        Reflections sharpness"			-0.2  -1.5 0.8 0.01
 #pragma parameter BEZEL_ROUGHNESS     "            Inner surface roughness"			1.0    0.0 5.0 0.1
-#pragma parameter BEZEL_RFL_CONTRAST  "            Inner shadows contrast"			 	1.0    -1.0 2.0 0.1
+#pragma parameter BEZEL_RFL_CONTRAST  "            Inner shadows contrast"			 	1.0    -1.0 2.0 0.05
 #pragma parameter BEZEL_DIFFUSION_STR "        Diffusion strength"             0.2     0.0 1.0 0.01
 #pragma parameter BEZEL_SPCL_STRENGTH "        Specularity strength"			0.5    0.0 3.0 0.05
 #pragma parameter BEZEL_LIGHT_NO_FADEOUT "        Light fadeout distance"		0.5    0.0 1.0 0.01

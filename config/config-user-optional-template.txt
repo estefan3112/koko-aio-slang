@@ -177,7 +177,7 @@
 // #define LUMINANCE  0.2               //        Luminance push
 // #define BRIGHTNESS  0.0              //        Brightness in
 // #define CONTRAST  0.0                //        Contrast in
-// #define ADAPTIVE_BLACK 0.1           //        Adaptive Black level range
+// #define ADAPTIVE_BLACK 0.1           //        CRT Black crush
 // #define TEMPERATURE  7700.0          //        Temperature in (6500=off)
 // #define COLOR_MONO_COLORIZE  0.0     //        Monochrome screen colorization
 // #define COLOR_MONO_HUE1  0.25        //        . Hue bright
@@ -287,9 +287,6 @@
 // #define PIXELGRID_NO_INTERBLEED_H  1.0    //          . Inter line extra steepness (1.0 to disable)
 // #define PIXELGRID_OFFSET_CORE   0.0       //          . Slotmask(fake) offset
 // #define PIXELGRID_OFFSET_CORE_W 0.0       //            . Slotmask(fake) width override (0=no override)
-// #define PIXELGRID_DECON_R_H  0.0          //          . Deconvergence Y: R phosphor
-// #define PIXELGRID_DECON_G_H  0.0          //          . Deconvergence Y: G phosphor
-// #define PIXELGRID_DECON_B_H  0.0          //          . Deconvergence Y: B phosphor
 // #define PIXELGRID_H_DEDOT  0.0            //          . Dedot mask between scanlines (use only if needed!)
 
 // #define DO_PIXELGRID_W  1.0         //       ★ Horizontal mask (0 to disable)
