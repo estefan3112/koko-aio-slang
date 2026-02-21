@@ -1,0 +1,22 @@
+#reference "../../shaders/shaders_slang/bezel/koko-aio/Presets-ng/Monitor-Ambilight-immersive.slangp"
+GEOM_WARP_Y = "0.949999"
+GEOM_CORNER_SIZE = "0.020000"
+BEZEL_FRAME_ZOOM = "0.180000"
+BEZEL_R = "-0.250000"
+BEZEL_G = "-0.255000"
+BEZEL_B = "-0.250000"
+GLOBAL_OFFX = "-0.003000"
+GLOBAL_OFFY = "0.011500"
+GLOBAL_ZOOM = "0.657493"
+BG_IMAGE_OFFY = "0.000000"
+BG_IMAGE_ZOOM = "1.000000"
+BG_IMAGE_NIGHTIFY = "0.550000"
+bg_under = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/rtype2.png"
+bg_over = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/rtype2.png"
+
+// Credits
+// shader by kokoko3k - https://github.com/kokoko3k/koko-aio-slang
+// Scanned and cleaned marquee provided by muddymusic
+// Vectored instruction card provided by Ars Invictus
+// Plastic bezel by N.I.B.
+// preset and artwork adjustments by estefan3112 - https://github.com/estefan3112/koko-aio-slang
