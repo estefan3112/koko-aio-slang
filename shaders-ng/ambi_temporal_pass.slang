@@ -14,19 +14,19 @@
 #pragma stage vertex
 layout(location = 0) in vec4 Position;
 layout(location = 1) in vec2 TexCoord;
-layout(location = 0) out vec2 vTexCoord;
-layout(location = 1) out float vLedBorder_min;
-layout(location = 2) out float vLedBorder_max;
-layout(location = 3) out float vLed_step;
-layout(location = 4) out float lod;
-layout(location = 5) out vec2 pre_pass_coords;
-layout(location = 6) out float vIs_rotated;
-layout(location = 7) out float vAMBI_STRETCH;
-layout(location = 8) out float vAMBI_POWER;
-layout(location = 9) out float vSmpBorder_min;
-layout(location = 10) out float vSmpBorder_max;
-layout(location = 11) out float vSmp_step;
-layout(location = 12) out float vMod_FrameCount_FrameDivider;
+layout(location = 0) noperspective out vec2 vTexCoord;
+layout(location = 1) flat out float vLedBorder_min;
+layout(location = 2) flat out float vLedBorder_max;
+layout(location = 3) flat out float vLed_step;
+layout(location = 4) flat out float lod;
+layout(location = 5) noperspective out vec2 pre_pass_coords;
+layout(location = 6) flat out float vIs_rotated;
+layout(location = 7) flat out float vAMBI_STRETCH;
+layout(location = 8) flat out float vAMBI_POWER;
+layout(location = 9) flat out float vSmpBorder_min;
+layout(location = 10) flat out float vSmpBorder_max;
+layout(location = 11) flat out float vSmp_step;
+layout(location = 12) flat out float vMod_FrameCount_FrameDivider;
 
 void main() {
     gl_Position = global.MVP * Position;
@@ -87,10 +87,15 @@ void main() {
             else
         pre_pass_coords = integer_scale(TexCoord, in_aspect, isrotated, Do_Tate, GAME_GEOM_INT_SCALE-1.0 ) ;
 
-    if (bNeed_NO_integer_scale) {
-        if (DO_GLOBAL_SHZO >0.5)
-            pre_pass_coords = zoom(pre_pass_coords + vec2(-GLOBAL_OFFX, -GLOBAL_OFFY), GLOBAL_ZOOM );
 
+    if (DO_GLOBAL_SHZO >0.5) {
+        if (bNeed_NO_integer_scale)
+            pre_pass_coords = zoom(pre_pass_coords + vec2(-GLOBAL_OFFX, -GLOBAL_OFFY), GLOBAL_ZOOM );
+        else
+            pre_pass_coords += vec2(-GLOBAL_OFFX, -GLOBAL_OFFY);
+    }
+    
+    if (bNeed_NO_integer_scale) {
         if (DO_GAME_GEOM_OVERRIDE > 0.5)
             pre_pass_coords = content_geom_override_zoom(pre_pass_coords, GAME_GEOM_ASPECT, get_in_aspect(), GAME_GEOM_VSHIFT, GAME_GEOM_HSHIFT, GAME_GEOM_ZOOM);
     }
@@ -107,19 +112,19 @@ void main() {
 }
 
 #pragma stage fragment
-layout(location = 0) in vec2 vTexCoord;
-layout(location = 1) in float vLedBorder_min;
-layout(location = 2) in float vLedBorder_max;
-layout(location = 3) in float vLed_step;
-layout(location = 4) in float lod;
-layout(location = 5) in vec2 pre_pass_coords;
-layout(location = 6) in float vIs_rotated;
-layout(location = 7) in float vAMBI_STRETCH;
-layout(location = 8) in float vAMBI_POWER;
-layout(location = 9) in float vSmpBorder_min;
-layout(location = 10) in float vSmpBorder_max;
-layout(location = 11) in float vSmp_step;
-layout(location = 12) in float vMod_FrameCount_FrameDivider;
+layout(location = 0) noperspective in vec2 vTexCoord;
+layout(location = 1) flat in float vLedBorder_min;
+layout(location = 2) flat in float vLedBorder_max;
+layout(location = 3) flat in float vLed_step;
+layout(location = 4) flat in float lod;
+layout(location = 5) noperspective in vec2 pre_pass_coords;
+layout(location = 6) flat in float vIs_rotated;
+layout(location = 7) flat in float vAMBI_STRETCH;
+layout(location = 8) flat in float vAMBI_POWER;
+layout(location = 9) flat in float vSmpBorder_min;
+layout(location = 10) flat in float vSmpBorder_max;
+layout(location = 11) flat in float vSmp_step;
+layout(location = 12) flat in float vMod_FrameCount_FrameDivider;
 
 layout(location = 0) out vec4 FragColor;
 

@@ -22,7 +22,7 @@
     d3d10 is completely unsupported.
     <br>
     Be warned that the following functions do not work if you enable the workaround: <br>
-        * CRT glitch on resolution changes <br>
+        * Resync speed when core resolution changes <br>
         * Adaptive Black <br>
         * CVBS Bleed size is limited to 5.0 <br>
         * Ambientlight scene change detection <br>
@@ -183,9 +183,12 @@ However nice effects may be obtained (eg: with vector games). <br>
 **Persistence of phosphors:**<br>
     This emulates the unexcited phosphors that continue to emit light.
 
-    Early decay: is the immediate light cut after the phosphor is no more/less excited.
-    Late persistence: modulates the time the residual light will stay on screen
-
+    Early decay (blue): is the immediate light cut after the blue phosphor is no more/less excited.
+    Late persistence (blue): modulates the time the residual blue light will stay on screen
+    Red/Green decay time multiplier: 
+                       Chemical composition makes different phosphors have different decay times.
+                       Highering this parameter will make them slower than blue.
+    
 
 **Deconvergence:**<br>
     Shift R,G,B components separately to mimic channel deconvergence.<br>
@@ -232,12 +235,16 @@ However nice effects may be obtained (eg: with vector games). <br>
         - Less than 0: will use box blur and will progressively
           add visual sharpness to image when approaching lower values.
 
-    Warped glow (X,Y):
+    Warped glow:
         Embolds bright pixels near dark ones using a warpsharp like algorithm.
         This is a cheap way to emulate phosphor glowing.
-        The Y parameter will also allow scanlines to be higher.
-        It will also help (if coupled with) antialiasing to stay sharp.
-
+        It will also help FXAA to stay sharp.
+        
+        When Warped glow X is set to a negative value, the horizontal embolding
+        will be modulated with a scanline shape to btter mimics CRT behaviour.
+        The latter will be auto-disabled in presence of Fake integer scanlines
+        and interlaced content.
+        
     Warped Dynamics:
         Change the amount of warpsharp applied based on the contrast between 
         nearby pixels, thereby altering their "Warped" shape.
@@ -252,10 +259,10 @@ However nice effects may be obtained (eg: with vector games). <br>
     0: Never.
     
     
-**Glitch if vertical resolution changes:**<br>
-    Emulates the crt circuits syncing to the new signal timing.<br>
+**Resync speed when core resolution changes:**<br>
+    Emulates the crt circuits syncing to the new signal timings.<br>
     Will shake the screen for a while when the resolution changes.<br>
-    The Hiher the value, the more the amplitude.
+    The higher the value, the lower the effect duration.
     
 **Hi-resolution scanlines handling:**<br>
         There you can choose how to handle scanlines when a game is Hi-Resolution.<br>
@@ -488,8 +495,8 @@ However nice effects may be obtained (eg: with vector games). <br>
             0: display is always slow to refresh (Game gear)
             1: display is slow to refresh bright pixels (??)
             2: display is slow to refresh dark pixels (Game Boy)
-    Shadow strength:
-        Emulates the typical shadow seen on Gameboy mono handhelds
+    Diorama/Shadow strength:
+        Emulates the typical diorama effect seen on Gameboy mono handhelds
         casted by on the underlying screen.
         Shadow offset:
             Moves the shadow left or right.
@@ -821,11 +828,7 @@ However nice effects may be obtained (eg: with vector games). <br>
             * beware: the following options in this group overrides the integer scale.
         Permit integer overscale by:
             When doing integer scaling, allow the image to be slightly overscanned (goes off screen).
-        Sharp hack through offset:
-            When using integer scaling, it may be not possible to draw sharp rounded lines.
-            This hack add a small offset to the image that allows for sharp lines 
-            at the cost of a slightly lower draw precision.
-            Use 0.0 to disable the hack.
+
     Aspect:
         Forces an aspect ratio.
         Use a negative value to use Core provided aspect ratio (requires RetroArch > 1.19.1)
@@ -907,6 +910,8 @@ Changes are applied after a shader reload.*<br>
     
     Strength:
         This modulates the clarity and the perceived flickering.
+    Hard limit strobe effect to:
+        This limit the maximum oscillation to reduce flickering on mid-tones 
     Gain adjustment, post gamma adjustment, Less gain on dark colors:
         Since the perceived image depends on the display pixel refresh speed,
         it may be needed to adjust this.
@@ -919,6 +924,7 @@ Changes are applied after a shader reload.*<br>
     . Not compatible Direct3D<br>
     . Disabled with DELTA_RENDER)<br>
     . Disabled with Adaptive strobe<br>
+    . Disabled with Antiburn<br>
     
     LCD displays often suffer from high pixel refresh times <br>
     which produces ghosting when game changes on screen.<br>
@@ -965,3 +971,8 @@ Changes are applied after a shader reload.*<br>
     ```#define ANTIBURN_Y 1.0```<br>
     ```#define ANTIBURN_X 1.0```<br><br>
     (1.0 is the effect speed).<br>
+    By enabling the following, not just the content, but the whole screen will shake:
+    ```#define ANTIBURN_COMPLETE```<br>
+    The following modulates the shake size:
+    ```#define ANTIBURN_AMPLITUDE 1.0```<br>
+    Antiburn disables LCD antighosting.

@@ -637,10 +637,6 @@
     #define GAME_GEOM_ZOOM		global.GAME_GEOM_ZOOM
 #endif
 
-#ifndef GAME_GEOM_OFF_FIX
-    #define GAME_GEOM_OFF_FIX   global.GAME_GEOM_OFF_FIX
-#endif
-
 #ifndef DO_TILT
     #define DO_TILT			global.DO_TILT
 #endif
@@ -687,8 +683,8 @@
     #define TATE	global.TATE
 #endif
 
-#ifndef RESSWITCH_GLITCH_SIZE
-    #define RESSWITCH_GLITCH_SIZE	global.RESSWITCH_GLITCH_SIZE
+#ifndef RESSWITCH_SYNC_SPEED
+    #define RESSWITCH_SYNC_SPEED	global.RESSWITCH_SYNC_SPEED
 #endif
 
 #ifndef DO_DOT_MATRIX
@@ -915,6 +911,14 @@
 	#define DO_PPERSISTENCE		global.DO_PPERSISTENCE
 #endif
 
+#ifndef PPERSISTENCE_MUL_R
+	#define PPERSISTENCE_MUL_R		global.PPERSISTENCE_MUL_R
+#endif
+
+#ifndef PPERSISTENCE_MUL_G
+	#define PPERSISTENCE_MUL_G		global.PPERSISTENCE_MUL_G
+#endif
+
 #ifndef PPERSISTENCE_START
 	#define PPERSISTENCE_START	global.PPERSISTENCE_START
 #endif
@@ -937,6 +941,10 @@
 
 #ifndef ADPT_STROBE_STR
     #define ADPT_STROBE_STR global.ADPT_STROBE_STR
+#endif
+
+#ifndef ADPT_STROBE_CEIL
+    #define ADPT_STROBE_CEIL global.ADPT_STROBE_CEIL
 #endif
 
 #ifndef ADPT_STROBE_GAIN_ADJ

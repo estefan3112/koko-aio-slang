@@ -1,7 +1,6 @@
 #version 450
 
 //#pragma format R32G32B32A32_SFLOAT
-
 #define CWHITE  vec3(1.0)
 #define CGRAY   vec3(0.5)
 #define CBLACK  vec3(0.0)
@@ -44,6 +43,7 @@
 #ifndef D3D_WORKAROUND
    #define FPS_ESTIMATE_PASS halo_pre_gamma_passFeedback
 #else
+   //this is just a STUB to make the shader compile, but fps are never estimated with D3D_WORKAROUND
    #define FPS_ESTIMATE_PASS Original
 #endif
 
@@ -52,12 +52,14 @@
 layout(location = 0) in vec4 Position;
 layout(location = 1) in vec2 TexCoord;
 
-layout(location = 0) out vec2 vTexCoord;
-layout(location = 1) out vec3 vTemperature_rgb;
-layout(location = 2) out float vNTSC_FILTER_FC;
-layout(location = 3) out float vPixelgrid_intr_gamma_adj;
-layout(location = 4) out vec3 vDebug;
-layout(location = 5) out float vNTSC_weights[NTSC_FILTER_WIDTH_MAX];
+layout(location = 0) noperspective out vec2 vTexCoord;
+layout(location = 1) flat out vec3 vTemperature_rgb;
+layout(location = 2) flat out float vNTSC_FILTER_FC;
+layout(location = 3) flat out float vPixelgrid_intr_gamma_adj;
+layout(location = 4) noperspective out vec3 vDebug;
+layout(location = 5) noperspective out vec2 vTexCoord_unshifted;
+layout(location = 6) noperspective out float vShake_sin_arg;
+layout(location = 7) flat out float vNTSC_weights[NTSC_FILTER_WIDTH_MAX];
 
 
 #include "includes/functions.include.slang"
@@ -92,7 +94,8 @@ void main() {
    //Or else the picture will be slightly blurred (visible only when output gamma is low).
    //Let's hope this will not break anything (classic diagonally broken screen).
    vTexCoord = TexCoord;
-
+   vTexCoord_unshifted = TexCoord;
+   
    if (DO_GAME_GEOM_OVERRIDE > 0.5) {
       vec2 shift = vec2(GAME_GEOM_HSHIFT,GAME_GEOM_VSHIFT);
       vTexCoord = content_geom_override_shift(vTexCoord, GAME_GEOM_ASPECT, get_in_aspect(), shift.y, shift.x, GAME_GEOM_ZOOM);
@@ -126,6 +129,15 @@ void main() {
       vPixelgrid_intr_gamma_adj = 1.0;
       if (pixelgrid_h_needed() && scanlines_will_alternate(is_interlaced()))
           vPixelgrid_intr_gamma_adj = PIXELGRID_INTR_GAMMA_ADJ;
+   
+   //For screen shaking:
+      #define Y_SHAKE_SPEED 1.5
+      #define X_SHAKE_NUM_WAVES 2.0
+      float wobbly_freq = mod(params.FrameCount,pi*100);
+      //vShake_sin_arg =  vec2( wobbly_freq * Y_SHAKE_SPEED, vTexCoord.y * X_SHAKE_NUM_WAVES + wobbly_freq);
+      vShake_sin_arg =  vTexCoord.y * X_SHAKE_NUM_WAVES + wobbly_freq;
+      if (params.FrameCount == 0.0) vShake_sin_arg = pi; //skip first frame
+   
    
    vDebug = vec3(0.0); //need to initialize to something.
    
@@ -198,12 +210,14 @@ void main() {
 
 #include "includes/functions.include.slang"
 
-layout(location = 0) in vec2 vTexCoord;
-layout(location = 1) in vec3 vTemperature_rgb;
-layout(location = 2) in float vNTSC_FILTER_FC;
-layout(location = 3) in float vPixelgrid_intr_gamma_adj;
-layout(location = 4) in vec3 vDebug;
-layout(location = 5) in float vNTSC_weights[NTSC_FILTER_WIDTH_MAX];
+layout(location = 0) noperspective in vec2 vTexCoord;
+layout(location = 1) flat in vec3 vTemperature_rgb;
+layout(location = 2) flat in float vNTSC_FILTER_FC;
+layout(location = 3) flat in float vPixelgrid_intr_gamma_adj;
+layout(location = 4) noperspective in vec3 vDebug;
+layout(location = 5) noperspective in vec2 vTexCoord_unshifted;
+layout(location = 6) noperspective in float vShake_sin_arg;
+layout(location = 7) flat in float vNTSC_weights[NTSC_FILTER_WIDTH_MAX];
 
 layout(location = 0) out vec4 FragColor;
 
@@ -330,7 +344,7 @@ vec3 debug() {
       pixel_debug *= DEBUG_COLOR;
       
    #elif defined DEBUG_WALKING_CIRCLE
-      float speed = 4.0;
+      float speed = 8.0;
       vec2 center = vec2(  mod(params.FrameCount*speed, params.SourceSize.x*1.2)/params.SourceSize.x  -0.1      , 0.5);
       center = vTexCoord - center;
       float radius = 0.05;
@@ -611,7 +625,7 @@ vec3 pixel_dedither(sampler2D tex, vec2 coords, vec4 sourcesize, float tmin, flo
 }
 
 
-vec3 persistence(vec3 feedback, vec3 pixel_now, float start_decay, float late_persistence, float motion_blur_cancel) {
+vec3 persistence(vec3 feedback, vec3 pixel_now, vec3 start_decay, vec3 late_persistence, float motion_blur_cancel, float fps) {
    //start_decay: is the initial decay, the fast one: 1.0 means instantaneous, try around 0.8
    //end decay the higher, the more the persistance in the long run, try around 1.0;
    //motion_blur_cancel: 0.0 means full blur on bright areas; try around 2.5
@@ -633,7 +647,8 @@ vec3 persistence(vec3 feedback, vec3 pixel_now, float start_decay, float late_pe
    
 
    //Compute the persistent light by mixing pixel current and previous one
-   vec3 pixel_persistent = mix(feedback, pixel_now, fade_speed );  
+   fade_speed *= 60/fps;
+   vec3 pixel_persistent = mix(feedback, pixel_now, fade_speed);
    
    //blend only if we are fading out
       vec3 light_fading_out = vec3(greaterThan(feedback, pixel_now));
@@ -649,12 +664,15 @@ void main() {
       co = clamp(co,  params.OriginalSize.zw * AUTOCROP_MIN, 
                     1-params.OriginalSize.zw * AUTOCROP_MIN );
    
+   // screen shake/glitch:
    #ifndef D3D_WORKAROUND
-      float shake = texture(avglum_passFeedback, RESSWITCH_SAMPLING_POINT).a;
-      //co.y += sin(shake * 2 * pi) * RESSWITCH_GLITCH_SIZE;
-      co.y = co.y + (sin(shake * 2 * pi) * RESSWITCH_GLITCH_SIZE);
+      if (RESSWITCH_SYNC_SPEED < 1.0) {
+            float fadeout = texture(avglum_passFeedback, RESSWITCH_SAMPLING_POINT).a;
+            float shake = sin( vShake_sin_arg );
+            co.y += shake * fadeout;
+      }
    #endif
-
+      
    vec3 pixel_in = texture(Source, co).rgb;
    
    //eventually return black pixel
@@ -717,7 +735,7 @@ void main() {
 	}
 
    if (DO_DOT_MATRIX + DOT_M_MBLUR_STR > 1.0) {
-      vec3 feedback = texture(colortools_and_ntsc_passFeedback, co).rgb;
+      vec3 feedback = texture(colortools_and_ntsc_passFeedback, vTexCoord_unshifted).rgb;
       
       //Dot matrix motion blur inertia on white or black (not both)?
       vec3 adaption = mix_step (pixel_out - feedback,
@@ -782,9 +800,12 @@ void main() {
    
    if (DO_PPERSISTENCE == 1.0) {
       if (params.OutputSize.xy == global.colortools_and_ntsc_passFeedbackSize.xy) {
-         vec3 feedback = texture(colortools_and_ntsc_passFeedback, co).rgb;
+         vec3 feedback = texture(colortools_and_ntsc_passFeedback, vTexCoord_unshifted).rgb;
          float motion_blur_cancel = 2.5;
-         pixel_out = persistence(feedback, pixel_out, PPERSISTENCE_START, PPERSISTENCE_END, motion_blur_cancel);
+         vec3 early_decay      = vec3(PPERSISTENCE_START) / vec3(PPERSISTENCE_MUL_R,PPERSISTENCE_MUL_G,1);
+         vec3 late_persistance = vec3(PPERSISTENCE_END)   * vec3(PPERSISTENCE_MUL_R,PPERSISTENCE_MUL_G,1);
+         float fps = get_fps(FPS_ESTIMATE_PASS);
+         pixel_out = persistence(feedback, pixel_out, early_decay, late_persistance, motion_blur_cancel, fps);
       }
    }
 
@@ -796,6 +817,9 @@ void main() {
       waterfall = get_waterfall();
    }
    
+
+   //if (low_fps(FPS_ESTIMATE_PASS) && vTexCoord.y < 0.05) { pixel_out = vec3(1,0,0); }
+
    FragColor = vec4(pixel_out, waterfall);
 }
 

@@ -6,16 +6,16 @@
 #pragma stage vertex
 layout(location = 0) in vec4 Position;
 layout(location = 1) in vec2 TexCoord;
-layout(location = 0) out vec2 vTexCoord;
-layout(location = 1) out vec2 vR_offset;
-layout(location = 2) out vec2 vG_offset;
-layout(location = 3) out vec2 vB_offset;
-layout(location = 4) out float vDo_shadow_mode;
-layout(location = 5) out float vDecon_or_JustShadow;
-layout(location = 6) out vec3 vCVBS_bandwidths;
+layout(location = 0) noperspective out vec2 vTexCoord;
+layout(location = 1) flat out vec2 vR_offset;
+layout(location = 2) flat out vec2 vG_offset;
+layout(location = 3) flat out vec2 vB_offset;
+layout(location = 4) flat out float vDo_shadow_mode;
+layout(location = 5) flat out float vDecon_or_JustShadow;
+layout(location = 6) flat out vec3 vCVBS_bandwidths;
 
-layout(location = 9) out float vDotCrawlShift;
-layout(location = 10) out vec4 vDotCrawlCoords_and_period;
+layout(location = 9) flat out float vDotCrawlShift;
+layout(location = 10) noperspective out vec4 vDotCrawlCoords_and_period;
 #include "includes/functions.include.slang"
 
 void main()
@@ -71,16 +71,16 @@ void main()
 
 #pragma stage fragment
 #include "includes/functions.include.slang"
-layout(location = 0) in vec2 vTexCoord;
-layout(location = 1) in vec2 vR_offset;
-layout(location = 2) in vec2 vG_offset;
-layout(location = 3) in vec2 vB_offset;
-layout(location = 4) in float vDo_shadow_mode;
-layout(location = 5) in float vDecon_or_JustShadow;
-layout(location = 6) in vec3 vCVBS_bandwidths;
+layout(location = 0) noperspective in vec2 vTexCoord;
+layout(location = 1) flat in vec2 vR_offset;
+layout(location = 2) flat in vec2 vG_offset;
+layout(location = 3) flat in vec2 vB_offset;
+layout(location = 4) flat in float vDo_shadow_mode;
+layout(location = 5) flat in float vDecon_or_JustShadow;
+layout(location = 6) flat in vec3 vCVBS_bandwidths;
 
-layout(location = 9) in float vDotCrawlShift;
-layout(location = 10) in vec4 vDotCrawlCoords_and_period;
+layout(location = 9) flat in float vDotCrawlShift;
+layout(location = 10) noperspective in vec4 vDotCrawlCoords_and_period;
 
 layout(location = 0) out vec4 FragColor;
 
@@ -165,8 +165,11 @@ vec3 dotc(sampler2D in_texture, vec3 pixel_in, vec2 co, vec4 tex_size){
    return yiq2rgb( pixel_in );
 }
 
-vec4 pixel_bleed(vec4 pixel_in, vec2 co, sampler2D in_texture, float sourcesize_z) { //FIXME pixelin.a è passante, non serve vec4
-
+vec3 pixel_bleed(vec3 pixel_in, vec2 co, sampler2D in_texture, float sourcesize_z) { //FIXME pixelin.a è passante, non serve vec4
+   //sometimes first frame has 0x0 size, that makes gpu mad in a way or another.
+   //hopefully fixes: https://github.com/kokoko3k/koko-aio-slang/issues/28   
+   if (sourcesize_z > 1.0) return pixel_in;
+      
    mat3 colorspace_out;
    mat3 colorspace_rgb;
 
@@ -209,7 +212,7 @@ vec4 pixel_bleed(vec4 pixel_in, vec2 co, sampler2D in_texture, float sourcesize_
    // Clamping min to 0.0 is needed for nvidia to avoid bad graphical glitches, why?
    pixel_bleeded = clamp(pixel_bleeded, 0.0, 1.0);
    
-   return vec4( pixel_bleeded, pixel_in.a);
+   return pixel_bleeded;
 }
 
 void main() {
@@ -228,7 +231,7 @@ void main() {
    
    //bleed
    if (DO_SAT_BLEED > 0.5)
-      pixel_out = pixel_bleed(pixel_out, vTexCoord, upscale_pass, params.OriginalSize.z*0.5);
+      pixel_out.rgb = pixel_bleed(pixel_out.rgb, vTexCoord, upscale_pass, params.OriginalSize.z*0.5);
 
    if (DOT_C > 0.0)
       pixel_out.rgb = dotc(upscale_pass, pixel_out.rgb, vTexCoord, params.OriginalSize);

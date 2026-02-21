@@ -5,20 +5,20 @@
 #pragma stage vertex
 layout(location = 0) in vec4 Position;
 layout(location = 1) in vec2 TexCoord;
-layout(location = 0) out vec2 vTexCoord;
-layout(location = 1) out float glow_h_inside_interval;
-layout(location = 2) out float vDoInGlowBias;
-layout(location = 3) out float vGlow_Gain;
-layout(location = 4) out float vSharp_sub;
-layout(location = 5) out float vDo_wtfl;
-layout(location = 6) out float vIn_glow_h_adapted;
-layout(location = 7) out float vDeltaRenderOk;
-layout(location = 8) out float vWarpedglow;
-layout(location = 9) out float vDynamicSeed;
-layout(location = 10) out float vIn_glow_edge_sharpness;
-layout(location = 11) out float vIn_glow_edge_defocus_strength;
-layout(location = 12) out float vWarpedglow_vtexcoord_offsets_plus;
-layout(location = 13) out float vWarpedglow_vtexcoord_offsets_minus;
+layout(location = 0) noperspective out vec2 vTexCoord;
+layout(location = 1) flat out float glow_h_inside_interval;
+layout(location = 2) flat out float vDoInGlowBias;
+layout(location = 3) flat out float vGlow_Gain;
+layout(location = 4) flat out float vSharp_sub;
+layout(location = 5) flat out float vDo_wtfl;
+layout(location = 6) flat out float vIn_glow_h_adapted;
+layout(location = 7) flat out float vDeltaRenderOk;
+layout(location = 8) flat out float vWarpedglow;
+layout(location = 9) noperspective out vec2 vDynamicSeed;
+layout(location = 10) flat out float vIn_glow_edge_sharpness;
+layout(location = 11) flat out float vIn_glow_edge_defocus_strength;
+layout(location = 12) noperspective out float vWarpedglow_vtexcoord_offsets_plus;
+layout(location = 13) noperspective out float vWarpedglow_vtexcoord_offsets_minus;
 
 void main() {
    gl_Position = global.MVP * Position;
@@ -70,10 +70,14 @@ void main() {
    if (DO_PIXELGRID > 0.0 && DO_PIXELGRID_H > 0.0)
       warpedglow_scale = PIXELGRID_MAX_H;
    
-   float IN_GLOW_WARPSHARP_TATED = IN_GLOW_WARPSHARP_Y;
-   if (need_tate(is_rotated()) == 1.0)
-      IN_GLOW_WARPSHARP_TATED = IN_GLOW_WARPSHARP_X;
-
+   float IN_GLOW_WARPSHARP_TATED = abs(IN_GLOW_WARPSHARP_Y);
+   if (need_tate(is_rotated()) == 1.0) {
+      IN_GLOW_WARPSHARP_TATED = abs(IN_GLOW_WARPSHARP_X);
+      //Disable warpdglow x if user requested scanline modulation on particular conditions like:
+      //fake integer scanlines and interlacing (leave it on on real interlacing)
+      warpedglow_scale *= warpedglow_x_allowed(IN_GLOW_WARPSHARP_X);
+   }
+   
    vWarpedglow = (IN_GLOW_WARPSHARP_TATED * warpedglow_scale) * 0.6 / 1400.0 * 3.0;   //*3.0 needed because we scale to 0->1 to use pow in the fragment.
 
    float warpedglow_delta = params.OriginalSize.w * 0.5;
@@ -82,7 +86,7 @@ void main() {
    
    
    //Generate a seed that changes over time for temporal random noise
-   vDynamicSeed = mod(params.FrameCount, 120.0001);
+   vDynamicSeed = mod(params.FrameCount, 120.0001) * vTexCoord;
    
    if (EDGE_DEFOCUS_DO_BLUR*DO_SHIFT_RGB > 0.001) {
       vIn_glow_edge_defocus_strength = EDGE_DEFOCUS_DO_BLUR;
@@ -118,20 +122,20 @@ void main() {
 
 #pragma stage fragment
 
-layout(location = 0) in vec2 vTexCoord;
-layout(location = 1) in float glow_h_inside_interval;
-layout(location = 2) in float vDoInGlowBias;
-layout(location = 3) in float vGlow_Gain;
-layout(location = 4) in float vSharp_sub;
-layout(location = 5) in float vDo_wtfl;
-layout(location = 6) in float vIn_glow_h_adapted;
-layout(location = 7) in float vDeltaRenderOk;
-layout(location = 8) in float vWarpedglow;
-layout(location = 9) in float vDynamicSeed;
-layout(location = 10) in float vIn_glow_edge_sharpness;
-layout(location = 11) in float vIn_glow_edge_defocus_strength;
-layout(location = 12) in float vWarpedglow_vtexcoord_offsets_plus;
-layout(location = 13) in float vWarpedglow_vtexcoord_offsets_minus;
+layout(location = 0) noperspective in vec2 vTexCoord;
+layout(location = 1) flat in float glow_h_inside_interval;
+layout(location = 2) flat in float vDoInGlowBias;
+layout(location = 3) flat in float vGlow_Gain;
+layout(location = 4) flat in float vSharp_sub;
+layout(location = 5) flat in float vDo_wtfl;
+layout(location = 6) flat in float vIn_glow_h_adapted;
+layout(location = 7) flat in float vDeltaRenderOk;
+layout(location = 8) flat in float vWarpedglow;
+layout(location = 9) noperspective in vec2 vDynamicSeed;
+layout(location = 10) flat in float vIn_glow_edge_sharpness;
+layout(location = 11) flat in float vIn_glow_edge_defocus_strength;
+layout(location = 12) noperspective in float vWarpedglow_vtexcoord_offsets_plus;
+layout(location = 13) noperspective in float vWarpedglow_vtexcoord_offsets_minus;
 
 layout(location = 0) out vec4 FragColor;
 layout(set = 0, binding = 4) uniform sampler2D upscale_pass;
@@ -163,7 +167,7 @@ vec3 apply_noise_to(vec3 c) {
       return c;
    
    c.rgb = pow(c.rgb, vec3(1/IN_GLOW_GAMMA));
-      c += get_rf_noise(vTexCoord * vDynamicSeed);
+      c += get_rf_noise(vDynamicSeed);
       c = max(c, vec3(0.0));
    c.rgb = pow(c.rgb, vec3(IN_GLOW_GAMMA));
    return c;
@@ -187,25 +191,27 @@ void main() {
      }
    }
    
-   //Warped Glow Y
-   //The result will be stored in the alpha channel to be consumed by final pass.
-   float warpedglow_y = eps; //see down note: (**)
-   #ifndef SKIP_WARPEDGLOW_Y
-      if (DO_IN_GLOW == 1.0) {
-         float max_inLum = max( 1.0, DO_CCORRECTION * apply_contrast_brightness(1.0, CONTRAST, BRIGHTNESS));
-         vec3 gy = texture(Source, vec2(vTexCoord.x, vWarpedglow_vtexcoord_offsets_plus) ).rgb
-                 - texture(Source, vec2(vTexCoord.x, vWarpedglow_vtexcoord_offsets_minus)  ).rgb;
-               
-         gy /=max_inLum;
-               
-         warpedglow_y = (gy.x+gy.y+gy.z) / 3.0;
-                                 
-         warpedglow_y = pow( abs(warpedglow_y), IN_GLOW_WARPSHARP_GAMMA) * sign(warpedglow_y);
-         
-         warpedglow_y = warpedglow_y *  vWarpedglow + (eps * delta_render_enabled()); 
-                                 
-         // (**) This eps is needed because we multiplex deltarender and warpedglow and we NEED to have dr = 0.0 (and not a positive number)
-         //To reuse old pixels, only that way (using 0.0 to reuse pixels) multiplexing is possible.
+    //Warped Glow Y
+    //The result will be stored in the alpha channel to be consumed by final pass.
+    float warpedglow_y = eps; //see down note: (**)
+    #ifndef SKIP_WARPEDGLOW
+        if (DO_IN_GLOW == 1.0) {
+            float max_inLum = max( 1.0, DO_CCORRECTION * apply_contrast_brightness(1.0, CONTRAST, BRIGHTNESS));
+            vec3 gy = texture(Source, vec2(vTexCoord.x, vWarpedglow_vtexcoord_offsets_plus) ).rgb
+                    - texture(Source, vec2(vTexCoord.x, vWarpedglow_vtexcoord_offsets_minus)  ).rgb;
+                
+            gy /=max_inLum;
+                
+            warpedglow_y = (gy.x+gy.y+gy.z) / 3.0;
+                                    
+            warpedglow_y = pow( abs(warpedglow_y), IN_GLOW_WARPSHARP_GAMMA) * sign(warpedglow_y);
+
+            warpedglow_y = warpedglow_y *  vWarpedglow; 
+
+            warpedglow_y = warpedglow_y + (eps * delta_render_enabled()); 
+            
+            // (**) This eps is needed because we multiplex deltarender and warpedglow and we NEED to have dr = 0.0 (and not a positive number)
+            //To reuse old pixels, only that way (using 0.0 to reuse pixels) multiplexing is possible.
       }
    #endif
 

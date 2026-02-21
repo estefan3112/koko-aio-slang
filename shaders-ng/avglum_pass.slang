@@ -16,19 +16,19 @@
 #pragma stage vertex
 layout(location = 0) in vec4 Position;
 layout(location = 1) in vec2 TexCoord;
-layout(location = 0) out vec2 vTexCoord;
-layout(location = 1) out float lod;
-layout(location = 2) out vec2 vFuzzy_main_pass_stage_1;
-layout(location = 3) out float vReduced_sample_time_is_now;
-layout(location = 4) out float vAvglum_needed;
+layout(location = 0) noperspective out vec2 vTexCoord;
+layout(location = 1) flat out float lod;
+layout(location = 2) flat out vec2 vFuzzy_main_pass_stage_1;
+layout(location = 3) flat out float vReduced_sample_time_is_now;
+layout(location = 4) flat out float vAvglum_needed;
 
-layout(location = 6) out float vResSwitch_res_changed;
-layout(location = 7) out float vResChanged;
-layout(location = 8) out vec2 vTexCoord_unscaled;
-layout(location = 9) out float vDo_autocrop;
-layout(location = 10) out float vDo_dynzoom;
+layout(location = 6) flat out float vResSwitch_res_changed;
+layout(location = 7) flat out float vResChanged;
+layout(location = 8) noperspective out vec2 vTexCoord_unscaled;
+layout(location = 9) flat out float vDo_autocrop;
+layout(location = 10) flat out float vDo_dynzoom;
 
-//layout(location = 9) out vec2 vLods;
+//layout(location = 9) flat out vec2 vLods;
 #include "includes/functions.include.slang"
 
 
@@ -45,14 +45,23 @@ void main() {
 
     vReduced_sample_time_is_now = mod(params.FrameCount,AMBI_AVGLUM_DIVIDER);
     
-    vAvglum_needed = DO_BLOOM + DO_AMBILIGHT + DO_BEZEL + (DO_DYNZOOM*10.0) + (RESSWITCH_GLITCH_SIZE*10.0) + AUTOCROP_MAX ;
+    vAvglum_needed = DO_BLOOM + DO_AMBILIGHT + DO_BEZEL + (DO_DYNZOOM*10.0) + (1-RESSWITCH_SYNC_SPEED) + AUTOCROP_MAX ;
     
     //RESSWITCH shaking:
+        #define RESSWITCH_FORCE_GLITCH_INITIAL_FRAMES 5
         vResSwitch_res_changed = 0.0;
-        if (abs(params.OutputSize.y - params.avglum_passFeedbackSize.y) / params.OutputSize.y > RESSWITCH_GLITCH_TRESHOLD)
-            if (params.FrameCount > 30) //needed to avoid shaking at start
-                vResSwitch_res_changed = 1.0;
+        if (abs(params.OutputSize.y - params.avglum_passFeedbackSize.y) / params.OutputSize.y > RESSWITCH_GLITCH_TRESHOLD
+            || params.FrameCount < RESSWITCH_FORCE_GLITCH_INITIAL_FRAMES)
+        vResSwitch_res_changed = 1.0;
     
+        if (params.FrameCount == 0.0 || RESSWITCH_SYNC_SPEED == 1.0)
+            vResSwitch_res_changed = 0.0;
+    
+    
+        //Uncomment to continuously test glitch effect
+        //if (mod(params.FrameCount, 100) > 100-2 && RESSWITCH_SYNC_SPEED < 1.0)
+        //    vResSwitch_res_changed = 1.0;
+        
     //AID Scene chnge detection
         vResChanged =  float(params.OutputSize.xy - params.avglum_passFeedbackSize.xy != vec2(0.0));
         //float lod_max = lodmax(params.OriginalSize.xy);
@@ -67,17 +76,17 @@ void main() {
 }
 
 #pragma stage fragment
-layout(location = 0) in vec2 vTexCoord;
-layout(location = 1) in float lod;
-layout(location = 2) in vec2 vFuzzy_main_pass_stage_1;
-layout(location = 3) in float vReduced_sample_time_is_now;
-layout(location = 4) in float vAvglum_needed;
+layout(location = 0) noperspective in vec2 vTexCoord;
+layout(location = 1) flat in float lod;
+layout(location = 2) flat in vec2 vFuzzy_main_pass_stage_1;
+layout(location = 3) flat in float vReduced_sample_time_is_now;
+layout(location = 4) flat in float vAvglum_needed;
 
-layout(location = 6) in float vResSwitch_res_changed;
-layout(location = 7) in float vResChanged;
-layout(location = 8) in vec2 vTexCoord_unscaled;
-layout(location = 9) in float vDo_autocrop;
-layout(location = 10) in float vDo_dynzoom;
+layout(location = 6) flat in float vResSwitch_res_changed;
+layout(location = 7) flat in float vResChanged;
+layout(location = 8) noperspective in vec2 vTexCoord_unscaled;
+layout(location = 9) flat in float vDo_autocrop;
+layout(location = 10) flat in float vDo_dynzoom;
 
 layout(location = 0) out vec4 FragColor;
 layout(set = 0, binding = 1) uniform sampler2D colortools_and_ntsc_passFeedback;
@@ -114,8 +123,8 @@ float get_avg_lum_from_mip_nocc() {
 float get_avglum() {
     /* avglum alpha has some zones:
      * 0.25 -> reduced sampling, used for to aid scene detection
-     * 0.50 -> smoothed_sampling, no color corrections.
-     * 0.75 -> smoothed_sampling, used to adapt fullscreen zoom and adaptive black
+     * 0.50 -> smoothed_sampling, no color corrections, adaptived black (/crush) use this..
+     * 0.75 -> temporal smoothed_sampling, used to adapt fullscreen zoom
      * AUTOCROP_SAMPLING_POINT (0.825) -> autocrop zoom value pixked up by final pass.
      * RESSWITCH_SAMPLING_POINT (0.900) -> resolution change detection
      * anything else: continuous sampling
@@ -123,7 +132,7 @@ float get_avglum() {
             
     bool reduced_sampling_co  = is_first_inside_rect(vTexCoord, vec4(0.24,0.24 , 0.26,0.26) );
     //WARNING: Use this for dynamic zoom only, since it returns 0.0 when dynzoom is disabled or when integer scaling is requested.
-    bool smoothed_sampling_co_dynzoom = is_first_inside_rect(vTexCoord, vec4(0.74,0.74 , 0.76,0.76) );
+    bool smoothed_sampling_co_dynzoom = is_first_inside_rect(vTexCoord, vec4(DYN_ZOOM_SAMPLING_POINT-0.1, DYN_ZOOM_SAMPLING_POINT+0.1));
     bool smoothed_sampling_co_nocc = is_first_inside_rect(vTexCoord, vec4(0.49,0.49 , 0.51,0.51)) ;
     #ifndef D3D_WORKAROUND
         if (reduced_sampling_co) {
@@ -137,7 +146,29 @@ float get_avglum() {
         }
 
         if (smoothed_sampling_co_dynzoom) {
-            return mix(texture(avglum_passFeedback,vTexCoord).a, get_avg_lum_from_mip(), SMOOTHNESS_SPEED) * vDo_dynzoom;
+
+            float prev_lum = texture(avglum_passFeedback,vTexCoord).a;
+            float myframecount = params.FrameCount;
+            float transition_speed = SMOOTHNESS_SPEED;
+            
+            //Tube warmup:
+                //Uncomment this to see the effect continuously
+                //myframecount = (mod(params.FrameCount, 60*4));
+                //Use this to have an higher speed when the screen is "small"
+                /*float multiply = 2.0;
+                float ramp_up_frames = 60;
+                float transition_speed = (ramp_up_frames - myframecount)/ramp_up_frames;
+                transition_speed = clamp(transition_speed, SMOOTHNESS_SPEED, SMOOTHNESS_SPEED*multiply);
+                */
+                
+                
+                if (myframecount < 10.0) {
+                    //prev_lum = mix(0.0, -1.0, clamp( DO_DYNZOOM*100.0, 0.0, 1.0 ) );
+                    prev_lum = -1/((DO_DYNZOOM+eps)*5.0);
+                }
+            //
+
+            return mix( prev_lum, get_avg_lum_from_mip(), transition_speed) * vDo_dynzoom;
         }
         
         if (smoothed_sampling_co_nocc) {
@@ -355,10 +386,11 @@ void main() {
     //The value stored will be used by the first pass as an argument to sin() to shake the image.
     if (is_first_inside_rect(vTexCoord_unscaled, vec4(RESSWITCH_SAMPLING_POINT-0.01 , RESSWITCH_SAMPLING_POINT+0.01) )) {
         if (vResSwitch_res_changed == 1.0 ) {
-            pixel_out.a = 1;  
+            pixel_out.a = 1.0;  
         } else {
             #ifndef D3D_WORKAROUND
-                pixel_out.a = max(texture(avglum_passFeedback,vTexCoord_unscaled).a - RESSWITCH_SHAKE_SPEED, 0.0);
+                pixel_out.a = mix(texture(avglum_passFeedback,vTexCoord_unscaled).a, 0.0, 0.02 );
+                if (pixel_out.a < RESSWITCH_SYNC_SPEED) pixel_out.a *= 0.7;
             #else
                  pixel_out.a = 0.0;
             #endif

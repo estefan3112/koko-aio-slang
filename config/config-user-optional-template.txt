@@ -63,11 +63,14 @@
 
 
 // Enable Antiburn protection (OLEDs)
-// It works by slowly shaking the content image in order to prevent image retention
-// The value defines the speed of the effect, leave it to 1.0 if unsure.
+// It works by slowly shaking the image in order to prevent image retention
+// The value of ANTIBURN_X/Y defines the speed of the effect, leave it to 1.0 if unsure.
+// If ANTIBURN_COMPLETE is enabled, not only the content, but the whole screen will shake.
+// ANTIBURN_AMPLITUDE modulates the shake size.
 // #define ANTIBURN_Y 1.0
 // #define ANTIBURN_X 1.0
-
+// #define ANTIBURN_COMPLETE
+// #define ANTIBURN_AMPLITUDE 1.0
 
 // Enable lcd antighosting.
 // It works by temporal sharpening pixels, and the  
@@ -133,10 +136,9 @@
 // possibly heavier banding when using the spot feature.
 // #define SKIP_RANDOM
 
-// Uncommenting this is the only way to statically disable Warped Glow (X) and
+// Uncommenting this is the only way to statically disable Warped Glow
 // spare a lookup in the final pass;
-// When the screen is rotated, skipping SKIP_WARPEDGLOW_X means skipping SKIP_WARPEDGLOW_Y
-// #define SKIP_WARPEDGLOW_X
+// #define SKIP_WARPEDGLOW
 
 // Uncomment this is the only way to statically disable Warped Glow (Y)
 // When the screen is rotated, skipping SKIP_WARPEDGLOW_Y means skipping SKIP_WARPEDGLOW_X
@@ -154,6 +156,7 @@
 // Cores may or not update OriginalFps uniform. So you may trust it or not.
 // In case you don't, it is derived by averaging frametimes.
 // The latter is less reliable depending on the video driver behaviour, and slower.
+// if D3D_WORKAROUND is defined, OriginalFps is always used.
 // #define ORIGINAL_FPS_TRUSTED
 
 ////////////////////////////////////////////////////////////////////////////
@@ -226,9 +229,10 @@
 // #define DOT_C_SPEED 8.0				//         Speed
 
 // #define DO_PPERSISTENCE  0.0         // ★ Persistence of phosphors enable?
-// #define PPERSISTENCE_START  0.9      //         Early decay
-// #define PPERSISTENCE_END  0.5        //         Late Persistence
-
+// #define PPERSISTENCE_START  0.9      //         Early decay (blue)
+// #define PPERSISTENCE_END  0.5        //         Late Persistence (blue)
+// #define PPERSISTENCE_MUL_R           //         Red decay time multiplier
+// #define PPERSISTENCE_MUL_G           //         Green decay time multiplier
 
 // #define DO_SHIFT_RGB  1.0           // ★ Deconvergence enable?
 // #define OFFSET_STRENGTH  0.3        //         Strength
@@ -264,7 +268,7 @@
 // #define TATE  1.0                   // ★ Tate mode (0:disabled 1:auto 2:forced)
 
 
-// #define RESSWITCH_GLITCH_SIZE 0.1   // ★ Glitch amount if vertical resolution changes
+// #define RESSWITCH_SYNC_SPEED 0.7   // ★ Resync speed when core resolution changes
 
 
 // #define MIN_LINES_INTERLACED  380.0     //     . Consider Hi-Resolution above # lines (0=never):
@@ -325,7 +329,6 @@
 // #define DOT_M_G_SHARP  0.0     //            . Grid sharpness (0.0 for auto)
 // #define DOT_M_MBLUR_STR  0.45  //         Ghosting
 // #define DOT_M_MBLUR_MODE  0.0  //            . Apply on: both,white,black
-// #define DOT_M_SHADOW_STR  0.0  //         Shadow strength (disables deconvergence)
 // #define DOT_M_SHADOW_OFF  0.0  //            . Shadow offset
 
 
@@ -456,7 +459,6 @@
 // #define GAME_GEOM_VSHIFT  0.0   //         Vertical position
 // #define GAME_GEOM_HSHIFT  0.0   //         Horizontal position	
 // #define GAME_GEOM_ZOOM  1.0     //         Zoom	
-// #define GAME_GEOM_OFF_FIX  0.0  //         Sharp hack through offset (0.0=disable)
 
 // LCD Antighosting 
 // #define LCD_ANTIGHOSTING            0.5 //    Strength

@@ -40,17 +40,17 @@
      
                 bg_under = "textures/background_under.png"
          bg_under_linear = "true"
-      bg_under_wrap_mode = "clamp_to_edge"
+      bg_under_wrap_mode = "mirrored_repeat"
          bg_under_mipmap = "false"
          
                  bg_over = "textures/background_over.png"
           bg_over_linear = "true"
-       bg_over_wrap_mode = "clamp_to_edge"
+       bg_over_wrap_mode = "mirrored_repeat"
           bg_over_mipmap = "false"
 
                 backdrop = "textures/backdrop.jpg"
          backdrop_linear = "true"
-      backdrop_wrap_mode = "clamp_to_edge"
+      backdrop_wrap_mode = "mirrored_repeat"
          backdrop_mipmap = "false"
          
                 sideshade = "textures/side_shade-helper.png"
@@ -183,13 +183,14 @@ float_framebuffer4 = true
             scale5 = 1.0
        scale_type5 = source
 // float_framebuffer here is needed to avoid visible bandings
-// (check flycast:D.O.A. intro.)
-// *and* because the alpha carries the fps estimation.
+// check flycast:D.O.A. intro.
 float_framebuffer5 = true
-        // This has to be clamp_to_border in order for the glow pass to return a black frame
+        // This should be clamp_to_border in order for the glow pass to return a black frame
         // around it, which is needed so that when using geometry override and zooming out the content,
-        // it will have black surrounding.
-        wrap_mode5 = "clamp_to_border"
+        // it will have black surrounding, but for this specific DMG base preset, we do NOT want a black
+        // surrounding, since that would mean a slight black edge everytime, due to linear sampling.
+        // So I opted for mirrored_repeat.
+        wrap_mode5 = "mirrored_repeat"
         
 // ASMDEBUG: GLSL45
            shader6 = shaders-ng/halo.slang
