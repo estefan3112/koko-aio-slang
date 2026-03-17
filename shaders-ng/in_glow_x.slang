@@ -7,7 +7,7 @@
 layout(location = 0) in vec4 Position;
 layout(location = 1) in vec2 TexCoord;
 layout(location = 0) noperspective out vec2 vTexCoord;
-layout(location = 2) flat out float glow_w_inside_interval;
+layout(location = 2) flat out float vGlow_w_needed;
 layout(location = 3) flat out float vSharp_sub;
 layout(location = 4) flat out float vDo_wtfl;
 layout(location = 12) flat out float vWarpedglow_scale_tated;
@@ -26,13 +26,13 @@ void main() {
     vDo_wtfl = float(bDo_wtfl);
     
     //The following conditions are used to skip blur-x code.
-    bool bGlow_w_inside_interval = true;
-    if (IN_GLOW_W >= GLOW_SHARP_MAX) bGlow_w_inside_interval = false;                 // radius falls in the allowed interval
-    if (DO_IN_GLOW < 0.5) bGlow_w_inside_interval = false;                              // Disabled if not user enabled
-    if (bDo_wtfl) bGlow_w_inside_interval = true;     //always active if need to blur the waterfalls.
-    if (bDo_defocus) bGlow_w_inside_interval = true; //always active if need to do defocusing.
+    bool bGlow_needed = true;
+    if (IN_GLOW_W >= GLOW_SHARP_MAX) bGlow_needed = false;                 // radius falls in the allowed interval
+    if (DO_IN_GLOW < 0.5) bGlow_needed = false;                              // Disabled if not user enabled
+    if (bDo_wtfl) bGlow_needed = true;     //always active if need to blur the waterfalls.
+    if (bDo_defocus) bGlow_needed = true; //always active if need to do defocusing.
     
-    glow_w_inside_interval = float( bGlow_w_inside_interval);
+    vGlow_w_needed = float( bGlow_needed);
 
 
     //if (IN_GLOW_W < 0.0) {
@@ -79,7 +79,7 @@ void main() {
 #pragma stage fragment
 
 layout(location = 0) noperspective in vec2 vTexCoord;
-layout(location = 2) flat in float glow_w_inside_interval;
+layout(location = 2) flat in float vGlow_w_needed;
 layout(location = 3) flat in float vSharp_sub;
 layout(location = 4) flat in float vDo_wtfl;
 layout(location = 12) flat in float vWarpedglow_scale_tated;
@@ -104,6 +104,15 @@ vec3 blur_select_wrap(sampler2D texture_in, vec2 co, vec4 sourcesize, float shar
 }
 
 
+vec3 unsharp_compensation(vec3 c, vec2 co, float amount) {
+    float dx = params.OriginalSize.z;
+    //vec3 c = texture(shift_and_bleed_pass, vTexCoord).rgb;
+    vec3 cl =texture(shift_and_bleed_pass, co + vec2(dx, 0.0)).rgb ;
+    vec3 cr =texture(shift_and_bleed_pass, co - vec2(dx, 0.0)).rgb ;
+    vec3 blur = ( c + cl + cr ) / 3.0;
+    vec3 sharped = c + (c - blur) * amount;
+    return clamp(sharped, 0.0,1.0);
+}
 
 void main() { 
     
@@ -131,9 +140,12 @@ void main() {
     
     //Don't do anything if IN_GLOW_H is are over the upper limit
     //and IN_GLOW_W is outside the allowed interval;
-        if ( glow_w_inside_interval == 0.0) {
-            //passthrough
-            FragColor =vec4(texture(shift_and_bleed_pass, vTexCoord).rgb, warpedglow_x);
+        if ( vGlow_w_needed == 0.0) {
+            //passthrough, almost, apply unsharp if requested.
+            vec3 pixel_out_early = texture(shift_and_bleed_pass, vTexCoord).rgb;
+            if ( CVBS_UNSHARP_COMPENSATION * DO_CVBS_BLEED  > 0.0)
+                pixel_out_early = unsharp_compensation(pixel_out_early, vTexCoord, CVBS_UNSHARP_COMPENSATION);
+            FragColor =vec4(pixel_out_early, warpedglow_x);
             return;
         }
         
@@ -178,8 +190,13 @@ void main() {
         if (params.OutputSize.xy == params.OriginalSize.xy)
             in_glow_w_adapted*=1.5;
             
-    
-    FragColor = vec4(blur_select_wrap(shift_and_bleed_pass, vTexCoord, global.upscale_passSize, in_glow_w_adapted, sharp_sub_adapted, (IN_GLOW_W >= 0.0)), warpedglow_x);
+    vec3 pixel_out = blur_select_wrap(shift_and_bleed_pass, vTexCoord, global.upscale_passSize, in_glow_w_adapted, sharp_sub_adapted, (IN_GLOW_W >= 0.0));
 
+    if ( CVBS_UNSHARP_COMPENSATION * DO_CVBS_BLEED  > 0.0 ) {
+        vec3 pixel_out_unsharp = unsharp_compensation(pixel_out,vTexCoord,CVBS_UNSHARP_COMPENSATION);
+        float bypass_unsharp = max(waterfall, (1-dist_from_edge)*vIn_glow_edge_defocus_strength);
+        pixel_out = mix(pixel_out_unsharp, pixel_out, bypass_unsharp);
+    }
+    FragColor = vec4(pixel_out, warpedglow_x);
 }
 

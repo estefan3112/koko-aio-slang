@@ -162,16 +162,18 @@ However nice effects may be obtained (eg: with vector games). <br>
 **CVBS: Bandwidth limited chroma:**<br>
     Will cause an horizontal chroma bleed typical of band constrained composite signals.
     
-	Colorspace (NTSC, PAL)
-		Switch bandwidths to match different standards.
-	Strength
-		Self explanatory.
-	Size/Quality
-		Maximum bleed size (the higher, the slower).
-	Shrpness
-		The bleed falloff speed.
-
-
+	Bandwidths (NTSC, PAL)
+		Switch composite bandwidth distribution to match different standards.
+	Bandwidth multiplier
+        Adjust bandwidths; more bandwith = more sharpnes.
+	Quality
+		Smearing visual quality (the higher, the more samples, the slower).
+    Use coarse sampling
+        Useful to increase the apparent blur size while when the samples number is low.
+    Post sharpness filter.
+        Compensates for the loss of sharpness due to the previous parameter.
+        
+        
 **CVBS: Dot crawl**<br>
     Emulates rolling chroma->luma crosstalks observed in composite signals.<br>
     
@@ -338,12 +340,6 @@ However nice effects may be obtained (eg: with vector games). <br>
             You may want them to blend or not, depending on your preference to keep scanlines separated.
             This function is useful when you want to emulate handhelds screens using integer scaling, 
             where cells are well separated.
-        Anti-moire sweet spot:
-            When dealing with curvature and deep scanlines gaps, moire patterns could appear on screen.
-            This setting staggers screen phosphors by the configured amount and that halps in mitigating
-            the disturbing effect.
-            I observed that a value of 0.17 does a good job for low-res games rendered at 1080p height.
-            Any value > 0.0 disables the, following functions: Slotmask(fake) and Deconvergence Y
         Slotmask(fake) offset(*):
             This will cause every triad to be vertically shifted by the configured amount to
             fake a slotmask phosphors layout.
@@ -630,7 +626,7 @@ However nice effects may be obtained (eg: with vector games). <br>
     <br>
     You can choose to emulate a "backdrop", as seen in some old arcades which 
     used a mirror trick to overlay the game over an high definition printed image.<br>
-    Or you can use some image representing tube glass reflections, scratches and so on.
+    Or you can use some image representing tube glass reflections.<br>
     
         Shift(Zoom) Backdrop over X(Y) axis:
             move or zoom the whole background image.

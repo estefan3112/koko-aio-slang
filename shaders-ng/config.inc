@@ -72,11 +72,11 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	
 	float DO_FXAA;
 	
-	float DO_SAT_BLEED;
-	float SAT_BLEED_SIZE;
-	float SAT_BLEED_FALLOFF;
-	float SAT_BLEED_STRENGTH;
-	float SAT_BLEED_PAL;
+	float DO_CVBS_BLEED;
+	float CVBS_BLEED_SAMPLES;
+	float CVBS_BLEED_COARSE;
+	float CVBS_BLEED_ADJUST;
+	float CVBS_BLEED_PAL;
 	
 	float DO_PPERSISTENCE;
 	float PPERSISTENCE_START;
@@ -150,7 +150,6 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	float BG_IMAGE_WRAP_MODE;
 
 	float DO_SHIFT_RGB;
-	float OFFSET_STRENGTH;
 	
 	float DO_GLOBAL_SHZO;
 	float GLOBAL_ZOOM;
@@ -329,6 +328,8 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 	
 	float PPERSISTENCE_MUL_R;
 	float PPERSISTENCE_MUL_G;
+
+	float CVBS_UNSHARP_COMPENSATION;
 	
 } global;
 
@@ -367,7 +368,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 // AA
 // Apply an antialiasing filters.
-#pragma parameter DO_FXAA "★ Antialiasing enable? (fxaa|ddt-xbr-lv1) ==>"	0.0 	0.0 2.0 1.0
+#pragma parameter DO_FXAA "★ Antialiasing enable? (fxaa, ddt-xbr-lv1) ==>"	0.0 	0.0 2.0 1.0
 #pragma parameter LABEL0004 " " 0 0 0 1
 
 
@@ -398,18 +399,19 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter NTSC_FILTER_FC    "        Frequency cutoff"			2.5	0.0 10.0 0.1
 #pragma parameter NTSC_PHASE_SHIFT  "        Phase shift"			0.0	0.0 1.0  1.0
 #pragma parameter NTSC_ARTF_TRSH      "      Artifacts upper threshold"			0.1	0.0 1.0 0.01
-#pragma parameter NTSC_ARTF_ZAP       "      . Cancel artifacts under the threshold"		0.0	0.0 1.0 0.01
-#pragma parameter NTSC_SHOW_ARTF_MASK "      . Show selected artifacts mask (need glow/blur enabled)"				0.0	0.0 1.0 1.0
+#pragma parameter NTSC_ARTF_ZAP       "        . Cancel artifacts under the threshold"		0.0	0.0 1.0 0.01
+#pragma parameter NTSC_SHOW_ARTF_MASK "        . Show selected artifacts mask (need glow/blur enabled)"				0.0	0.0 1.0 1.0
 #pragma parameter LABEL0007 " " 0 0 0 1
 
 
 
 // YIQ/YUV bandwidth limited chroma bleeding.
-#pragma parameter DO_SAT_BLEED "★ CVBS: Bandwidth limited chroma enable? (cv) ==>"	0.0 	0.0 1.0 1.0
-#pragma parameter SAT_BLEED_PAL           "        Colorspace (NTSC, PAL)"	0.0 	 0.0 1.0 1.0
-#pragma parameter SAT_BLEED_STRENGTH      "        Strength"						1.0	 0.0 5.0  0.01
-#pragma parameter SAT_BLEED_SIZE          "        Size/quality (capped to 5.0 in d3d)"		5.0  1.0 20.0  1.0
-#pragma parameter SAT_BLEED_FALLOFF  	  "        Sharpness"				1.7 	 1.0 2.0 0.01        
+#pragma parameter DO_CVBS_BLEED "★ CVBS: Bandwidth limited chroma enable? (cv) ==>"	0.0 	0.0 1.0 1.0
+#pragma parameter CVBS_BLEED_PAL             "        Bandwidth distribution (NTSC, PAL)"	0.0  0.0 1.0 1.0
+#pragma parameter CVBS_BLEED_ADJUST         "        Bandwith multiplier"					0.7	 0.1 5.0 0.1
+#pragma parameter CVBS_BLEED_SAMPLES        "        Quality (capped to 5.0 in d3d)"		5.0  1.0 20.0  1.0
+#pragma parameter CVBS_BLEED_COARSE	  	    "        Use coarse sampling"					0.3  0.0 1.0 0.05
+#pragma parameter CVBS_UNSHARP_COMPENSATION "        Post sharpness filter" 0.0  0.0 3.0 0.1
 #pragma parameter LABEL0008 " " 0 0 0 1
 
 
@@ -432,7 +434,6 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 //Deconvergence
 #pragma parameter DO_SHIFT_RGB       "★ Deconvergence/Defocus enable? (de) ==>"	0.0	 0.0 1.0 1.0
-#pragma parameter OFFSET_STRENGTH  "        Strength"			0.6 	 0.0 1.0 0.05
 #pragma parameter DECON_RX         "        Red x offset"	    0.0 -5.0 5.0 0.05
 #pragma parameter DECON_RY         "        Red y offset"	   -1.6 -5.0 5.0 0.05
 #pragma parameter DECON_GX         "        Green x offset"		1.0 -5.0 5.0 0.05
@@ -460,15 +461,15 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 
 // Input Blur / light glowing
-#pragma parameter DO_IN_GLOW               "★ Glow/Blur enable? (gl) ==>"	 					0.0	0.0 1.0 1.0
-#pragma parameter IN_GLOW_BIAS             "        Glow to blur bias (Ignored with Fake transparencie)"	1.0     0.0 1.0 0.1
-#pragma parameter IN_GLOW_SPREAD           "        .  Glow light gain"		0.6 	0.0 4.0 0.05
-#pragma parameter IN_GLOW_SPREAD_SHARPNESS "        .  Glow light sharpness"	2.0 	0.01 2.0 0.01
-#pragma parameter IN_GLOW_W                "        Sharp X (neg=use BOX unsharp)"		2.5	-2.0 7.0 0.05
-#pragma parameter IN_GLOW_H                "        Sharp Y (neg=use BOX unsharp)"		2.5	-2.0 7.0 0.05
-#pragma parameter IN_GLOW_WARPSHARP_X      "        Warped glow X (neg = scanlined)"    -0.3  -2.0 2.0 0.05
-#pragma parameter IN_GLOW_WARPSHARP_Y      "        Warped glow Y"                      0.4  0.0  2.0 0.05
-#pragma parameter IN_GLOW_WARPSHARP_GAMMA  "        Warped glow dynamics (1.0=linear)"  1.0  0.2 1.0 0.05
+#pragma parameter DO_IN_GLOW                "★ Glow/Blur enable? (gl) ==>"	 					0.0	0.0 1.0 1.0
+#pragma parameter IN_GLOW_BIAS              "        Glow to blur bias (Ignored with Fake transparencie)"	1.0     0.0 1.0 0.1
+#pragma parameter IN_GLOW_SPREAD            "        .  Glow light gain"		0.6 	0.0 4.0 0.05
+#pragma parameter IN_GLOW_SPREAD_SHARPNESS  "        .  Glow light sharpness"	2.0 	0.01 2.0 0.01
+#pragma parameter IN_GLOW_W                 "        Sharp X (neg=use BOX unsharp)"		2.5	-2.0 7.0 0.05
+#pragma parameter IN_GLOW_H                 "        Sharp Y (neg=use BOX unsharp)"		2.5	-2.0 7.0 0.05
+#pragma parameter IN_GLOW_WARPSHARP_X       "        Warped glow X (neg = scanlined)"    -0.3  -2.0 2.0 0.05
+#pragma parameter IN_GLOW_WARPSHARP_Y       "        Warped glow Y"                      0.4  0.0  2.0 0.05
+#pragma parameter IN_GLOW_WARPSHARP_GAMMA   "        Warped glow dynamics (1.0=linear)"  1.0  0.2 1.0 0.05
 #pragma parameter LABEL0011 " " 0 0 0 1
 
 
@@ -552,7 +553,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 #pragma parameter DOT_M_G_SHARP		"           . Grid sharpness (0.0 for auto)"	0.0 0.0 20.0 0.25
 #pragma parameter DOT_M_MBLUR_STR	"        Ghosting"				0.45  0.0 0.9 0.05
 #pragma parameter DOT_M_MBLUR_MODE  "           . Apply on: both,white,black"	0.0  0.0 2.0 1.0
-#pragma parameter DOT_M_SHADOW_STR  "        Diorama/shadow strength (disables deconvergence)"	0.0  0.0 1.0 0.01
+#pragma parameter DOT_M_SHADOW_STR  "        Diorama/shadow strength"	0.0  0.0 1.0 0.01
 #pragma parameter DOT_M_SHADOW_OFF  "           . Shadow offset"								0.0  -2.0 2.0 0.05
 #pragma parameter LABEL0020 " " 0 0 0 1
 

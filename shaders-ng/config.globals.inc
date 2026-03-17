@@ -144,10 +144,6 @@
     #define RF_NOISE_STRENGTH	global.RF_NOISE_STRENGTH
 #endif
 
-#ifndef DO_SAT_BLEED
-    #define DO_SAT_BLEED		global.DO_SAT_BLEED
-#endif
-
 #ifndef DOT_C
     #define DOT_C		global.DOT_C
 #endif
@@ -156,20 +152,24 @@
     #define DOT_C_SPEED		global.DOT_C_SPEED
 #endif
 
-#ifndef SAT_BLEED_SIZE
-    #define SAT_BLEED_SIZE	global.SAT_BLEED_SIZE
+#ifndef DO_CVBS_BLEED
+    #define DO_CVBS_BLEED		global.DO_CVBS_BLEED
 #endif
 
-#ifndef SAT_BLEED_FALLOFF
-    #define SAT_BLEED_FALLOFF	global.SAT_BLEED_FALLOFF
+#ifndef CVBS_BLEED_PAL
+    #define CVBS_BLEED_PAL		global.CVBS_BLEED_PAL
 #endif
 
-#ifndef SAT_BLEED_STRENGTH
-    #define SAT_BLEED_STRENGTH	global.SAT_BLEED_STRENGTH
+#ifndef CVBS_BLEED_ADJUST
+    #define CVBS_BLEED_ADJUST	global.CVBS_BLEED_ADJUST
 #endif
 
-#ifndef SAT_BLEED_PAL
-    #define SAT_BLEED_PAL		global.SAT_BLEED_PAL
+#ifndef CVBS_BLEED_SAMPLES
+    #define CVBS_BLEED_SAMPLES	global.CVBS_BLEED_SAMPLES
+#endif
+
+#ifndef CVBS_BLEED_COARSE
+    #define CVBS_BLEED_COARSE	    global.CVBS_BLEED_COARSE
 #endif
 
 #ifndef DO_SHIFT_RGB
@@ -212,10 +212,6 @@
     #define EDGE_DEFOCUS_DO_BLUR		global.EDGE_DEFOCUS_DO_BLUR
 #endif
 
-#ifndef OFFSET_STRENGTH
-    #define OFFSET_STRENGTH	global.OFFSET_STRENGTH
-#endif
-
 #ifndef DO_IN_GLOW
     #define DO_IN_GLOW		global.DO_IN_GLOW
 #endif
@@ -251,6 +247,10 @@
 
 #ifndef	IN_GLOW_WARPSHARP_GAMMA
 	#define IN_GLOW_WARPSHARP_GAMMA global.IN_GLOW_WARPSHARP_GAMMA
+#endif
+
+#ifndef	CVBS_UNSHARP_COMPENSATION
+	#define CVBS_UNSHARP_COMPENSATION global.CVBS_UNSHARP_COMPENSATION
 #endif
 
 #ifndef IN_GLOW_POWER
