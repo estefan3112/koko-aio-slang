@@ -24,7 +24,7 @@
     Be warned that the following functions do not work if you enable the workaround: <br>
         * Resync speed when core resolution changes <br>
         * Adaptive Black <br>
-        * CVBS Bleed size is limited to 5.0 <br>
+<!--         * CVBS Bleed size is limited to 5.0 <br> -->
         * Ambientlight scene change detection <br>
         * Halving border updates refresh <br>
         * Lcd antighosting <br>
@@ -617,24 +617,29 @@ However nice effects may be obtained (eg: with vector games). <br>
     Zoom and shift everything on screen, but background pictures.<br>
 
     
-**Mid Overlay image (backdrop, scratches):**<br>
+**Mid image (backdrop, reflections, overlay...):**<br>
     Display an image over the content.<br>
     The image used by default, picked from the "textures" shader subdirectory,<br>
     is named: backdrop.jpg<br>
     Of course you can use other path/names, but then you have to edit the preset <br>
     by modifying the "backdrop =" line.<br>
     <br>
-    You can choose to emulate a "backdrop", as seen in some old arcades which 
-    used a mirror trick to overlay the game over an high definition printed image.<br>
-    Or you can use some image representing tube glass reflections.<br>
+    Possible usecases include:
+    -Simulate a "backdrop", as seen in some old arcades which  used a mirror trick to 
+    overlay the game over an high definition printed image.<br>
+    -Simulate scratches over the tube class.
+    -Simulate mask/filters (as seen in some old arcades like "War of the Worlds")
+    -possibly other usecasesd
     
-        Shift(Zoom) Backdrop over X(Y) axis:
-            move or zoom the whole background image.
         Display only on content (no shift/zoom)
-            Choose to display the image just over the content
-            ...that way it will be tied to the content geometry 
-            and no zoom/shift will be allowed
-    
+            Choose to display the image just over the content as it were glued to the screen.
+            
+        Content Blend mode
+            0.0 for ambient reflections or scratches and so on
+            1.0 for an rgb multiplicative blending overlay
+                    (like the one used in 1979 "War of the Worlds")
+        Shift(Zoom) Backdrop over X(Y) axis:
+            move or zoom the whole background image.        
         
 **Background image:**<br>
     Draws an image on screen picked from the "textures" shader subdirectory,<br>
@@ -972,3 +977,15 @@ Changes are applied after a shader reload.*<br>
     The following modulates the shake size:
     ```#define ANTIBURN_AMPLITUDE 1.0```<br>
     Antiburn disables LCD antighosting.
+    
+**Core fps estimation**<br>
+    Temporal based features need to know the source fps to have a fixed duration<br>
+    across multiple input refresh rates (25,30,50,60...).<br>
+    But since some cores do not report it correctly, you may trust them, or not.<br>
+    In case you don't, koko-aio derives the information by averaging frametimes.<br>
+    Such estimation is activated by enabling the following in config-user-optional.txt:<br>
+    ```#define ORIGINAL_FPS_UNTRUSTED```<br>
+    ...however ORIGINAL_FPS_UNTRUSTED is slower and on some<br>
+    video drivers isn't reliable either.<br>
+    if D3D_WORKAROUND is defined, Core reported fps value is always trusted.<br>
+

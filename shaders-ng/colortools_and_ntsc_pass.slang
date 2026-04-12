@@ -132,7 +132,7 @@ void main() {
    
    //For screen shaking:
       #define Y_SHAKE_SPEED 1.5
-      #define X_SHAKE_NUM_WAVES 2.0
+      #define X_SHAKE_NUM_WAVES 1.0
       float wobbly_freq = mod(params.FrameCount,pi*100);
       //vShake_sin_arg =  vec2( wobbly_freq * Y_SHAKE_SPEED, vTexCoord.y * X_SHAKE_NUM_WAVES + wobbly_freq);
       vShake_sin_arg =  vTexCoord.y * X_SHAKE_NUM_WAVES + wobbly_freq;
@@ -227,6 +227,7 @@ layout(set = 0, binding = 3) uniform sampler2D colortools_and_ntsc_passFeedback;
 layout(set = 0, binding = 4) uniform sampler2D avglum_passFeedback;
 #endif
 layout(set = 0, binding = 5) uniform sampler2D FPS_ESTIMATE_PASS;
+
 
 vec3 colorwheel(vec2 uv){
    float timeoffset = params.FrameCount / 120.0;
@@ -672,7 +673,7 @@ void main() {
             co.y += shake * fadeout;
       }
    #endif
-      
+
    vec3 pixel_in = texture(Source, co).rgb;
    
    //eventually return black pixel
@@ -728,7 +729,7 @@ void main() {
       //pixel_out = color_tools(pixel_out, vec3(1.0));
       #ifndef D3D_WORKAROUND
          if (ADAPTIVE_BLACK != 0.0) {
-            float avglum = texture(avglum_passFeedback, vec2(0.5,0.5)).a ;
+            float avglum = texture(avglum_passFeedback, TSMOOTH_NOCC_SAMPLING_POINT).a ;
             pixel_out = adaptive_black(pixel_out,  avglum, abs(ADAPTIVE_BLACK), ADAPTIVE_BLACK > 0.0);
          }
       #endif
@@ -826,6 +827,7 @@ void main() {
    pixel_out = YIQ2RGB*pixel_out;
    pixel_out = saturation_set_gain(pixel_out, mix(1.0, 3.0, SERVICE1));
    */
+
    FragColor = vec4(pixel_out, waterfall);
 }
 

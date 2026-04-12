@@ -81,7 +81,8 @@ layout(location = 0) out vec4 FragColor;
 
 layout(set = 0, binding = 1) uniform sampler2D Source;
 layout(set = 0, binding = 2) uniform sampler2D colortools_and_ntsc_pass;
-layout(set = 0, binding = 3) uniform sampler2D sideshade;
+layout(set = 0, binding = 3) uniform sampler2D colortools_and_ntsc_passFeedback;
+layout(set = 0, binding = 4) uniform sampler2D sideshade;
 
 #include "includes/functions.include.slang"
 #include "includes/blooms.include.slang"
@@ -131,10 +132,16 @@ void main() {
       float start_offset = (pi*2.0/8.0/4.0);
 
       vec3 pixel_out = bloom(Source, vCoords_zoomout, global.FinalViewportSize, blur_radius_adpt, 1.0, start_offset, 0.0) ;
+      
+      //pixel_out.rgb *= pixel_out.rgb; //seems to improve reflections (counteracted by the previous pass)
+      
       pixel_out *= BEZEL_REFL_STRENGTH;
      
    //Next simulate a diffused light
-      vec3 pixel_diffused = textureLod( colortools_and_ntsc_pass, vCoords_zoomout, 6.0).rgb;
+      vec2 co_diffused = vCoords_zoomout;
+      if (DO_GAME_GEOM_OVERRIDE > 0.5)
+         co_diffused = content_geom_override_zoom(vCoords_zoomout, GAME_GEOM_ASPECT, get_in_aspect(), GAME_GEOM_VSHIFT, GAME_GEOM_HSHIFT, GAME_GEOM_ZOOM);
+      vec3 pixel_diffused = textureLod( colortools_and_ntsc_pass, co_diffused, 6.0).rgb;
       pixel_diffused = pow(pixel_diffused.rgb, vec3(IN_GLOW_GAMMA));
 
       pixel_out += pixel_diffused * BEZEL_DIFFUSION_STR;
@@ -158,6 +165,7 @@ void main() {
             
    //Corners: less reflections:
       float fcorners_dark = 1 - corners_shade(vTexCoord, 1.125) * BEZEL_CORNER_DARK ;
+
 
    
    FragColor = vec4(pixel_out * fcorners_dark, side_shade);

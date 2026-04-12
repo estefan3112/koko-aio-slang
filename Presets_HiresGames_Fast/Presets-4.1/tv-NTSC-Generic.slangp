@@ -1,4 +1,4 @@
-#reference "tv-NTSC-Megadrive-Genesis-old.slangp"
+#reference "tv-NTSC-Megadrive-Genesis.slangp"
 	NTSC_MIX = "0.700001"
 	NTSC_FILTER_WIDTH = "5.000000"
 	NTSC_PHASE_SHIFT = "1.0"
