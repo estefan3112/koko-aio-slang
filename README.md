@@ -30,6 +30,8 @@ Space Invaders Deluxe in MAME current with pixel overlay (further below the prev
 <br>
 Screenshots from release 0.7ng:
 <br>
+<br>
+
 ![1942-Tate Off](https://github.com/user-attachments/assets/2eba9de7-23e5-42cd-8735-38c7a0bd4ef4)
 ![dkongbp1-250302-193400](https://github.com/user-attachments/assets/087475ba-af74-4048-a085-62f60398b465)
 ![mhavoc-241122-223547](https://github.com/user-attachments/assets/8670931f-4517-421e-9ed8-e29d625a939d)
