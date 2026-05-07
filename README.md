@@ -11,12 +11,26 @@ Requirements: RetroArch 1.19.0 upwards, you need Vulkan support. Version 1.20.0 
 <br>
 
 # Screenshots
-
-Screenshot from the first Game & Watch Handheld artwork using the latest upstream code:
-
+<br>
+<br>
+Pre-Release Screenshots using the latest upstream code:
+<br>
+<br>
+First Game & Watch handheld:
+<br>
+<br>
 <img width="2600" height="1322" alt="gnw_dkong-260507-220135" src="https://github.com/user-attachments/assets/674cf084-563f-4185-b740-f0856978fb4e" />
-
+<br>
+<br>
+Space Invaders Deluxe in MAME current with pixel overlay (further below the previous version with white pixels):
+<br>
+<br>
+<img width="1440" height="810" alt="invaddlx-260412-214814" src="https://github.com/user-attachments/assets/f7a31dcd-6fe8-41a5-8cd4-4942c8d23d55" />
+<br>
+<br>
 Screenshots from release 0.7ng:
+<br>
+<br>
 
 ![1942-Tate Off](https://github.com/user-attachments/assets/2eba9de7-23e5-42cd-8735-38c7a0bd4ef4)
 ![dkongbp1-250302-193400](https://github.com/user-attachments/assets/087475ba-af74-4048-a085-62f60398b465)
