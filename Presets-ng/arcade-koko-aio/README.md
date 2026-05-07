@@ -8,4 +8,12 @@ Games with backdrops typically work only in MAME variants, but not FinalBurn Neo
 
 Note: The FinalBurn Neo.cfg, MAME 2003 (078).cfg and MAME 2003-Plus.cfg files contain only one line and shall guarantee that the Aspect Ratio is set to 'Full'. Without this setting, the Artwork will not appear.
 
-Also note that the additional Artwork must be installed according to the instructions there.<br>
+Also note that the additional Artwork must be installed according to the instructions there.
+
+# remaps
+
+Optional button remapping for individual games, see the description inside.
+
+# system
+
+Important additional MAME current layout files, see the description inside.
