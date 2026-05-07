@@ -12,6 +12,10 @@ Requirements: RetroArch 1.19.0 upwards, you need Vulkan support. Version 1.20.0 
 
 # Screenshots
 
+Screenshot from the first Game & Watch Handheld artwork using the latest upstream code:
+
+<img width="2600" height="1322" alt="gnw_dkong-260507-220135" src="https://github.com/user-attachments/assets/674cf084-563f-4185-b740-f0856978fb4e" />
+
 Screenshots from release 0.7ng:
 
 ![1942-Tate Off](https://github.com/user-attachments/assets/2eba9de7-23e5-42cd-8735-38c7a0bd4ef4)
