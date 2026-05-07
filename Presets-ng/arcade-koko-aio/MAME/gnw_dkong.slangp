@@ -7,7 +7,6 @@ DO_DOT_MATRIX = "1.000000"
 
 DOT_M_G_SHARP = "9.750000"
 
-
 DO_GLOBAL_SHZO = "1.000000"
 GLOBAL_OFFY = "-0.002500"
 GLOBAL_ZOOM = "0.990014"
@@ -49,3 +48,8 @@ DO_DYNZOOM = "0.000000"
 DO_RF_NOISE = "1.000000" 
 RF_NOISE_STRENGTH = "-0.200000"
 RF_NOISE_SPARK = "-0.200000"
+
+// Credits
+// shader and custom Game & Watch preset by kokoko3k - https://github.com/kokoko3k/koko-aio-slang
+// Design, layout and editing by Lee Robson (hydef), background scans by Henrik Algestam (algestam)
+// https://drive.google.com/drive/folders/1vl9O-0jIGCHHY_lrWpOwBtqTXEKsVGOY 
