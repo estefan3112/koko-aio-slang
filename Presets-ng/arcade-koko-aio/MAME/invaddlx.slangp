@@ -11,13 +11,16 @@ DO_BEZEL = "0.000000"
 GLOBAL_OFFX = "-0.012000"
 GLOBAL_OFFY = "-0.007000"
 GLOBAL_ZOOM = "0.802000"
+DO_BACKDROP = "1.000000"
+BACKDROP_JUST_TUBE = "1.000000"
+BACKDROP_ZOOM = "1.787442"
 BG_IMAGE_ZOOM = "1.000000"
 BG_IMAGE_NIGHTIFY = "0.400000"
-DO_BACKDROP = "1.000000"
-BACKDROP_ZOOM = "1.118991"
-BACKDROP_JUST_TUBE = "1.000000"
 DO_SPOT = "0.000000"
-ASPECT_X = "-5.000000"
+ASPECT_X = "3.000000"
+ASPECT_Y = "4.000000"
+DO_GAME_GEOM_OVERRIDE = "1.000000"
+GAME_GEOM_ASPECT = "-0.010000"
 bg_over = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/invaddlx.png"
 backdrop = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/invaddlx_backdrop.png"
 
@@ -25,4 +28,5 @@ backdrop = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/
 // shader by kokoko3k - https://github.com/kokoko3k/koko-aio-slang
 // artwork by John Merrit
 // backdrop by Mr. Do's Arcade - https://mrdo.mameworld.info/index.php 
+// overlay hints by Starman99x
 // preset and artwork adjustments by estefan3112 - https://github.com/estefan3112/koko-aio-slang
