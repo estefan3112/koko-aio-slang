@@ -7,7 +7,7 @@ Main source of this artwork comes from John Merrit, who set a benchmark for real
 <br>
 Focus on highest possible quality and diversity over mass production. Also improvements of existing artwork to have a best possible experience.<br>
 <br>
-My latest work as of 2026 is focused on vector games (MAME current recommended) and the famous Game & Watch handhelds (MAME current only). For Game & Watch, a lot of extra settings and files need to be considered (see special chapter regarding installation below).
+My latest work as of 2026 is focused on vector games (MAME current recommended) and the famous Game & Watch handhelds (MAME current only). For Game & Watch, a lot of extra settings and files need to be considered (see special chapter regarding installation below).<br>
 <br>
 Requirements: RetroArch 1.19.0 upwards, you need Vulkan support. Latest Stable Version or Nightly Build is recommended<br>
 <br>
