@@ -7,7 +7,9 @@ Main source of this artwork comes from John Merrit, who set a benchmark for real
 <br>
 Focus on highest possible quality and diversity over mass production. Also improvements of existing artwork to have a best possible experience.<br>
 <br>
-Requirements: RetroArch 1.19.0 upwards, you need Vulkan support. Version 1.20.0 or Nightly Build is recommended<br>
+My latest work as of 2026 is focused on vector games (MAME current recommended) and the famous Game & Watch handhelds (MAME current only). For Game & Watch, a lot of extra settings and files need to be considered (see special chapter regarding installation below).<br>
+<br>
+Requirements: RetroArch 1.19.0 upwards, you need Vulkan support. Latest Stable Version or Nightly Build is recommended<br>
 <br>
 
 # Screenshots
@@ -90,9 +92,17 @@ Please see the Moon Patrol example - you can just duplicate the .slangp preset a
 
 # Backdrop support
 
-Since Release 0.3, backdrop support landed in koko-aio as a dynamic option. A separate shader repository for backdrops is no longer required, and I have merged the backdrop presets into koko-aio. 
+Since Release 0.3, backdrop support landed in koko-aio as a dynamic option. A separate shader repository for backdrops is no longer required, and I have merged the backdrop presets into koko-aio.
 
-# Technical Information
+# Game & Watch installation
+
+Right now, Game & Watch presets need to be installed manually. I recommend the following steps:
+- First like with every preset of this repo: copy the game-specific .slangp preset into the MAME config folder (this is MAME current only) and the game-specific texture into textures/arcade textures of koko-aio 
+- Additional Step 1: copy the game-specific .cfg (disabling any runahead) and the game-specific .opt file (switches to the Alternative Renderer at the given resolution) into the MAME config folder
+- Additional Step 2: Copy the game-specific .zip file contained in this repo in system/mame/artwork/ (contains overlays, enables dual screen in some games etc) into the same place of your RetroArch install
+Then launch the game, and all should be set.
+
+# Technical Information: Shader Preset Modifications
 
 (Update January 2025) This fork will remain as closely as possible in line with the main repository, as I frequently update from Upstream. Here is a list of deviations from Upstream:
 - koko-aio-ng.slangp - line 43:  bg_under_wrap_mode = "clamp_to_edge" (instead of previously "mirrored_repeat") 
