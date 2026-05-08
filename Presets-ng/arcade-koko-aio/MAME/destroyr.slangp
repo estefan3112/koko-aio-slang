@@ -1,0 +1,36 @@
+#reference "../../shaders/shaders_slang/bezel/koko-aio/Presets_Hiresgames_Fast/Presets-ng/Monitor-New_slotmask_gm.slangp"
+GAMMA_OUT = "0.500000"
+IN_GLOW_POWER = "2.349999"
+LUMINANCE = "0.000000"
+SATURATION = "1.400000"
+DO_FXAA = "3.000000"
+DO_IN_GLOW = "0.000000"
+PIXELGRID_INTR_FLICK_MODE = "0.000000"
+HALO_POWER = "0.790000"
+HALO_SHARPNESS = "6.299997"
+BLOOM_MIX = "0.450000"
+DO_BEZEL = "0.000000"
+GLOBAL_OFFY = "-0.158000"
+GLOBAL_ZOOM = "0.355501"
+DO_BACKDROP = "1.000000"
+BACKDROP_BLEND_MODE = "1.000000"
+BACKDROP_OFFX = "-0.008000"
+BACKDROP_OFFY = "0.191999"
+BACKDROP_ZOOM = "1.251981"
+DO_BG_IMAGE = "1.000000"
+BG_IMAGE_OVER = "1.000000"
+BG_IMAGE_ZOOM = "1.122491"
+BG_IMAGE_NIGHTIFY = "0.250000"
+BG_IMAGE_WRAP_MODE = "1.000000"
+DO_AMBILIGHT = "0.000000"
+bg_over = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/destroyer_bezel.png"
+backdrop = "../../shaders/shaders_slang/bezel/koko-aio/textures/arcade_textures/destroyer_backdrop.png"
+
+
+/ Credits
+// shader by kokoko3k - https://github.com/kokoko3k/koko-aio-slang
+// Scanned artwork (background, foreground, marquee) provided by TrevEB
+// Bezel reproduced by Comboman
+// Lever by Mr. Do
+// Volcano button by SteelTiger
+// preset and artwork adjustments by estefan3112 - https://github.com/estefan3112/koko-aio-slang
