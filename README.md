@@ -18,11 +18,12 @@ Requirements: RetroArch 1.19.0 upwards, you need Vulkan support. Latest Stable V
 Pre-Release Screenshots using the latest upstream code:
 <br>
 <br>
-First Game & Watch handheld:
+First two Game & Watch handhelds:
 <br>
 <br>
 <img width="2600" height="1322" alt="gnw_dkong-260507-220135" src="https://github.com/user-attachments/assets/674cf084-563f-4185-b740-f0856978fb4e" />
 <br>
+<img width="1800" height="1127" alt="gnw_mmouse-260508-214422" src="https://github.com/user-attachments/assets/2b8af21c-3f93-4302-b704-4470f075ee87" />
 <br>
 Space Invaders Deluxe in MAME current with pixel overlay (further below the previous version with white pixels):
 <br>
