@@ -15,7 +15,7 @@ Requirements: RetroArch 1.19.0 upwards, you need Vulkan support. Latest Stable V
 # Screenshots
 <br>
 <br>
-Pre-Release Screenshots using the latest upstream code:
+Screenshots from release 0.8ng:
 <br>
 <br>
 First two Game & Watch handhelds:
