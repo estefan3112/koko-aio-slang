@@ -336,10 +336,14 @@ float_framebuffer15 = true
            shader16 = shaders-ng/final_pass.slang
             alias16 = "final_pass"
     filter_linear16 = true
-       scale_type16 = viewport
-            scale16 = 1.0
         //This needs to be clamp_to_edge or displacing vignette would dark screen borders
         wrap_mode16 = "clamp_to_edge" 
+        
+// Till retroarch 1.22.2 you can gain some performance by commenting the following 
+// retroarch past 1.22.2 does not need to do that manually.
+// Be warned that commenting the following has some side effects:
+//      delta render, frame halving (content and border), prevent glitches on window resize will not work.
+//      plugins like antistrobe and antighosting
 
-
-
+       scale_type16 = viewport
+            scale16 = 1.0
