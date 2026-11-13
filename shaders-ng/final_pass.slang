@@ -54,8 +54,9 @@ layout(location = 16) flat out float vDo_pixelgrid_h;
 layout(location = 17) noperspective out float vFake_scanline_period;
 layout(location = 18) flat out float vPG_y_shift;
 layout(location = 19) noperspective out vec2 vUnrotated_Output_coords;
+layout(location = 20) noperspective out float vEarly_exit_on_content_possible;
 #ifdef DO_ADPT_STROBE_PLUGIN
-    layout(location = 20) flat out float vAdaptive_strobe_oscillator;
+    layout(location = 21) flat out float vAdaptive_strobe_oscillator;
 #endif
     
 #ifdef DEBUG_PRINT_VALUE
@@ -393,6 +394,11 @@ void main() {
         vAdaptive_strobe_oscillator = cos(iFrameMod * pi);
     #endif
 
+    vEarly_exit_on_content_possible = 0.0;
+    if (DO_BACKDROP == 0.0 || (DO_BACKDROP == 1.0 && BACKDROP_JUST_TUBE > 0.0))
+        if (DO_BG_IMAGE == 0.0 || (DO_BG_IMAGE == 1.0 && BG_IMAGE_OVER == 0.0)) 
+            vEarly_exit_on_content_possible = 1.0;
+        
 }
 
 
@@ -419,8 +425,9 @@ layout(location = 16) flat in float vDo_pixelgrid_h;
 layout(location = 17) noperspective in float vFake_scanline_period;
 layout(location = 18) flat in float vPG_y_shift;
 layout(location = 19) noperspective in vec2 vUnrotated_Output_coords;
+layout(location = 20) noperspective in float vEarly_exit_on_content_possible;
 #ifdef DO_ADPT_STROBE_PLUGIN
-    layout(location = 20) flat in float vAdaptive_strobe_oscillator;
+    layout(location = 21) flat in float vAdaptive_strobe_oscillator;
 #endif
 
 
@@ -464,7 +471,7 @@ vec2 get_vOutputCoord_adapted() {
 }
 
 vec2 get_scaled_coords_for_bezel(vec2 co, float isrotated) {
-
+    //putting co computation into vertex shader does not bring any gain.
     co = zoomout_coords(co, -BEZEL_FRAME_ZOOM); //FIXME COULD BE FASTER.
     //co.y = zoom1D(co.y, BEZEL_ASPECT_CORRECTION );
     //co = zoomxy(co, vec2(1+SERVICE1*0.001, 1-SERVICE1*0.001));
@@ -649,10 +656,11 @@ vec4 fn_pixel_grid(vec2 in_coords, vec3 pixel_in, float min_inLum, float max_inL
     // Shadowmask
     // Works by staggering odd rows by 1.5X triad
     // Pay attention to phosphor width; if too low may, vanify shadowmask.
-    vec3 PG_offsets = vPG_offsets_and_size.rgb + //base offsets staggered (+)
-                float( PIXELGRID_DO_SHADOWMASK *                                      // user wants shadowmask
-                       sin(freq_base_screen.y * 2.0 / PIXELGRID_SHADOWMASK_H ) > 0.0  // sin > 0.0 means the row is even
-                      ) * PIXELGRID_SHADOWMASK_SHIFT ;                                // stagger by 1.5
+    // performance: small branch seems a bit better than arithmetic.
+    vec3 PG_offsets = vPG_offsets_and_size.rgb; //base offsets staggered (+)
+    if (PIXELGRID_DO_SHADOWMASK > 0.0)                                    // user wants shadowmask
+        if (sin(freq_base_screen.y * 2.0 / PIXELGRID_SHADOWMASK_H) > 0.0) // sin > 0.0 means the row is even
+            PG_offsets += PIXELGRID_SHADOWMASK_SHIFT;                     // stagger by 1.5
 
         
     vec3 freq_rgb = freq_base.xxx - PG_offsets;
@@ -705,23 +713,21 @@ vec4 fn_pixel_grid(vec2 in_coords, vec3 pixel_in, float min_inLum, float max_inL
                                 
             //Finally get 3 sines out of the previous one by applying height modifiers
                 phosphor_height = pow(phosphor_height, vec3(PIXELGRID_GAMMA_H));
-                rgb_h = morph_shape_full_vec3(rgb_h_sin, phosphor_height, PIXELGRID_NO_INTERBLEED_H, 1);
+
+                #ifndef HQ_DECON
+                    rgb_h = morph_shape_full_vec3(rgb_h_sin, phosphor_height, PIXELGRID_NO_INTERBLEED_H, 1);
+                #else
+                    vec3 scanline_area = vec3(0.0); //the area under the scanline, useful to blend no scanline look without altering the brightness
+                    rgb_h = morph_shape_full_vec3_with_area(rgb_h_sin, phosphor_height, PIXELGRID_NO_INTERBLEED_H, 1, scanline_area);
+                    float mixing_factor =         // the mixing factor will depend on:
+                              DO_SHIFT_RGB           // the fact that we are doing defocusing
+                            * EDGE_DEFOCUS_DO_BLUR
+                            * (1-dist_from_edge);     // the distance from the center
+                    rgb_h = mix(rgb_h, scanline_area, mixing_factor);
+                #endif
 
                 rgb_h = mix(vec3(1.0), rgb_h, DO_PIXELGRID_H);
-                
                 rgb_h = clamp(rgb_h, 0.0,1.0); //max(x,0.0) should suffice, but somehos produces slower code.
-                
-                #ifdef HQ_DECON
-                    // Y Defocusing causes scanlines gaps to blend, so mix the scanlines mask with the original color
-                    // since the original color will be multiplied again for rgb_h later on, pow it to 0.9 to avoid excessive gamma increase.
-                    
-                        float mixing_factor =         // the mixing factor will depend on:
-                              (DO_SHIFT_RGB           // the fact that we are doing defocusing
-                            * EDGE_DEFOCUS_DO_BLUR) 
-                            * ((1-dist_from_edge)     // the distance from the center
-                            * DO_PIXELGRID_H) ;       //the scanline strength
-                    rgb_h = mix( rgb_h,  mix(vec3(1.0), pixel_in.rgb, 0.9), mixing_factor);
-                #endif
         }
 
 
@@ -936,68 +942,6 @@ vec4 textureLod_wrap(sampler2D tex, vec2 co, float lod, float wrap_mode) {
     return textureLod(tex, co, lod);
 }
 
-
-
-/*vec3 pixel_blank_alternate_v2(vec2 co, vec4 texsize, float strength, vec3 c) {
-
-	c = pow(c, vec3(2.2));
-
-    vec3 S=vec3(strength);
-    vec3 ref = clamp(c, 0.0,1.0);
-    S = min(S, vec3(1.0)-ref);
-    S = min(S, ref);
-
-    float line = co.y * texsize.y;
-    float column = co.x * texsize.x;
-
-    float l_period_half = ALT_BLANK_PERIOD / 2;
-
-    float sinlinea= sin(line*pi/ALT_BLANK_PERIOD);
-    sinlinea*=sinlinea;
-
-    float sincolonna= sin(column*pi/ALT_BLANK_PERIOD);
-    sincolonna*=sincolonna;
-
-
-    bool linea_pari = sinlinea > 0.5;
-    bool frame_pari =  mod(float(params.FrameCount),2.0  ) == 1 ;
-
-    if (frame_pari) {
-        if (linea_pari)
-            S = -S;
-                else
-            S = +S;
-	} else {
-
-		if (!frame_pari) {
-			if (linea_pari)
-				S = S;
-					else
-				S = -S;
-		}
-    }
-
-    c = c+S;
-
-	c = pow(c, vec3(1/2.2));
-
-    return c;
-}
-
-
-vec3 pixel_blank_alternate(vec3 strength, vec3 pixel_in) {
-    //strength *= 1-pixel_in; <<--- less on bright areas?
-    strength =  1-strength;
-
-    float square_wave_line = float(mod((vTexCoord.y+0.0001) * params.OutputSize.y, ALT_BLANK_PERIOD) > ALT_BLANK_PERIOD / 2);
-    if ( mod(params.FrameCount, 2.0) == 1.0) {
-        return min(square_wave_line + strength, vec3(1.0));
-    } else {
-        return min(1 - square_wave_line + strength, vec3(1.0));
-    }
-
-}
-*/
 
 vec3 bezel_color(float lum)  {
     //Colorize bezel frame
@@ -1305,7 +1249,7 @@ vec3 antighost(vec3 c) {
         return c;
     #endif
 
-    #ifdef ANTIBURN_X
+    #ifdef ANTIBURN_Y
         return c;
     #endif
 
@@ -1314,13 +1258,12 @@ vec3 antighost(vec3 c) {
 				if (frame_is_even() && (vInterlace_offset == 0.0)) {
 					vec3 f = texture(LAST_FEEDBACK_PASS, vOutputCoord).rgb;
                     //since feedback is not float framebuffer, we need to clamp current color (only)
-                    c=clamp(c,vec3(0),vec3(1));
-                    //f=clamp(f,vec3(0),vec3(1));
                     c = clamp(c, vec3(0), vec3(1));
+                    //f=clamp(f,vec3(0),vec3(1));
 					vec3 diff=(f - c)*LCD_ANTIGHOSTING;
 					//diff = sign(diff) * min( abs(diff), vec3(LCD_ANTIGHOSTING_CEIL));
                     diff = clamp(diff, -LCD_ANTIGHOSTING_CEIL, LCD_ANTIGHOSTING_CEIL); //probably faster.
-					c = mix(c, c-diff, 0.5);
+					c = c - diff * 0.5;   // same as: mix(c, c-diff, 0.5) 
 				}
 		}
 	#endif
@@ -1493,7 +1436,7 @@ void main() {
         
         pixel_out = fn_pixel_content(co_content);
         
-            
+        //Backdrop/mid image just on the tube (eg ambient reflections, GEL)
         if (DO_BACKDROP * BACKDROP_JUST_TUBE > 0.0) {
             vec3 blended = vec3(0.0);
             vec4 backdrop_img = pixel_overlay_image_stretch(backdrop, co_content);
@@ -1522,7 +1465,21 @@ void main() {
                 #endif
             #endif
         
-
+            float t = 80.0; //  percent of the inner content is supposed to always stay visible.
+                             // allows an early exit and gain fps, but too much higer value
+                             // may lead to jagged borders (for override geometry zoom)
+                             // or mangled content over bezel borders (for low bezel frame alignment)
+            t = (1-(t/100.0))/2.0;
+            if (vEarly_exit_on_content_possible == 1.0) 
+                if (is_first_inside_rect(co_content, vec4(vec2(0.0+t) , vec2(1.0-t))))
+                {
+                    FragColor.rgb = pixel_out.rgb;
+                    return;
+                }
+            
+        
+                    
+                    
     } else {
 
         // Can we halve border update to spare some cycles?
@@ -1536,7 +1493,6 @@ void main() {
         // We can skip border update on subframes.
         // The following may seem redundant because we skip whole subframes already
         // But when we use strobing, we always reach this point/code.
-        bool skip_because_is_subframe = false;
         #ifdef SUBFRAMES_OPTIMIZATIONS
             if (is_subframe()) skip_border = true;
         #endif
@@ -1700,10 +1656,10 @@ void main() {
     }
 
     
-   // Backdrop
-   if ( (1-BACKDROP_JUST_TUBE) + DO_BACKDROP > 1.0 ) {
-        vec3 backdrop_img = pixel_backdrop_image(backdrop, vUnrotated_Output_coords, global.FinalViewportSize );
-        pixel_out += backdrop_img * (1-pixel_fg_image_alpha);
+    // Backdrop on the whole picture:
+    if ( ((1.0 - BACKDROP_JUST_TUBE) + DO_BACKDROP > 1.0) && (pixel_fg_image_alpha < 1.0) ) {
+        vec3 backdrop_img = pixel_backdrop_image(backdrop, vUnrotated_Output_coords, global.FinalViewportSize);
+        pixel_out += backdrop_img * (1.0 - pixel_fg_image_alpha);
     }
     
     
