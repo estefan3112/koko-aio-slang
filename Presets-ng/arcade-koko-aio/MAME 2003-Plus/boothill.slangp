@@ -1,4 +1,5 @@
 #reference "../../shaders/shaders_slang/bezel/koko-aio/Presets-ng/Monitor-Ambilight-immersive.slangp"
+DO_FXAA = "3.000000"
 DO_CCORRECTION = "0.000000"
 DO_IN_GLOW = "0.000000"
 HALO_POWER = "0.330000"

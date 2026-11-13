@@ -1,4 +1,5 @@
 #reference "../../shaders/shaders_slang/bezel/koko-aio/Presets-ng/Monitor-Ambilight-immersive.slangp"
+DO_FXAA = "3.000000"
 DO_CCORRECTION = "0.000000"
 GEOM_CORNER_SIZE = "0.020000"
 BEZEL_INNER_ZOOM = "-0.388000"
