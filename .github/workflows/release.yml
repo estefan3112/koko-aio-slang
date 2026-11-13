@@ -1,0 +1,39 @@
+# Builds the koko-aio arcade artwork pack from the arcade-artwork branch
+# and attaches it to a DRAFT release. Start it from the Actions tab
+# ("Build release" -> "Run workflow"), then add notes and publish on GitHub.
+name: Build release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag, e.g. 0.9ng"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out arcade-artwork (latest files only, no history)
+        uses: actions/checkout@v4
+        with:
+          ref: arcade-artwork
+          fetch-depth: 1
+
+      - name: Build zip (koko-aio/ folder, without .git, .github, .gitignore)
+        run: |
+          git archive --format=zip --prefix=koko-aio/ \
+            -o "koko-aio-arcade-${{ inputs.tag }}.zip" HEAD -- . \
+            ':(exclude).github' ':(exclude).gitignore'
+          ls -lh *.zip
+
+      - name: Create draft release with the zip attached
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ inputs.tag }}" "koko-aio-arcade-${{ inputs.tag }}.zip" \
+            --draft --target arcade-artwork --title "${{ inputs.tag }}" \
+            --notes "Release notes to follow."
