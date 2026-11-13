@@ -1,4 +1,5 @@
 #reference "../../shaders/shaders_slang/bezel/koko-aio/Presets-ng/Monitor-Ambilight-immersive.slangp"
+DO_FXAA = "3.000000"
 BEZEL_R = "-0.300000"
 BEZEL_G = "-0.300000"
 BEZEL_B = "-0.305000"

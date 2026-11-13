@@ -1,4 +1,5 @@
 #reference "../../shaders/shaders_slang/bezel/koko-aio/Presets-ng/Monitor-Ambilight-immersive.slangp"
+DO_FXAA = "3.000000"
 LUMINANCE = "0.100000"
 BEZEL_R = "-0.165000"
 BEZEL_G = "-0.165000"
